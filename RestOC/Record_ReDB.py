@@ -15,7 +15,8 @@ import sys
 from time import sleep, time
 
 # Pip imports
-import rethinkdb as r
+from rethinkdb import errors as rerrors, RethinkDB
+r = RethinkDB()
 
 # Framework imports
 from . import DictHelper, Record_Base
@@ -51,7 +52,7 @@ def _connect(host, error_count=0):
 		oCon = r.connect(**__mdHosts[host])
 
 	# Check for driver errors
-	except r.errors.RqlDriverError as e:
+	except rerrors.RqlDriverError as e:
 
 		# If there was an error, increment the error count
 		error_count += 1
@@ -136,11 +137,11 @@ def dbCreate(name, host = 'primary'):
 				return False
 
 	# If the DB already exists
-	except r.errors.ReqlOpFailedError:
+	except rerrors.ReqlOpFailedError:
 		return True
 
 	# Unknown runtime error
-	except r.errors.RqlRuntimeError:
+	except rerrors.RqlRuntimeError:
 		return False
 
 	# Return OK
@@ -172,7 +173,7 @@ def dbDrop(name, host = 'primary'):
 				return False
 
 	# If the DB doesn't exist
-	except r.errors.RqlRuntimeError:
+	except rerrors.RqlRuntimeError:
 		return False
 
 	# Return OK
@@ -545,7 +546,7 @@ class Record(Record_Base.Record):
 				dRes = oCur.delete().run(oCon)
 
 			# Catch operational errors
-			except r.errors.ReqlOpFailedError as e:
+			except rerrors.ReqlOpFailedError as e:
 
 				# An invalid index was passed
 				if e.args[0][:5] == 'Index':
@@ -885,7 +886,7 @@ class Record(Record_Base.Record):
 				itRes = oCur.run(oCon)
 
 			# Catch operational errors
-			except r.errors.ReqlOpFailedError as e:
+			except rerrors.ReqlOpFailedError as e:
 
 				# An invalid index was passed
 				if e.args[0][:5] == 'Index':
@@ -1237,7 +1238,7 @@ class Record(Record_Base.Record):
 						.run(oCon)
 
 			# The table already exists
-			except r.errors.RqlRuntimeError as e:
+			except rerrors.RqlRuntimeError as e:
 				print(str(e))
 				return False
 
@@ -1286,7 +1287,7 @@ class Record(Record_Base.Record):
 						.run(oCon)
 
 			# If there's no such table
-			except r.errors.RqlRuntimeError:
+			except rerrors.RqlRuntimeError:
 				return False
 
 		# Return OK
@@ -1448,7 +1449,7 @@ class Record(Record_Base.Record):
 				dRes = oCur.update({field, value}).run(oCon)
 
 			# Catch operational errors
-			except r.errors.ReqlOpFailedError as e:
+			except rerrors.ReqlOpFailedError as e:
 
 				# An invalid index was passed
 				if e.args[0][:5] == 'Index':
