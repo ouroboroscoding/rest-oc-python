@@ -15,7 +15,7 @@ import sys
 from time import sleep, time
 
 # Pip imports
-from rethinkdb import errors as rerrors, RethinkDB
+from rethinkdb import errors as rerrors, net as rnet, RethinkDB
 r = RethinkDB()
 
 # Framework imports
@@ -715,11 +715,11 @@ class Record(Record_Base.Record):
 
 					# Greater than
 					elif 'gt' in _id:
-						oCur = oCur.between(_id['gt'], r.max_id, index=index, left_bound='open')
+						oCur = oCur.between(_id['gt'], r.maxval, index=index, left_bound='open')
 
 					# Greater than or equal
 					elif 'gte' in _id:
-						oCur = oCur.between(_id['gte'], r.max_id, index=index)
+						oCur = oCur.between(_id['gte'], r.maxval, index=index)
 
 					# Less than
 					elif 'lt' in _id:
@@ -777,11 +777,11 @@ class Record(Record_Base.Record):
 
 					# Greater than
 					elif 'gt' in _id:
-						oCur = oCur.between(_id['gt'], r.max_id, left_bound='open')
+						oCur = oCur.between(_id['gt'], r.maxval, left_bound='open')
 
 					# Greater than or equal
 					elif 'gte' in _id:
-						oCur = oCur.between(_id['gte'], r.max_id)
+						oCur = oCur.between(_id['gte'], r.maxval)
 
 					# Less than
 					elif 'lt' in _id:
@@ -907,7 +907,7 @@ class Record(Record_Base.Record):
 				# Try to get one row
 				try:
 					dRow = itRes.next()
-				except r.net.DefaultCursorEmpty as e:
+				except rnet.DefaultCursorEmpty as e:
 					return None
 
 				# If it's raw, don't instantiate it
@@ -1352,11 +1352,11 @@ class Record(Record_Base.Record):
 
 					# Greater than
 					elif 'gt' in _id:
-						oCur = oCur.between(_id['gt'], r.max_id, index=index, left_bound='open')
+						oCur = oCur.between(_id['gt'], r.maxval, index=index, left_bound='open')
 
 					# Greater than or equal
 					elif 'gte' in _id:
-						oCur = oCur.between(_id['gte'], r.max_id, index=index)
+						oCur = oCur.between(_id['gte'], r.maxval, index=index)
 
 					# Less than
 					elif 'lt' in _id:
@@ -1414,11 +1414,11 @@ class Record(Record_Base.Record):
 
 					# Greater than
 					elif 'gt' in _id:
-						oCur = oCur.between(_id['gt'], r.max_id, left_bound='open')
+						oCur = oCur.between(_id['gt'], r.maxval, left_bound='open')
 
 					# Greater than or equal
 					elif 'gte' in _id:
-						oCur = oCur.between(_id['gte'], r.max_id)
+						oCur = oCur.between(_id['gte'], r.maxval)
 
 					# Less than
 					elif 'lt' in _id:
