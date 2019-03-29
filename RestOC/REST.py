@@ -140,6 +140,10 @@ class _Route(object):
 				bottle.response.status = 401
 				return str(Services.Effect(error=102))
 
+			# Else, extend the session
+			else:
+				oSession.extend()
+
 		else:
 			oSession = None
 

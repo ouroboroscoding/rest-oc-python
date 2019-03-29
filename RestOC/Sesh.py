@@ -21,6 +21,7 @@ from . import StrHelper
 
 # Open redis connection
 _moRedis = None
+_muiExpire = 86400
 
 def create(id = None):
 	"""Create
@@ -38,23 +39,27 @@ def create(id = None):
 	# Create a new Session using a UUID as the id
 	return _Session(id and id or uuid.uuid4().hex)
 
-def init(conf):
+def init(conf, expire=86400):
 	"""Init
 
 	Initialises the module
 
 	Arguments:
 		conf {dict} -- The necessary Redis config
+		expire {uint} -- Length in seconds for the session to remain active
 
 	Returns:
 		None
 	"""
 
 	# Pull in the module variable
-	global _moRedis
+	global _moRedis, _muiExpire
 
 	# Create the Redis connection
 	_moRedis = StrictRedis(**conf)
+
+	# Store the expire time
+	_muiExpire = expire
 
 def load(id):
 	"""Load
@@ -194,6 +199,16 @@ class _Session(object):
 		"""
 		_moRedis.delete(self.__id)
 
+	def extend(self):
+		"""Extend
+
+		Keep the session alive by extending it's expire time
+
+		Returns:
+			None
+		"""
+		_moRedis.expire(self.__id, _muiExpire)
+
 	def id(self):
 		"""ID
 
@@ -212,4 +227,4 @@ class _Session(object):
 		Returns:
 			None
 		"""
-		_moRedis.setex(self.__id, 86400, json.dumps(self.__dStore))
+		_moRedis.setex(self.__id, _muiExpire, json.dumps(self.__dStore))

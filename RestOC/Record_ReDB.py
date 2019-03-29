@@ -844,12 +844,17 @@ class Record(Record_Base.Record):
 			# If an order by arg was passed
 			if orderby is not None:
 
-				# If we need to orger by multiple fields
+				# If we need to order by multiple fields
 				if isinstance(orderby, (tuple,list)):
+					for i in range(len(orderby)):
+						if(orderby[i][0] == '!'):
+							orderby[i] = r.desc(orderby[i][1:])
 					oCur = oCur.order_by(*orderby)
 
 				# If we need to order by
 				elif isinstance(orderby, str):
+					if(orderby[0] == '!'):
+						orderby = r.desc(orderby[1:])
 					oCur = oCur.order_by(orderby)
 
 				# Else we got something invalid
