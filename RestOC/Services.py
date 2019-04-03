@@ -19,7 +19,7 @@ from datetime import datetime
 import requests
 
 # Framework imports
-from . import Sesh
+from . import Errors, Sesh
 
 __mbVerbose = False
 """Verbose Flag"""
@@ -75,7 +75,7 @@ def __request(service, action, path, data, sesh=None):
 		else:
 
 			try: __funcToRequest[action]
-			except KeyError: Effect(error=(200, action))
+			except KeyError: Effect(error=(Errors.SERVICE_ACTION, action))
 
 			# Generate the URL to reach the service
 			sURL = __mdRegistered[service]['url'] + path
@@ -103,15 +103,15 @@ def __request(service, action, path, data, sesh=None):
 
 				# If the request wasn't successful
 				if oRes.status_code != 200:
-					return Effect(error=(201, '%d: %s' % (oRes.status_code, oRes.content)))
+					return Effect(error=(Errors.SERVICE_STATUS, '%d: %s' % (oRes.status_code, oRes.content)))
 
 				# If we got the wrong content type
 				if oRes.headers['Content-Type'].lower() != 'application/json; charset=utf-8':
-					return Effect(error=(202, '%s' % oRes.headers['content-type']))
+					return Effect(error=(Errors.SERVICE_CONTENT_TYPE, '%s' % oRes.headers['content-type']))
 
 			# If we couldn't connect to the service
 			except requests.ConnectionError as e:
-				return Effect(error=(203, str(e)))
+				return Effect(error=(Errors.SERVICE_UNREACHABLE, str(e)))
 
 			# Else turn the content into an Effect and return it
 			oEffect = Effect.fromJSON(oRes.text)
@@ -126,7 +126,7 @@ def __request(service, action, path, data, sesh=None):
 
 	# Service not registered
 	else:
-		raise Effect(error=(204, service))
+		raise Effect(error=(Errors.SERVICE_NOT_REGISTERED, service))
 
 def create(service, path, data, sesh=None):
 	"""Create
@@ -571,7 +571,7 @@ class Service(object):
 
 			# If the method wasn't found
 			if "'%s'" % sMethod in e.args[0]:
-				return Effect(error=(205, 'POST %s' % path))
+				return Effect(error=(Errors.SERVICE_NO_SUCH_NOUN, 'POST %s' % path))
 			else:
 				raise
 
@@ -609,7 +609,7 @@ class Service(object):
 
 			# If the method wasn't found
 			if "'%s'" % sMethod in e.args[0]:
-				return Effect(error=(205, 'DELETE %s' % path))
+				return Effect(error=(Errors.SERVICE_NO_SUCH_NOUN, 'DELETE %s' % path))
 			else:
 				raise
 
@@ -672,7 +672,7 @@ class Service(object):
 
 			# If the method wasn't found
 			if "'%s'" % sMethod in e.args[0]:
-				return Effect(error=(205, 'GET %s' % path))
+				return Effect(error=(Errors.SERVICE_NO_SUCH_NOUN, 'GET %s' % path))
 			else:
 				raise
 
@@ -710,7 +710,7 @@ class Service(object):
 
 			# If the method wasn't found
 			if "'%s'" % sMethod in e.args[0]:
-				return Effect(error=(205, 'PUT %s' % path))
+				return Effect(error=(Errors.SERVICE_NO_SUCH_NOUN, 'PUT %s' % path))
 			else:
 				raise
 

@@ -16,7 +16,7 @@ import json, re
 import bottle
 
 # Framework imports
-from . import Services, Sesh
+from . import Errors, Services, Sesh
 
 # Method bytes
 A		= 0xF
@@ -101,7 +101,7 @@ class _Route(object):
 				try:
 					mData = json.loads(bottle.request.query['d'])
 				except Exception as e:
-					return str(Services.Effect(error=(100, '%s\n%s' % (bottle.request.query['d'], str(e)))))
+					return str(Services.Effect(error=(Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
 
 		# Else we most likely got the data in the body
 		else:
@@ -109,9 +109,9 @@ class _Route(object):
 			# Make sure the request send JSON
 			try:
 				if bottle.request.headers['Content-Type'].lower() not in ('application/json; charset=utf8', 'application/json; charset=utf-8'):
-					return str(Services.Effect(error=101))
+					return str(Services.Effect(error=Errors.REST_CONTENT_TYPE))
 			except KeyError:
-				return str(Services.Effect(error=101))
+				return str(Services.Effect(error=Errors.REST_CONTENT_TYPE))
 
 			# Store the body, if it's too big we need to read it rather than
 			#	use getvalue
@@ -122,7 +122,7 @@ class _Route(object):
 			try:
 				if sBody: mData = json.loads(sBody)
 			except Exception as e:
-				return str(Services.Effect(error=(100,'%s\n%s' % (sBody, str(e)))))
+				return str(Services.Effect(error=(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e)))))
 
 		# If the request should have sent a session
 		if self.sesh:
@@ -130,7 +130,7 @@ class _Route(object):
 			# Is there an Authorization token
 			if 'Authorization' not in bottle.request.headers:
 				bottle.response.status = 401
-				return str(Services.Effect(error=102))
+				return str(Services.Effect(error=Errors.REST_AUTHORIZATION))
 
 			# Get the session from the Authorization token
 			oSession = Sesh.load(bottle.request.headers['Authorization'])
@@ -138,7 +138,7 @@ class _Route(object):
 			# If the session is not found
 			if not oSession:
 				bottle.response.status = 401
-				return str(Services.Effect(error=102))
+				return str(Services.Effect(error=Errors.REST_AUTHORIZATION))
 
 			# Else, extend the session
 			else:
