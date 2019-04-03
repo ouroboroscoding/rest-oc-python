@@ -92,16 +92,13 @@ class _Route(object):
 		bottle.response.headers['Content-Type'] = 'application/json; charset=UTF-8'
 
 		# If we got a Read request and the data is in the GET
-		if bottle.request.method == 'GET':
+		if bottle.request.method == 'GET' and 'd' in bottle.request.query:
 
-			# If we got a d argument
-			if 'd' in bottle.request.query:
-
-				# Convert the GET and store the data
-				try:
-					mData = json.loads(bottle.request.query['d'])
-				except Exception as e:
-					return str(Services.Effect(error=(Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
+			# Convert the GET and store the data
+			try:
+				mData = json.loads(bottle.request.query['d'])
+			except Exception as e:
+				return str(Services.Effect(error=(Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
 
 		# Else we most likely got the data in the body
 		else:
