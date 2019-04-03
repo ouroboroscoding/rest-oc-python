@@ -560,7 +560,7 @@ class Service(object):
 		"""
 
 		# Generate the method name from the URI
-		sMethod = self.pathToMethod(path, 'Create')
+		sMethod = self.pathToMethod(path, '_create')
 
 		# Try to call the method
 		try:
@@ -598,7 +598,7 @@ class Service(object):
 		"""
 
 		# Generate the method name from the URI
-		sMethod = self.pathToMethod(path, 'Delete')
+		sMethod = self.pathToMethod(path, '_delete')
 
 		# Try to call the method
 		try:
@@ -661,7 +661,7 @@ class Service(object):
 		"""
 
 		# Generate the method name from the URI
-		sMethod = self.pathToMethod(path, 'Read')
+		sMethod = self.pathToMethod(path, '_read')
 
 		# Try to call the method
 		try:
@@ -699,7 +699,7 @@ class Service(object):
 		"""
 
 		# Generate the method name from the URI
-		sMethod = self.pathToMethod(path, 'Update')
+		sMethod = self.pathToMethod(path, '_update')
 
 		# Try to call the method
 		try:
