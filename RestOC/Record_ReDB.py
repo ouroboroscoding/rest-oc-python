@@ -400,12 +400,16 @@ class Record(Record_Base.Record):
 
 			# Go through each record and store the primary key if we didn't set
 			#	it ourselves
-			for i in xrange(len(records)):
-				if dStruct['auto_primary']:
+			if dStruct['auto_primary']:
+				for i in xrange(len(records)):
 					records[i][dStruct['primary']] = dRes['generated_keys'][i]
 
-		# Return the primary keys
-		return dRes['generated_keys']
+				# Return the primary keys
+				return dRes['generated_keys']
+
+			# Else return how many records were replaced or inserted
+			else:
+				return dRes['inserted'] + dRes['replaced']
 
 	def delete(self, changes=None):
 		"""Delete
@@ -831,7 +835,12 @@ class Record(Record_Base.Record):
 
 			# If we want to filter the data further
 			if filter:
-				oCur = oCur.filter(filter)
+
+				# If we got a list
+				if isinstance(filter, (list,tuple)):
+					oCur = oCur.filter(*filter)
+				else:
+					oCur = oCur.filter(filter)
 
 			# If we want to filter by a match
 			if match:
