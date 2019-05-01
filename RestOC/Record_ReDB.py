@@ -348,10 +348,13 @@ class Record(Record_Base.Record):
 		# Return the primary key
 		return self._dRecord[self._dStruct['primary']]
 
-	def createMany(cls, docs, replace=False, custom={}):
+	@classmethod
+	def createMany(cls, records, replace=False, custom={}):
 		"""Create Many
 
-		Inserts multiple documents at once, returning all their primary keys
+		Inserts multiple records at once, returning all their primary keys
+		if auto_primary is true, else just returning the number of records
+		inserted (or replaced if replace is set to True)
 
 		Arguments:
 			records {Record[]} -- A list of Record instances to insert
@@ -369,7 +372,7 @@ class Record(Record_Base.Record):
 
 		# If changes are required
 		if dStruct['changes']:
-			raise RuntimeError('Tables with \'changes\' flag can\'t be inserted using insertMany')
+			raise RuntimeError('Tables with \'changes\' flag can\'t be inserted using createMany')
 
 		# Initialise a list of raw records
 		lRecords = []
@@ -504,7 +507,7 @@ class Record(Record_Base.Record):
 			int
 		"""
 
-		# Get the config values associated with the Tree
+		# Fetch the record structure
 		dStruct = cls.struct(custom)
 
 		# If changes are required
