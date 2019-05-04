@@ -923,7 +923,7 @@ class Record(Record_Base.Record):
 
 				# Try to get one row
 				try:
-					dRow = itRes.next()
+					dRow = itRes[0]
 				except rnet.DefaultCursorEmpty as e:
 					return None
 
