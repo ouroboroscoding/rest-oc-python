@@ -922,7 +922,7 @@ class Record(Record_Base.Record):
 				(iLimitParams == 2 and limit[1] == 1):
 
 				# If we got a list
-				if isinstance(itRest, (tuple,list)):
+				if isinstance(itRes, (tuple,list)):
 
 					# If there's no data
 					if not len(itRes):
