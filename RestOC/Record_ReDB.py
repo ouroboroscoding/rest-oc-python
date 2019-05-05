@@ -921,11 +921,24 @@ class Record(Record_Base.Record):
 			if (iLimitParams == 1 and limit == 1) or \
 				(iLimitParams == 2 and limit[1] == 1):
 
-				# Try to get one row
-				try:
+				# If we got a list
+				if isinstance(itRest, (tuple,list)):
+
+					# If there's no data
+					if not len(itRes):
+						return None
+
+					# Store the row
 					dRow = itRes[0]
-				except rnet.DefaultCursorEmpty as e:
-					return None
+
+				# Else it's a cursor
+				else:
+
+					# Try to get one row
+					try:
+						dRow = itRes.next()
+					except rnet.DefaultCursorEmpty as e:
+						return None
 
 				# If it's raw, don't instantiate it
 				return (raw and dRow or cls(dRow, custom))
