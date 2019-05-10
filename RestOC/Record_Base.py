@@ -614,7 +614,7 @@ class Record(abc.ABC):
 		return None
 
 	@staticmethod
-	def generateConfig(tree, special='db', db='test'):
+	def generateConfig(tree, special='db', db=None):
 		"""Generate Config
 
 		Generates record specific config based on the Format-OC tree passed
@@ -627,11 +627,11 @@ class Record(abc.ABC):
 			dict
 		"""
 
-		# Return default values
-		return DictHelper.combine({
+		# Combine the dicts
+		dRet = DictHelper.combine({
 			"auto_primary": True,
 			"changes": False,
-			"db": db,
+			"db": 'test',
 			"indexes": {},
 			"table": "table",
 			"primary": "_id",
@@ -639,6 +639,13 @@ class Record(abc.ABC):
 			"revisions": False,
 			"tree": tree
 		}, tree.special(special, default={}))
+
+		# If there's a specific DB
+		if db:
+			dRet['db'] = db
+
+		# Return the values
+		return dRet
 
 	@abc.abstractclassmethod
 	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, orderby=None, limit=None, custom={}):
