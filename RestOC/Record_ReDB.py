@@ -542,7 +542,7 @@ class Record(Record_Base.Record):
 
 				# If we got multiple primary keys, use get all
 				if isinstance(_id, (tuple,list)):
-					oCur = oCur.get_all(_id)
+					oCur = oCur.get_all(*_id)
 
 				# Else, use get for one record
 				else:
