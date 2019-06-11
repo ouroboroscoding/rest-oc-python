@@ -317,6 +317,25 @@ class Record(abc.ABC):
 		"""
 		raise NotImplementedError('Must implement the "contains" method')
 
+	@abc.abstractclassmethod
+	def count(cls, _id, index=None, filter=None, custom={}):
+		"""Count
+
+		Returns the number of records associated with index or filter
+
+		Arguments:
+			_ids {mixed} -- The ID to check
+			index {str} -- Used as the index instead of the primary key
+			filter {dict} -- Additional filter
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			bool
+		"""
+		raise NotImplementedError('Must implement the "count" method')
+
 	@abc.abstractmethod
 	def create(self, conflict='error', changes=None):
 		"""Create

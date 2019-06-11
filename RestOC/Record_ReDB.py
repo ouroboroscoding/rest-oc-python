@@ -269,6 +269,195 @@ class Record(Record_Base.Record):
 				.contains(item) \
 				.run(oCon)
 
+	@classmethod
+	def count(cls, _id, index=None, filter=None, custom={}):
+		"""Count
+
+		Returns the number of records associated with index or filter
+
+		Arguments:
+			_ids {mixed} -- The ID to check
+			index {str} -- Used as the index instead of the primary key
+			filter {dict} -- Additional filter
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			bool
+		"""
+
+		# Fetch the record structure
+		dStruct = cls.struct(custom)
+
+		# If an index is passed
+		if index:
+
+			# If the index doesn't exist
+			if index not in dStruct['indexes']:
+				raise KeyError('no index named "%s" in the structure' % index)
+
+		# Get a connection to the host
+		with _with(dStruct['host']) as oCon:
+
+			# Create a cursor for all records
+			oCur = r \
+				.db(dStruct['db']) \
+				.table(dStruct['table'])
+
+			# If there's no primary key, we want all records
+			if _id == None:
+				pass
+
+			# Else, if there's an index
+			elif index:
+
+				# If we recieved a dict for the primary key
+				if isinstance(_id, dict):
+
+					# Between two points
+					if 'between' in _id:
+						oCur = oCur.between(_id['between'][0], _id['between'][1], index=index, right_bound='closed')
+
+					# Greater than
+					elif 'gt' in _id:
+						oCur = oCur.between(_id['gt'], r.maxval, index=index, left_bound='open')
+
+					# Greater than or equal
+					elif 'gte' in _id:
+						oCur = oCur.between(_id['gte'], r.maxval, index=index)
+
+					# Less than
+					elif 'lt' in _id:
+						oCur = oCur.between(r.minval, _id['lt'], index=index)
+
+					# Less than or equal
+					elif 'lte' in _id:
+						oCur = oCur.between(r.minval, _id['lte'], index=index, right_bound='closed')
+
+					# Invalid request
+					else:
+						raise ValueError('_id', _id)
+
+				# If we received a tuple
+				elif isinstance(_id, tuple):
+
+					# Look for None values
+					iNone = -1
+					for i in range(len(_id)):
+						if _id[i] is None:
+							if iNone != -1:
+								raise ValueError('_id', 'only one None per tuple')
+							iNone = i
+
+					# If there us a None in the tuple, assume between and
+					#	replace them with the min and max
+					if iNone > -1:
+						idMax = list(_id)
+						idMin = list(_id)
+						idMax[iNone] = r.maxval
+						idMin[iNone] = r.minval
+						oCur = oCur.between(idMin, idMax, index=index)
+
+					# No None, pass as is
+					else:
+						oCur = oCur.get_all(_id, index=index)
+
+				# If we get a list, it's a complex index
+				elif isinstance(_id, list):
+					oCur = oCur.get_all(r.args(_id), index=index)
+
+				# Else, pass as is
+				else:
+					oCur = oCur.get_all(_id, index=index)
+
+			# If we are using the primary key
+			else:
+
+				# If we recieved a dict for the primary key
+				if isinstance(_id, dict):
+
+					# Between two points
+					if 'between' in _id:
+						oCur = oCur.between(_id['between'][0], _id['between'][1], right_bound='closed')
+
+					# Greater than
+					elif 'gt' in _id:
+						oCur = oCur.between(_id['gt'], r.maxval, left_bound='open')
+
+					# Greater than or equal
+					elif 'gte' in _id:
+						oCur = oCur.between(_id['gte'], r.maxval)
+
+					# Less than
+					elif 'lt' in _id:
+						oCur = oCur.between(r.minval, _id['lt'])
+
+					# Less than or equal
+					elif 'lte' in _id:
+						oCur = oCur.between(r.minval, _id['lte'], right_bound='closed')
+
+					# Invalid request
+					else:
+						raise ValueError('_id', _id)
+
+				# If we received a tuple
+				elif isinstance(_id, tuple):
+
+					# Look for None values
+					iNone = -1
+					for i in range(len(_id)):
+						if _id[i] is None:
+							if iNone != -1:
+								raise ValueError('_id', 'only one None per tuple')
+							iNone = i
+
+					# If there us a None in the tuple, assume between and
+					#	replace them with the min and max
+					if iNone > -1:
+						idMax = list(_id)
+						idMin = list(_id)
+						idMax[iNone] = r.maxval
+						idMin[iNone] = r.minval
+						oCur = oCur.between(idMin, idMax)
+
+					# No None, pass as is
+					else:
+						bMulti = False
+						oCur = oCur.get(_id)
+
+				# If we got multiple primary keys, use get all
+				elif isinstance(_id, list):
+					oCur = oCur.get_all(*_id)
+
+				# If we want one record, change the multi flag, and use get
+				else:
+					bMulti = False
+					oCur = oCur.get(_id)
+
+			# If we want to filter the data further
+			if filter:
+
+				# If we got a list
+				if isinstance(filter, (list,tuple)):
+					oCur = oCur.filter(*filter)
+				else:
+					oCur = oCur.filter(filter)
+
+			# Run the request and return the count
+			try:
+				return oCur.count().run(oCon)
+
+			# Catch operational errors
+			except rerrors.ReqlOpFailedError as e:
+
+				# An invalid index was passed
+				if e.args[0][:5] == 'Index':
+					raise KeyError('no index named "%s" in the table' % index)
+
+				# Else, re-raise
+				raise e
+
 	def create(self, conflict='error', changes=None):
 		"""Create
 
