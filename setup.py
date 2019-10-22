@@ -17,7 +17,7 @@ setup(
 		'hiredis==0.2.0',
 		'Jinja2==2.10',
 		'pdfkit==0.6.1',
-		'Pillow==5.3.0',
+		'Pillow==6.2.0',
 		'redis==2.10.6',
 		'requests==2.20.1',
 		'rethinkdb==2.4.1'
