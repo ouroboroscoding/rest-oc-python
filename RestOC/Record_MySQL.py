@@ -1,22 +1,22 @@
 # coding=utf8
-"""Record ReDB Module
+"""Record SQL Module
 
-Extends Record module to add support for RethinkDB tables
+Extends Record module to add support for SQL tables
 """
 
 __author__ = "Chris Nasr"
 __copyright__ = "FUEL for the FIRE"
 __version__ = "1.0.0"
-__created__ = "2018-11-11"
+__created__ = "2020-02-12"
 
 # Python imports
+from enum import IntEnum
 from hashlib import md5
 import sys
 from time import sleep, time
 
 # Pip imports
-from rethinkdb import errors as rerrors, net as rnet, RethinkDB
-r = RethinkDB()
+import pymysql.cursors
 
 # Framework imports
 from . import DictHelper, Record_Base
@@ -27,13 +27,621 @@ __mdHosts = {}
 # defines
 MAX_RETRIES = 3
 
+## ESelect
+class ESelect(IntEnum):
+	ALL			= 1
+	CELL		= 2
+	COLUMN		= 3
+	HASH		= 4
+	HASH_ROWS	= 5
+	ROW			= 6
+
+# Duplicate key exception
+class DuplicateException(Exception):
+	"""DuplicateException class
+
+	Used for raising issues with duplicate records
+
+	Extends:
+		Exception
+	"""
+	pass
+
+@staticmethod
+def _converterTimestamp(ts):
+	"""Converter Timestamp
+
+	Converts timestamps received from MySQL into proper integers
+
+	Args:
+		ts (str): The timestamp to convert
+
+	Returns:
+		uint
+	"""
+
+	# If there is no time
+	if ts == '0000-00-00 00:00:00':
+		return 0
+
+	# Get a datetime tuple
+	tDT	= datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+
+	# Convert it to a timestamp and return it
+	return int(tDT.strftime('%s'))
+
+class _with(object):
+	"""_with
+
+	Used with the special Python with method to create a connection that will
+	always be closed regardless of exceptions
+
+	Extends:
+		object
+	"""
+
+	def __init__(self, host):
+		self.con = _connect(host)
+
+	def __enter__(self):
+		return self.con
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		self.con.close()
+		if exc_type is not None:
+			return False
+
+def _connect(cls, host, dict_cursor=False, error_count=0):
+	"""Connect
+
+	Internal module function to fetch a connection to a specific MySQL host
+
+	Args:
+		host {str} -- The name of the host stored using addHost()
+		dict_cursor {bool} -- If true, use a dict curser with MySQL rather than a list
+		error_count {int} -- The number of times the function has failed
+
+	Raises:
+		ConnectionError
+
+	Returns:
+		pmysql.cursor
+	"""
+
+	# If no such host has been added
+	if host not in __mdHosts:
+		raise ValueError('no such host "%s"' % str(host))
+
+	# Try to connect
+	try:
+		oCon = pmysql.connect(**__mdHost[host])
+
+	# Check for errors
+	except pymysql.err.OperationalError:
+
+		# Raise an exception if we've tried enough times
+		if error_count == MAX_RETRIES:
+			raise ConnectionError(*e.args)
+
+		# Sleep and try again
+		else:
+			sleep(1)
+			return cls._connect(host, dict_cursor, error_count)
+
+	# Fetch a cursor to the connection
+	try:
+		if dict_cursor: oCur = oCon.cursor(pymysql.cursors.DictCursor)
+		else: oCur = oDB.cursor()
+
+	# Turn on autocommit
+	oCon.autocommit(True)
+
+	# Change conversions
+	dConv = oDB.decoders.copy()
+	for k in dConv:
+		if k in [7]: dConv[k] = cls._converterTimestamp
+		elif k in [10,11,12]: dConv[k] = str
+	oDB.decoders = dConv
+
+	# Make absolutely sure we're on UTF
+	oCur.execute('SET NAMES utf8')
+
+	# Return the connection and cursor
+	return {"connection": oCon, "cursor": oCur}
+
+# Raw class
+class Raw(object):
+	"""Raw class
+
+	Used to directly interface with MySQL
+
+	Extends:
+		object
+	"""
+
+	@classmethod
+	def addHost(cls, name, details):
+		"""Add Host
+
+		Adds a host entry to the list so that it can be used apps
+
+		Args:
+			name (str): The name of the host
+			details (dict): The details needed to connect to the host
+
+		Returns:
+			None
+		"""
+
+		# Make sure name is a valid string
+		if not isinstance(name, basestring):
+			raise ValueError(cls.__name__ + '.' + sys._getframe().f_code.co_name + ' first argument (name) must be a string')
+
+		# Store the details under the name
+		cls._dHosts[name]	= details
+
+	@classmethod
+	def dbCreate(cls, name, server = 'default'):
+		"""DB Create
+
+		Creates a new DB on the given server
+
+		Args:
+			name (str): The name of the DB to create
+			server (str): The name of the server to create the DB on
+
+		Returns:
+			bool
+		"""
+
+		try:
+			cls.execute(server, "create database if not exists `%s%s`" % (globalPrefix(), name))
+			return True
+
+		except SQL.SqlException:
+			return False
+
+	@classmethod
+	def dbDrop(cls, name, server = 'default'):
+		"""DB Drop
+
+		Deletes an existing DB from the given server
+
+		Args:
+			name (str): The name of the DB to create
+			server (str): The name of the server to create the DB on
+
+		Returns:
+			bool
+		"""
+
+		try:
+			cls.execute(server, 'DROP DATABASE IF EXISTS `%s%s`' % (globalPrefix(), name))
+			return True
+
+		except SQL.SqlException:
+			return False
+
+	@classmethod
+	def escape(cls, host, value, rel='master', errcnt=0):
+		"""Escape
+
+		Used to escape string values for the DB
+
+		Args:
+			host (str): The name of the instance to escape for
+			value (str): The value to escape
+			rel (str): The relationship of the server, master or slave
+
+		Returns:
+			str
+		"""
+
+		# Get the connection
+		oCur	= cls._fetchConnection(host, rel)
+
+		# Get the value
+		try:
+			sRet	= oCur.connection.escape_string(value)
+
+		# Else there's an operational problem so close the connection and
+		#	restart
+		except MySQLdb.OperationalError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# Clear the connection, sleep for a second, and try again
+			cls._clearConnection(host, rel)
+			time.sleep(1)
+			return cls.escape(host, value, rel, errcnt=errcnt)
+
+		except Exception as e:
+
+			# Close the cursor
+			oCur.close()
+
+			print('\n------------------------------------------------------------')
+			print('Unknown Error in SQL_MySQL.escape')
+			print('exception = ' + str(e.__class__.__name__))
+			print('value = ' + str(value))
+			print('args = ' + ', '.join([str(s) for s in e.args]))
+
+			# Rethrow
+			raise e
+
+		# Close the cursor
+		oCur.close()
+
+		# Return the escaped string
+		return sRet
+
+	@classmethod
+	def execute(cls, host, sql, errcnt=0):
+		"""Execute
+
+		Used to run SQL that doesn't return any rows
+
+		Args:
+			host (str): The name of the host
+			sql (str|tuple): The SQL (or SQL plus a list) statement to run
+
+		Returns:
+			uint
+		"""
+
+		# Get the connection
+		oCur		= cls._fetchConnection(host, 'master')
+
+		try:
+
+			# If the sql arg is a tuple we've been passed a string with a list for the purposes
+			#	of replacing parameters
+			if isinstance(sql, tuple):
+				iRet	= oCur.execute(sql[0], sql[1])
+			else:
+				iRet	= oCur.execute(sql)
+
+			# Close the cursor
+			oCur.close()
+
+			# Return the changed rows
+			return iRet
+
+		# If the SQL is bad
+		except MySQLdb.ProgrammingError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# Raise an SQL Exception
+			raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+
+		# Else, a duplicate key error
+		except MySQLdb.IntegrityError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# Raise an SQL Duplicate Exception
+			raise SqlDuplicateException(e.args[0], e.args[1])
+
+		# Else there's an operational problem so close the connection and
+		#	restart
+		except MySQLdb.OperationalError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# If the error code is one that won't change
+			if e.args[0] in [1054]:
+				raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+
+			# If the max error count hasn't been hit yet
+			if errcnt < 5:
+
+				# Clear the connection, sleep for a second, and try again
+				cls._clearConnection(host, 'master')
+				time.sleep(1)
+				return cls.execute(host, sql, errcnt=errcnt+1)
+
+			else:
+				raise e
+
+		# Else, catch any Exception
+		except Exception as e:
+
+			# Close the cursor
+			oCur.close()
+
+			print('\n------------------------------------------------------------')
+			print('Unknown Error in SQL_MySQL.execute')
+			print('exception = ' + str(e.__class__.__name__))
+			print('errcnt = ' + str(errcnt))
+			print('sql = ' + str(sql))
+			print('args = ' + ', '.join([str(s) for s in e.args]))
+
+			# Rethrow
+			raise e
+
+	@classmethod
+	def getGlobalPrefix(cls):
+		"""Get Global Prefix
+
+		Gets the name of the currently set DB prefix
+
+		Returns:
+			str
+		"""
+		return cls._DB_PREFIX;
+
+	@classmethod
+	def hasHost(cls, name):
+		"""Has Host
+
+		Returns True if we already have the host stored
+
+		Args:
+			name (str): The name of the host to check for
+
+		Returns:
+			bool
+		"""
+		return name in cls._dHosts
+
+	@classmethod
+	def insert(cls, host, sql, errcnt=0):
+		"""Insert
+
+		Handles INSERT statements and returns the new ID. To insert records
+		without auto_increment it's best to just stick to CSQL.execute()
+
+		Args:
+			host (str): The name of the host
+			sql (str): The SQL statement to run
+
+		Returns:
+			mixed
+		"""
+
+		# Get the connection
+		oCur	= cls._fetchConnection(host, 'master')
+
+		try:
+
+			# If the sql arg is a tuple we've been passed a string with a list for the purposes
+			#	of replacing parameters
+			if isinstance(sql, tuple):
+				oCur.execute(sql[0], sql[1])
+			else:
+				oCur.execute(sql)
+
+			# Get the ID
+			mInsertID	= oCur.lastrowid
+
+			# Close the cursor
+			oCur.close()
+
+			# Return the last inserted ID
+			return mInsertID
+
+		# If the SQL is bad
+		except MySQLdb.ProgrammingError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# Raise an SQL Exception
+			raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+
+		# Else, a duplicate key error
+		except MySQLdb.IntegrityError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# Raise an SQL Duplicate Exception
+			raise SqlDuplicateException(e.args[0], e.args[1])
+
+		# Else there's an operational problem so close the connection and
+		#	restart
+		except MySQLdb.OperationalError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# If the error code is one that won't change
+			if e.args[0] in [1054]:
+				raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+
+			# If the max error count hasn't been hit yet
+			if errcnt < 5:
+
+				# Clear the connection, sleep for a second, and try again
+				cls._clearConnection(host, 'master')
+				time.sleep(1)
+				return cls.insert(host, sql, errcnt=errcnt+1)
+
+			else:
+				raise e
+
+
+		# Else, catch any Exception
+		except Exception as e:
+
+			# Close the cursor
+			oCur.close()
+
+			print('\n------------------------------------------------------------')
+			print('Unknown Error in SQL_MySQL.insert')
+			print('exception = ' + str(e.__class__.__name__))
+			print('errcnt = ' + str(errcnt))
+			print('sql = ' + str(sql))
+			print('args = ' + ', '.join([str(s) for s in e.args]))
+
+			# Rethrow
+			raise e
+
+	@classmethod
+	def select(cls, host, sql, seltype=ESelect.ALL, field=None, master=False, errcnt=0):
+		"""Select
+
+		Handles SELECT queries and returns the data
+
+		Args:
+			host (str): The name of the host
+			sql (str): The SQL statement to run
+			seltype (ESelect): The format to return the data in
+			field (str): Only used by HASH_ROWS since MySQLdb has no ordereddict
+				for associative rows
+			master (bool): Set to true to run the select statement off the
+				master and not the slave, necessary for functions that change
+				data
+
+		Returns:
+			mixed
+		"""
+
+		# Get a cursor
+		bDictCursor	= seltype in (ESelect.ALL, ESelect.HASH_ROWS, ESelect.ROW)
+
+		# Get the connection
+		sRel	= (master and 'master' or 'slave')
+		oCur	= cls._fetchConnection(host, sRel, dictCursor=bDictCursor)
+
+		try:
+			# If the sql arg is a tuple we've been passed a string with a list for the purposes
+			#	of replacing parameters
+			if isinstance(sql, tuple):
+				oCur.execute(sql[0], sql[1])
+			else:
+				oCur.execute(sql)
+
+			# If we want all rows
+			if seltype == ESelect.ALL:
+				mData	= list(oCur.fetchall())
+
+			# If we want the first cell 0,0
+			elif seltype == ESelect.CELL:
+				mData	= oCur.fetchone()
+				if mData != None:
+					mData	= mData[0]
+
+			# If we want a list of one field
+			elif seltype == ESelect.COLUMN:
+				mData	= []
+				mTemp	= oCur.fetchall()
+				for i in mTemp:
+					mData.append(i[0])
+
+			# If we want a hash of the first field and the second
+			elif seltype == ESelect.HASH:
+				mData	= {}
+				mTemp	= oCur.fetchall()
+				for n,v in mTemp:
+					mData[n]	= v
+
+			# If we want a hash of the first field and the entire row
+			elif seltype == ESelect.HASH_ROWS:
+				# If the field arg wasn't set
+				if field == None:
+					raise SqlException('Must specificy a field for the dictionary key when using HASH_ROWS')
+
+				mData	= {}
+				mTemp	= oCur.fetchall()
+
+				for o in mTemp:
+					# Store the entire row under the key
+					mData[o[field]]	= o
+
+			# If we want just the first row
+			elif seltype == ESelect.ROW:
+				mData	= oCur.fetchone()
+
+			# Close the cursor
+			oCur.close()
+
+			# Return the results
+			return mData
+
+		# If the SQL is bad
+		except MySQLdb.ProgrammingError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# Raise an SQL Exception
+			raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+
+		# Else, a duplicate key error
+		except MySQLdb.IntegrityError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# Raise an SQL Duplicate Exception
+			raise SqlDuplicateException(e.args[0], e.args[1])
+
+		# Else there's an operational problem so close the connection and
+		#	restart
+		except MySQLdb.OperationalError as e:
+
+			# Close the cursor
+			oCur.close()
+
+			# If the error code is one that won't change
+			if e.args[0] in [1054]:
+				raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+
+			# If the max error count hasn't been hit yet
+			if errcnt < 5:
+
+				# Clear the connection, sleep for a second, and try again
+				cls._clearConnection(host, sRel)
+				time.sleep(1)
+				return cls.select(host, sql, seltype, errcnt=errcnt+1)
+
+			else:
+				raise e
+
+		# Else, catch any Exception
+		except Exception as e:
+
+			# Close the cursor
+			oCur.close()
+
+			print('\n------------------------------------------------------------')
+			print('Unknown Error in SQL_MySQL.select')
+			print('exception = ' + str(e.__class__.__name__))
+			print('errcnt = ' + str(errcnt))
+			print('sql = ' + str(sql))
+			print('args = ' + ', '.join([str(s) for s in e.args]))
+
+			# Rethrow
+			raise e
+
+	@classmethod
+	def setGlobalPrefix(cls, prefix):
+		"""Set Global Prefix
+
+		Use this to rename every DB so we can easily switch for testing and
+		debugging. Will never be used in production.
+
+		Args:
+			prefix (str): The prefix for every DB name
+
+		Returns:
+			None
+		"""
+		cls._DB_PREFIX	= prefix;
+
 def _connect(host, error_count=0):
 	"""Connect
 
-	Internal module function to fetch a connection to a specific RethinkDB host
+	Internal module function to fetch a connection to a specific MySQL host
 
 	Arguments:
-		host {str} -- The name the host is stored using addHost()
+		host {str} -- The name the host is stored under using addHost()
 		error_count {int} -- The number of times the function has failed
 
 	Raises:
@@ -49,7 +657,7 @@ def _connect(host, error_count=0):
 
 	# Try to connect
 	try:
-		oCon = r.connect(**__mdHosts[host])
+		oCon = pymysql.connect(**__mdHosts[host])
 
 	# Check for driver errors
 	except rerrors.RqlDriverError as e:
@@ -81,11 +689,13 @@ class _with(object):
 
 	def __init__(self, host):
 		self.con = _connect(host)
+		self.cursor = self.con.cursor()
 
 	def __enter__(self):
-		return self.con
+		return self.con.cursor()
 
 	def __exit__(self, exc_type, exc_value, traceback):
+		self.cursor.close()
 		self.con.close()
 		if exc_type is not None:
 			return False
