@@ -270,7 +270,7 @@ class Record(Record_Base.Record):
 				.run(oCon)
 
 	@classmethod
-	def count(cls, _id, index=None, filter=None, custom={}):
+	def count(cls, _id=None, index=None, filter=None, custom={}):
 		"""Count
 
 		Returns the number of records associated with index or filter

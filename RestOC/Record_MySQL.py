@@ -117,7 +117,7 @@ def __connection(host, errcnt = 0):
 		# Change conversions
 		conv = oCon.converter.copy()
 		for k in conv:
-			if k in [7]: conv[k] = cls.converterTimestamp
+			if k in [7]: conv[k] = __converterTimestamp
 			elif k in [10,11,12]: conv[k] = str
 		oCon.converter = conv
 
@@ -139,6 +139,28 @@ def __connection(host, errcnt = 0):
 	# Store the connection and return it
 	__mdConnections[host] = oCon
 	return oCon
+
+def __converterTimestamp(ts):
+	"""Converter Timestamp
+
+	Converts timestamps received from MySQL into proper integers
+
+	Args:
+		ts (str): The timestamp to convert
+
+	Returns:
+		uint
+	"""
+
+	# If there is no time
+	if ts == '0000-00-00 00:00:00':
+		return 0
+
+	# Get a datetime tuple
+	tDT = datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+
+	# Convert it to a timestamp and return it
+	return int(tDT.strftime('%s'))
 
 def __cursor(host, dictCur = False):
 	"""Cursor
@@ -195,27 +217,6 @@ class __wcursor(object):
 		if exc_type is not None:
 			return False
 
-class connect(object):
-	"""Connect
-
-	Used with the special Python with method to create a connection that will
-	always be closed regardless of exceptions
-
-	Extends:
-		object
-	"""
-
-	def __init__(self, host):
-		self.raw = _Raw(host);
-
-	def __enter__(self):
-		return self.raw
-
-	def __exit__(self, exc_type, exc_value, traceback):
-		del self.raw
-		if exc_type is not None:
-			return False
-
 def addHost(name, info, update=False):
 	"""Add Host
 
@@ -252,12 +253,9 @@ def dbCreate(name, host = 'primary'):
 
 	try:
 
-		# Fetch the connection
-		with connect(host) as oRaw:
-
-			# Create the DB
-			oRaw.execute('CREATE DATABASE `%s%s`' % (Record_Base.dbPrepend(), name))
-			return True
+		# Create the DB
+		Commands.execute(host, 'CREATE DATABASE `%s%s`' % (Record_Base.dbPrepend(), name))
+		return True
 
 	# If the DB already exists
 	except pymysql.err.ProgrammingError:
@@ -285,11 +283,8 @@ def dbDrop(name, host = 'primary'):
 
 	try:
 
-		# Fetch the connection
-		with connect(host) as oRaw:
-
-			# Delete the DB
-			oRaw.execute("DROP DATABASE `%s%s`" % (Record_Base.dbPrepend(), name))
+		# Delete the DB
+		Commands.execute(host, "DROP DATABASE `%s%s`" % (Record_Base.dbPrepend(), name))
 
 	# If the DB doesn't exist
 	except pymysql.err.InternalError:
@@ -298,9 +293,9 @@ def dbDrop(name, host = 'primary'):
 	# Return OK
 	return True
 
-# Raw class
-class _Raw(object):
-	"""Raw class
+# Commands class
+class Commands(object):
+	"""Commands class
 
 	Used to directly interface with MySQL
 
@@ -308,51 +303,14 @@ class _Raw(object):
 		object
 	"""
 
-	def __init__(self, host):
-		"""Constructor
-
-		Initialises the instance and returns it
-
-		Arguments:
-			host {str} -- The name of the host to use with this instance
-
-		Returns:
-			Raw
-		"""
-
-		# Store the host
-		self.__sHost = host
-
-	@staticmethod
-	def __converterTimestamp(ts):
-		"""Converter Timestamp
-
-		Converts timestamps received from MySQL into proper integers
-
-		Args:
-			ts (str): The timestamp to convert
-
-		Returns:
-			uint
-		"""
-
-		# If there is no time
-		if ts == '0000-00-00 00:00:00':
-			return 0
-
-		# Get a datetime tuple
-		tDT	= datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
-
-		# Convert it to a timestamp and return it
-		return int(tDT.strftime('%s'))
-
-	def escape(self, value):
+	@classmethod
+	def escape(cls, host, value):
 		"""Escape
 
 		Used to escape string values for the DB
 
 		Args:
-			host (str): The name of the instance to escape for
+			host (str): The name of the connection to escape for
 			value (str): The value to escape
 			rel (str): The relationship of the server, master or slave
 
@@ -361,7 +319,7 @@ class _Raw(object):
 		"""
 
 		# Get a connection to the host
-		oCon = __connection(self.__sHost)
+		oCon = __connection(host)
 
 		# Get the value
 		try:
@@ -372,13 +330,13 @@ class _Raw(object):
 		except pymysql.err.OperationalError as e:
 
 			# Clear the connection and try again
-			__clearConnection(self.__sHost)
-			return self.escape(value)
+			__clearConnection(host)
+			return cls.escape(host, value)
 
 		except Exception as e:
 			print('\n------------------------------------------------------------')
 			print('Unknown Error in Record_MySQL.Raw.escape')
-			print('host = ' + self.__sHost)
+			print('host = ' + host)
 			print('value = ' + str(value))
 			print('exception = ' + str(e.__class__.__name__))
 			print('args = ' + ', '.join([str(s) for s in e.args]))
@@ -389,12 +347,14 @@ class _Raw(object):
 		# Return the escaped string
 		return sRet
 
-	def execute(self, sql):
+	@classmethod
+	def execute(cls, host, sql):
 		"""Execute
 
 		Used to run SQL that doesn't return any rows
 
 		Args:
+			host (str): The name of the connection to execute on
 			sql (str|tuple): The SQL (or SQL plus a list) statement to run
 
 		Returns:
@@ -402,7 +362,7 @@ class _Raw(object):
 		"""
 
 		# Fetch a cursor
-		with __wcursor(self.__sHost) as oCursor:
+		with __wcursor(host) as oCursor:
 
 			try:
 
@@ -437,14 +397,14 @@ class _Raw(object):
 					raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
 
 				# Clear the connection and try again
-				__clearConnection(self.__sHost)
-				return self.execute(sql)
+				__clearConnection(host)
+				return cls.execute(host, sql)
 
 			# Else, catch any Exception
 			except Exception as e:
 				print('\n------------------------------------------------------------')
 				print('Unknown Error in Record_MySQL.Raw.execute')
-				print('host = ' + self.__sHost)
+				print('host = ' + host)
 				print('sql = ' + str(sql))
 				print('exception = ' + str(e.__class__.__name__))
 				print('args = ' + ', '.join([str(s) for s in e.args]))
@@ -452,13 +412,15 @@ class _Raw(object):
 				# Rethrow
 				raise e
 
-	def insert(self, sql):
+	@classmethod
+	def insert(cls, host, sql):
 		"""Insert
 
 		Handles INSERT statements and returns the new ID. To insert records
 		without auto_increment it's best to just stick to CSQL.execute()
 
 		Args:
+			host (str): The name of the connection to into on
 			sql (str): The SQL statement to run
 
 		Returns:
@@ -466,7 +428,7 @@ class _Raw(object):
 		"""
 
 		# Fetch a cursor
-		with __wcursor(self.__sHost) as oCursor:
+		with __wcursor(host) as oCursor:
 
 			try:
 
@@ -478,7 +440,7 @@ class _Raw(object):
 					oCursor.execute(sql)
 
 				# Get the ID
-				mInsertID	= oCursor.lastrowid
+				mInsertID = oCursor.lastrowid
 
 				# Return the last inserted ID
 				return mInsertID
@@ -501,17 +463,17 @@ class _Raw(object):
 
 				# If the error code is one that won't change
 				if e.args[0] in [1054]:
-					raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+					raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
 
 				# Clear the connection and try again
-				__clearConnection(self.__sHost)
-				return self.insert(sql)
+				__clearConnection(host)
+				return cls.insert(host, sql)
 
 			# Else, catch any Exception
 			except Exception as e:
 				print('\n------------------------------------------------------------')
 				print('Unknown Error in Record_MySQL.Raw.insert')
-				print('host = ' + self.__sHost)
+				print('host = ' + host)
 				print('sql = ' + str(sql))
 				print('exception = ' + str(e.__class__.__name__))
 				print('args = ' + ', '.join([str(s) for s in e.args]))
@@ -519,13 +481,14 @@ class _Raw(object):
 				# Rethrow
 				raise e
 
-	def select(self, sql, seltype=ESelect.ALL, field=None):
+	@classmethod
+	def select(cls, host, sql, seltype=ESelect.ALL, field=None):
 		"""Select
 
 		Handles SELECT queries and returns the data
 
 		Args:
-			host (str): The name of the host
+			host (str): The name of the host to select from
 			sql (str): The SQL statement to run
 			seltype (ESelect): The format to return the data in
 			field (str): Only used by HASH_ROWS since MySQLdb has no ordereddict
@@ -536,10 +499,10 @@ class _Raw(object):
 		"""
 
 		# Get a cursor
-		bDictCursor	= seltype in (ESelect.ALL, ESelect.HASH_ROWS, ESelect.ROW)
+		bDictCursor = seltype in (ESelect.ALL, ESelect.HASH_ROWS, ESelect.ROW)
 
 		# Fetch a cursor
-		with __wcursor(self.__sHost) as oCursor:
+		with __wcursor(host) as oCursor:
 
 			try:
 				# If the sql arg is a tuple we've been passed a string with a list for the purposes
@@ -571,27 +534,24 @@ class _Raw(object):
 					mData = {}
 					mTemp = oCursor.fetchall()
 					for n,v in mTemp:
-						mData[n]	= v
+						mData[n] = v
 
 				# If we want a hash of the first field and the entire row
 				elif seltype == ESelect.HASH_ROWS:
 					# If the field arg wasn't set
 					if field == None:
-						raise SqlException('Must specificy a field for the dictionary key when using HASH_ROWS')
+						raise ValueError('Must specificy a field for the dictionary key when using HASH_ROWS')
 
 					mData = {}
 					mTemp = oCursor.fetchall()
 
 					for o in mTemp:
 						# Store the entire row under the key
-						mData[o[field]]	= o
+						mData[o[field]] = o
 
 				# If we want just the first row
 				elif seltype == ESelect.ROW:
 					mData = oCursor.fetchone()
-
-				# Close the cursor
-				oCursor.close()
 
 				# Return the results
 				return mData
@@ -600,7 +560,7 @@ class _Raw(object):
 			except pymysql.err.ProgrammingError as e:
 
 				# Raise an SQL Exception
-				raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+				raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
 
 			# Else, a duplicate key error
 			except pymysql.err.IntegrityError as e:
@@ -614,17 +574,17 @@ class _Raw(object):
 
 				# If the error code is one that won't change
 				if e.args[0] in [1054]:
-					raise SqlException(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+					raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
 
 				# Clear the connection and try again
-				__clearConnection(self.__sHost)
-				return self.select(sql, seltype)
+				__clearConnection(host)
+				return cls.select(host, sql, seltype)
 
 			# Else, catch any Exception
 			except Exception as e:
 				print('\n------------------------------------------------------------')
 				print('Unknown Error in Record_MySQL.Raw.select')
-				print('host = ' + self.__sHost)
+				print('host = ' + host)
 				print('sql = ' + str(sql))
 				print('exception = ' + str(e.__class__.__name__))
 				print('errcnt = ' + str(errcnt))
@@ -632,3 +592,229 @@ class _Raw(object):
 
 				# Rethrow
 				raise e
+
+class Record(Record_Base.Record):
+	"""Record
+
+	Extends the base Record class
+
+	Extends:
+		Record_Base.Record
+	"""
+
+	@classmethod
+	def config(cls):
+		"""Config
+
+		Returns the configuration data associated with the record type
+
+		Returns:
+			dict
+		"""
+		raise NotImplementedError('Must implement the "config" method')
+
+	@classmethod
+	def count(cls, _id=None, filter=None, custom={}):
+		"""Count
+
+		Returns the number of records associated with index or filter
+
+		Arguments:
+			_id {mixed} -- The ID(s) to check
+			filter {dict} -- Additional filter
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			bool
+		"""
+
+		# Fetch the record structure
+		dStruct = cls.struct(custom)
+
+		# Init possible WHERE values
+		lWhere = []
+
+		# If there's no primary key, we want all records
+		if _id == None:
+			pass
+
+		# If we are using the primary key
+		else:
+
+			# Append the ID check
+			lWhere.append('`%s` %s' % (
+				dStruct['primary'],
+				self.processValue(dStruct, dStruct['primary'], _id)
+			))
+
+		# If we want to filter the data further
+		if filter:
+
+			# Go through each value
+			for n,v in filter.items():
+
+				# Generate theSQL and append it to the list
+				lWhere.append(
+					'`%s` %s' % (
+						n,
+						cls.processValue(dStruct, n, v)
+				))
+
+		# Build the statement
+		sSQL = 'SELECT COUNT(*) FROM `%s`.`%s` ' \
+				'WHERE %s ' % (
+					dStruct['db'],
+					dStruct['tree']._name,
+					' AND '.join(lWhere)
+				)
+
+		# Run the request and return the count
+		return Commands.select(dStruct['host'], sSQL, ESelect.CELL)
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# escape method
+	@classmethod
+	def escape(cls, struct, field, value):
+		"""Escape
+
+		Takes a value and turns it into an acceptable string for SQL
+
+		Args:
+			struct {dict} -- The structure associated with the record
+			field {str} -- The name of the field we are escaping
+			value {mixed} -- The value to escape
+
+		Returns:
+			str
+		"""
+
+		# Get the type of field
+		sType = struct['tree'].get(field).type();
+
+		# If we're escaping a bool
+		if sType == 'bool':
+
+			# If it's already a bool or a valid int representation
+			if isinstance(value, bool) or (isinstance(value, (int,long)) and value in [0,1,1L]):
+				return (value and '1' or '0')
+
+			# Else if it's a string
+			elif isinstance(value, basestring):
+
+				# If it's t, T, 1, f, F, or 0
+				return (value in ('true', 'True', 'TRUE', 't', 'T', '1') and '1' or '0')
+
+		# Else if it's a date, md5, or UUID, return as is
+		elif sType in ('base64', 'date', 'datetime', 'md5', 'time', 'uuid'):
+			return "'%s'" % value
+
+		# Else if the value is a decimal value
+		elif sType in ('decimal', 'float', 'price'):
+			return str(float(value))
+
+		# Else if the value is an integer value
+		elif sType in ('int', 'uint'):
+			return str(int(value))
+
+		# Else if it's a timestamp
+		elif sType == 'timestamp' and (isinstance(value, int) or re.match('^\d+$', value)):
+			return 'FROM_UNIXTIME(%s)' % str(value)
+
+		# Else it's a standard escape
+		else:
+			return "'%s'" % SQL.escape(struct['host'], value)
+
+	# processValue static method
+	@classmethod
+	def processValue(cls, struct, field, value):
+		"""Process Value
+
+		Takes a field and a value or values and returns the proper SQL
+		to look up the values for the field
+
+		Args:
+			struct {dict} -- The structure associated with the record
+			field {str} -- The name of the field
+			value {mixed} -- The value as a single item, list, or dictionary
+
+		Returns:
+			str
+		"""
+
+		# If the value is a list
+		if isinstance(value, (list,tuple)):
+
+			# Build the list of values
+			lValues = []
+			for i in value:
+				# If it's None
+				if i is None: lValues.append('NULL')
+				else: lValues.append(cls.escape(struct, field, i))
+			sRet = 'IN (%s)' % ','.join(lValues)
+
+		# Else if the value is a dictionary
+		elif isinstance(value, dict):
+
+			# If it has a start and end
+			if 'between' in value:
+				sRet = 'BETWEEN %s AND %s' % (
+							cls.escape(struct, field, value['between'][0]),
+							cls.escape(struct, field, value['between'][1])
+						)
+
+			# Else if we have a less than
+			elif 'lt' in value:
+				sRet = '< ' + cls.escape(struct, field, value['lt'])
+
+			# Else if we have a greater than
+			elif 'gt' in value:
+				sRet = '> ' + cls.escape(struct, field, value['gt'])
+
+			# Else if we have a less than equal
+			elif 'lte' in value:
+				sRet = '<= ' + cls.escape(struct, field, value['lteq'])
+
+			# Else if we have a greater than equal
+			elif 'gte' in value:
+				sRet = '>= ' + cls.escape(struct, field, value['gteq'])
+
+			# Else if we have a not equal
+			elif 'neq' in value:
+
+				# If the value is a list
+				if isinstance(value['neq'], (list,tuple)):
+
+					# Build the list of values
+					lValues = []
+					for i in value['neq']:
+						# If it's None
+						if i is None: lValues.append('NULL')
+						else: lValues.append(cls.escape(struct, field, i))
+					sRet = 'NOT IN (%s)' % ','.join(lValues)
+
+				# Else, it must be a single value
+				else:
+					sRet = '!= ' + cls.escape(struct, field, value['neq'])
+
+		# Else, it must be a single value
+		else:
+
+			# If it's None
+			if value is None: sRet = '= NULL'
+			else: sRet = '= ' + cls.escape(struct, field, value)
+
+		# Return the processed value
+		return sRet
