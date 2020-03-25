@@ -12,6 +12,7 @@ __created__ = "2020-02-12"
 # Python imports
 from enum import IntEnum
 from hashlib import md5
+import json
 import sys
 from time import sleep, time
 
@@ -75,7 +76,7 @@ def __clearConnection(cls, host):
 		# Catch any exception
 		except Exception as e:
 			print('\n------------------------------------------------------------')
-			print('Unknown exception in Record_MySQL.Raw.__clear')
+			print('Unknown exception in Record_MySQL.Commands.__clear')
 			print('host = ' + str(host))
 			print('exception = ' + str(e.__class__.__name__))
 			print('args = ' + ', '.join([str(s) for s in e.args]))
@@ -335,7 +336,7 @@ class Commands(object):
 
 		except Exception as e:
 			print('\n------------------------------------------------------------')
-			print('Unknown Error in Record_MySQL.Raw.escape')
+			print('Unknown Error in Record_MySQL.Commands.escape')
 			print('host = ' + host)
 			print('value = ' + str(value))
 			print('exception = ' + str(e.__class__.__name__))
@@ -403,7 +404,7 @@ class Commands(object):
 			# Else, catch any Exception
 			except Exception as e:
 				print('\n------------------------------------------------------------')
-				print('Unknown Error in Record_MySQL.Raw.execute')
+				print('Unknown Error in Record_MySQL.Commands.execute')
 				print('host = ' + host)
 				print('sql = ' + str(sql))
 				print('exception = ' + str(e.__class__.__name__))
@@ -472,7 +473,7 @@ class Commands(object):
 			# Else, catch any Exception
 			except Exception as e:
 				print('\n------------------------------------------------------------')
-				print('Unknown Error in Record_MySQL.Raw.insert')
+				print('Unknown Error in Record_MySQL.Commands.insert')
 				print('host = ' + host)
 				print('sql = ' + str(sql))
 				print('exception = ' + str(e.__class__.__name__))
@@ -583,7 +584,7 @@ class Commands(object):
 			# Else, catch any Exception
 			except Exception as e:
 				print('\n------------------------------------------------------------')
-				print('Unknown Error in Record_MySQL.Raw.select')
+				print('Unknown Error in Record_MySQL.Commands.select')
 				print('host = ' + host)
 				print('sql = ' + str(sql))
 				print('exception = ' + str(e.__class__.__name__))
@@ -673,39 +674,263 @@ class Record(Record_Base.Record):
 		# Run the request and return the count
 		return Commands.select(dStruct['host'], sSQL, ESelect.CELL)
 
+	def create(self, conflict='error', changes=None):
+		"""Create
 
+		Adds the record to the DB and returns the primary key
 
+		Arguments:
+			conflict {str} -- Must be one of 'error', 'ignore', 'replace'
+			changes {dict} -- Data needed to store a change record, is
+				dependant on the 'changes' config value
 
+		Returns:
+			mixed|None
+		"""
 
+		# Make sure conflict arg is valid
+		if conflict not in ('error', 'ignore', 'replace'):
+			raise ValueError('conflict', conflict)
 
+		# If the record requires revisions, make the first one
+		if self._dStruct['revisions']:
+			self._revision(True)
 
+		# Create the string of all fields and values but the primary if it's
+		#	auto incremented
+		lTemp = [[], []]
+		for f in self._dStruct['tree'].keys():
+			if (f != self._dStruct['primary'] or not self._dStruct['auto_primary']) and f in self._dRecord:
+				lTemp[0].append('`%s`' % f)
+				if self._dRecord[f] != None:
+					lTemp[1].append(self.processValue(self._dStruct, f, self._dRecord[f]))
+				else:
+					lTemp[1].append('NULL')
 
+		# If we have replace for conflicts
+		if conflict == 'replace':
+			sUpdate = 'ON DUPLICATE KEY UPDATE %s' % ''.join([
+				"%s = VALUES(%s)\n" % (lTemp[0][i], lTemp[0][i])
+				for i in range(len(lTemp[0]))
+			])
 
+		# Else, no update
+		else:
+			sUpdate = ''
 
+		# Join the fields and values
+		sFields	= ','.join(lTemp[0])
+		sValues	= ','.join(lTemp[1])
 
+		# Cleanup
+		del lTemp
 
+		# Generate the INSERT statement
+		sSQL = 'INSERT %s INTO `%s`.`%s` (%s)\n' \
+				' VALUES (%s)\n' \
+				'%s' % (
+					(conflict == 'ignore' and 'IGNORE' or ''),
+					self._dInfo['db'],
+					self._dInfo['tree']._name,
+					sFields,
+					sValues,
+					sUpdate
+				)
+
+		# If the primary key does not auto increment don't worry about storing
+		#	the new ID
+		if self._dStruct['auto_primary']:
+			self._dRecord[self._dStruct['primary']] = Commands.insert(self._dStruct['host'], sSQL)
+			mRet = self._dRecord[self._dStruct['primary']]
+		else:
+			if not Commands.execute(self._dStruct['host'], sSQL):
+				mRet = None
+			else:
+				mRet = True
+
+		# Clear changed fields
+		self._dChanged = {}
+
+		# If changes are required
+		if self._dStruct['changes']:
+
+			# Create the changes record
+			dChanges = {
+				"old": None,
+				"new": "inserted"
+			}
+
+			# If Changes requires fields
+			if isinstance(self._dStruct['changes'], list):
+
+				# If they weren't passed
+				if not isinstance(changes, dict):
+					raise ValueError('changes')
+
+				# Else, add the extra fields
+				for k in self._dStruct['changes']:
+					dChanges[k] = changes[k]
+
+			# Generate the INSERT statement
+			sSQL = 'INSERT `%s`, `created`, `items` INTO `%s`.`%s_changes`' \
+					'VALUES(%s, CURRENT_TIMESTAMP, \'%s\')' % (
+						self._dStruct['primary'],
+						self._dStruct['db'],
+						self._dStruct['table'],
+						self.processValue(self._dStruct, self._dStruct['primary'], self._dRecord[self._dStruct['primary']]),
+						json.dumps(dChanges)
+					)
+
+			# Create the changes record
+			Commands.execute(self._dStruct['host'], sSQL)
+
+		# Return
+		return mRet
+
+	def delete(self, changes=None):
+		"""Delete
+
+		Deletes the record represented by the instance
+
+		Arguments:
+			changes {dict} -- Data needed to store a change record, is
+				dependant on the 'changes' config value
+
+		Returns:
+			bool
+		"""
+
+		# If the record lacks a primary key (never been created/inserted)
+		if self._dStruct['primary'] not in self._dRecord:
+			raise KeyError(self._dStruct['primary'])
+
+		# Generate the DELETE statement
+		sSQL = 'DELETE FROM `%s`.`%s` WHERE `%s` = %s' % (
+			self._dStruct['db'],
+			self._dStruct['table'],
+			self._dStruct['primary'],
+			self.processValue(
+				self._dStruct,
+				self._dStruct['primary'],
+				self._dRecord[self._dStruct['primary']]
+			)
+		)
+
+		# Delete the record
+		iRet = Commands.execute(self._dStruct['host'], sSQL)
+
+		# If no record was deleted
+		if iRet != 1:
+			return False
+
+		# If changes are required
+		if self._dStruct['changes']:
+
+			# Create the changes record
+			dChanges = {
+				"old": self._dRecord,
+				"new": None
+			}
+
+			# If Changes requires fields
+			if isinstance(self._dStruct['changes'], list):
+
+				# If they weren't passed
+				if not isinstance(changes, dict):
+					raise ValueError('changes')
+
+				# Else, add the extra fields
+				for k in self._dStruct['changes']:
+					dChanges[k] = changes[k]
+
+			# Generate the INSERT statement
+			sSQL = 'INSERT `%s`, `created`, `items` INTO `%s`.`%s_changes`' \
+					'VALUES(%s, CURRENT_TIMESTAMP, \'%s\')' % (
+						self._dStruct['primary'],
+						self._dStruct['db'],
+						self._dStruct['table'],
+						self.processValue(self._dStruct, self._dStruct['primary'], self._dRecord[self._dStruct['primary']]),
+						json.dumps(dChanges)
+					)
+
+			# Insert the changes
+			Commands.execute(self._dStruct['host'], sSQL)
+
+		# Remove the primary key value so we can't delete again or save
+		del self._dRecord[self._dStruct['primary']]
+
+		# Return OK
+		return True
+
+	@classmethod
+	def deleteGet(cls, _id=None, index=None, custom={}):
+		"""Delete Get
+
+		Deletes one or many records by primary key or index and returns how many
+		were found/deleted
+
+		Arguments:
+			_id {mixed|mixed[]} -- The primary key(s) to delete or None for all
+				records
+			index {str} -- Used as the index instead of the primary key
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Return:
+			int
+		"""
+
+		# Fetch the record structure
+		dStruct = cls.struct(custom)
+
+		# If changes are required
+		if dStruct['changes']:
+			raise RuntimeError('Tables with \'changes\' flag can\'t be deleted using deleteGet')
+
+		# If there's no index and at least one ID passed
+		if not index and _id:
+			if not dStruct['primary']:
+				raise DocumentException('Can not delete by primary key if none exists')
+			index = dStruct['primary']
+
+		# Build the statement
+		sSQL = 'DELETE FROM `%s`.`%s`' % (dStruct['db'], dStruct['table'])
+
+		# If we have IDs
+		if _id is not None:
+
+			# If there's only one
+			if not isinstance(_id, (tuple,list)):
+				sSQL += ' WHERE `%s` = %s' % (index, cls.processValue(dStruct, index, id_))
+
+			else:
+				sSQL += ' WHERE `%s` IN (%s)' % (index, ','.join([
+					cls.processValue(dStruct, index, s)
+					for s in _id
+				]))
+
+		# Delete the records
+		return Commands.execute(dStruct['host'], sSQL)
 
 	# escape method
 	@classmethod
-	def escape(cls, struct, field, value):
+	def escape(cls, host, type_, value):
 		"""Escape
 
 		Takes a value and turns it into an acceptable string for SQL
 
 		Args:
-			struct {dict} -- The structure associated with the record
-			field {str} -- The name of the field we are escaping
+			host {str} -- The name of the host if we need to call the server
+			type_ {str} -- The type of data to escape
 			value {mixed} -- The value to escape
 
 		Returns:
 			str
 		"""
 
-		# Get the type of field
-		sType = struct['tree'].get(field).type();
-
 		# If we're escaping a bool
-		if sType == 'bool':
+		if type_ == 'bool':
 
 			# If it's already a bool or a valid int representation
 			if isinstance(value, bool) or (isinstance(value, (int,long)) and value in [0,1,1L]):
@@ -718,24 +943,146 @@ class Record(Record_Base.Record):
 				return (value in ('true', 'True', 'TRUE', 't', 'T', '1') and '1' or '0')
 
 		# Else if it's a date, md5, or UUID, return as is
-		elif sType in ('base64', 'date', 'datetime', 'md5', 'time', 'uuid'):
+		elif type_ in ('base64', 'date', 'datetime', 'md5', 'time', 'uuid'):
 			return "'%s'" % value
 
 		# Else if the value is a decimal value
-		elif sType in ('decimal', 'float', 'price'):
+		elif type_ in ('decimal', 'float', 'price'):
 			return str(float(value))
 
 		# Else if the value is an integer value
-		elif sType in ('int', 'uint'):
+		elif type_ in ('int', 'uint'):
 			return str(int(value))
 
 		# Else if it's a timestamp
-		elif sType == 'timestamp' and (isinstance(value, int) or re.match('^\d+$', value)):
+		elif type_ == 'timestamp' and (isinstance(value, int) or re.match('^\d+$', value)):
 			return 'FROM_UNIXTIME(%s)' % str(value)
 
 		# Else it's a standard escape
 		else:
-			return "'%s'" % SQL.escape(struct['host'], value)
+			return "'%s'" % Commands.escape(host, value)
+
+	@classmethod
+	def exists(cls, _id, index=None, custom={}):
+		"""Exists
+
+		Returns true if the specified primary key or unique index value exists
+
+		Arguments:
+			_id {mixed} -- The primary key to check
+			index {str} -- Used as the index instead of the primary key
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			bool
+		"""
+
+		# Fetch the record structure
+		dStruct = cls.struct(custom)
+
+		# Use the get method to avoid duplicate code and check if anything was
+		#	returned
+		if not cls.get(_id, raw=[dStruct['primary']], custom=custom):
+			return False
+
+		# If anything was returned, the key exists
+		return True
+
+	# filter static method
+	@classmethod
+	def filter(cls, fields, raw=None, orderby=None, custom={}):
+		"""Filter
+
+		Finds records based on the specific fields and values passed
+
+		Arguments:
+			fields {dict} -- A dictionary of field names to the values they
+				should match
+			raw (bool|list} -- Return raw data (dict) for all or a set list of
+				fields
+			orderby {str|str[]} -- A field or fields to order the results by
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			Record[]|dict[]
+		"""
+
+		# Fetch the record structure
+		dStruct = cls.struct(custom)
+
+		# Generate the SELECT fields
+		if not isinstance(raw, bool):
+			sFields = '`' + '`,`'.join(raw) + '`'
+		else:
+			sFields = '`' + '`,`'.join(dStruct['tree'].keys()) + '`'
+
+		# Go through each value
+		lWhere = [];
+		for n,v in obj.items():
+
+			# Generate theSQL and append it to the list
+			lWhere.append(
+				'`%s` %s' % (n, cls.processValue(dStruct, n, v))
+			)
+
+		# If the order isn't set
+		if orderby == None:
+			sOrderBy = ''
+
+		# Else, generate it
+		else:
+
+			# If the field is a list of fields
+			if isinstance(orderby, (list, tuple)):
+
+				# Go through each field
+				lOrderBy = []
+				for i in orderby:
+					if instanceof(i, (list,tuple)):
+						lOrderBy.append('`%s` %s' % (i[0], i[1]))
+					else:
+						lOrderBy.append('`%s`' % i)
+				sOrderBy = 'ORDER BY %s' % ','.join(lOrderBy)
+
+			# Else there's only one field
+			else:
+				sOrderBy = 'ORDER BY `%s`' % orderby
+
+		# Build the statement
+		sSQL = 'SELECT %s FROM `%s`.`%s` ' \
+				'WHERE %s ' \
+				'%s' % (
+					sFields,
+					dStruct['db'],
+					dStruct['table'],
+					' AND '.join(lWhere),
+					sOrderBy
+				)
+
+		# Get all the records
+		lRecords = Commands.select(dStruct['host'], sSQL, ESelect.ALL)
+
+		# If Raw requested, return as is
+		if raw:
+			return lRecords
+
+		# Else create instances for each
+		else:
+			return [cls(d, custom) for d in lRecords]
+
+
+
+
+
+
+
+
+
+
 
 	# processValue static method
 	@classmethod
@@ -754,6 +1101,9 @@ class Record(Record_Base.Record):
 			str
 		"""
 
+		# Get the field type
+		sType = struct['tree'][field].type()
+
 		# If the value is a list
 		if isinstance(value, (list,tuple)):
 
@@ -762,7 +1112,7 @@ class Record(Record_Base.Record):
 			for i in value:
 				# If it's None
 				if i is None: lValues.append('NULL')
-				else: lValues.append(cls.escape(struct, field, i))
+				else: lValues.append(cls.escape(struct['host'], sType, i))
 			sRet = 'IN (%s)' % ','.join(lValues)
 
 		# Else if the value is a dictionary
@@ -771,25 +1121,25 @@ class Record(Record_Base.Record):
 			# If it has a start and end
 			if 'between' in value:
 				sRet = 'BETWEEN %s AND %s' % (
-							cls.escape(struct, field, value['between'][0]),
-							cls.escape(struct, field, value['between'][1])
+							cls.escape(struct['host'], sType, value['between'][0]),
+							cls.escape(struct['host'], sType, value['between'][1])
 						)
 
 			# Else if we have a less than
 			elif 'lt' in value:
-				sRet = '< ' + cls.escape(struct, field, value['lt'])
+				sRet = '< ' + cls.escape(struct['host'], sType, value['lt'])
 
 			# Else if we have a greater than
 			elif 'gt' in value:
-				sRet = '> ' + cls.escape(struct, field, value['gt'])
+				sRet = '> ' + cls.escape(struct['host'], sType, value['gt'])
 
 			# Else if we have a less than equal
 			elif 'lte' in value:
-				sRet = '<= ' + cls.escape(struct, field, value['lteq'])
+				sRet = '<= ' + cls.escape(struct['host'], sType, value['lteq'])
 
 			# Else if we have a greater than equal
 			elif 'gte' in value:
-				sRet = '>= ' + cls.escape(struct, field, value['gteq'])
+				sRet = '>= ' + cls.escape(struct['host'], sType, value['gteq'])
 
 			# Else if we have a not equal
 			elif 'neq' in value:
@@ -802,19 +1152,19 @@ class Record(Record_Base.Record):
 					for i in value['neq']:
 						# If it's None
 						if i is None: lValues.append('NULL')
-						else: lValues.append(cls.escape(struct, field, i))
+						else: lValues.append(cls.escape(struct['host'], sType, i))
 					sRet = 'NOT IN (%s)' % ','.join(lValues)
 
 				# Else, it must be a single value
 				else:
-					sRet = '!= ' + cls.escape(struct, field, value['neq'])
+					sRet = '!= ' + cls.escape(struct['host'], sType, value['neq'])
 
 		# Else, it must be a single value
 		else:
 
 			# If it's None
 			if value is None: sRet = '= NULL'
-			else: sRet = '= ' + cls.escape(struct, field, value)
+			else: sRet = '= ' + cls.escape(struct['host'], sType, value)
 
 		# Return the processed value
 		return sRet
