@@ -12,7 +12,7 @@ setup(
 	packages=['RestOC'],
 	install_requires=[
 		'bottle==0.12.13',
-		'format-oc==1.5.5',
+		'format-oc==1.5.6',
 		'gunicorn==19.9.0',
 		'hiredis==0.2.0',
 		'Jinja2==2.10.1',
