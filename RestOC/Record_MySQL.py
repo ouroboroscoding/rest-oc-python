@@ -196,19 +196,19 @@ def _cursor(host, dictCur = False):
 	oCon = _connection(host)
 
 	# Try to get a cursor on the connection
-#	try:
-	if dictCur:
-		oCursor = oCon.cursor(pymysql.cursors.DictCursor)
-	else:
-		oCursor = oCon.cursor()
+	try:
+		if dictCur:
+			oCursor = oCon.cursor(pymysql.cursors.DictCursor)
+		else:
+			oCursor = oCon.cursor()
 
-	# Make sure we're on UTF8
-	oCursor.execute('SET NAMES utf8')
+		# Make sure we're on UTF8
+		oCursor.execute('SET NAMES utf8')
 
-#	except :
-#		# Clear the connection and try again
-#		_clearConnection(host)
-#		return _cursor(host, dictCur)
+	except :
+		# Clear the connection and try again
+		_clearConnection(host)
+		return _cursor(host, dictCur)
 
 	# Return the cursor
 	return oCursor
@@ -502,7 +502,7 @@ class Commands(object):
 		bDictCursor = seltype in (ESelect.ALL, ESelect.HASH_ROWS, ESelect.ROW)
 
 		# Fetch a cursor
-		with _wcursor(host) as oCursor:
+		with _wcursor(host, bDictCursor) as oCursor:
 
 			try:
 
@@ -590,7 +590,6 @@ class Commands(object):
 				print('host = ' + host)
 				print('sql = ' + str(sql))
 				print('exception = ' + str(e.__class__.__name__))
-				print('errcnt = ' + str(errcnt))
 				print('args = ' + ', '.join([str(s) for s in e.args]))
 
 				# Rethrow
@@ -622,7 +621,8 @@ class Record(Record_Base.Record):
 		'time': 'time',
 		'timestamp': 'timestamp',
 		'uint': 'integer unsigned',
-		'uuid': 'char(36)'
+		'uuid': 'char(36)',
+		'uuid4': 'char(36)'
 	}
 	"""Node To SQL
 
@@ -646,7 +646,7 @@ class Record(Record_Base.Record):
 		Returns:
 			bool
 		"""
-		raise Exception('append not available for Record_MySQL')
+		raise Exception('append method not available in Record_MySQL')
 
 	@classmethod
 	def config(cls):
@@ -658,6 +658,25 @@ class Record(Record_Base.Record):
 			dict
 		"""
 		raise NotImplementedError('Must implement the "config" method')
+
+	@classmethod
+	def contains(cls, _id, array, item, custom={}):
+		"""Contains
+
+		Checks if a specific item exist inside a given array/list
+
+		Arguments:
+			_id {mixed} -- The ID of the record to check
+			array {str} -- The name of the field with the array
+			item {mixed} -- The value to check for in the array
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			bool
+		"""
+		raise Exception('contains method not available in Record_MySQL')
 
 	@classmethod
 	def count(cls, _id=None, filter=None, custom={}):
@@ -683,7 +702,7 @@ class Record(Record_Base.Record):
 		lWhere = []
 
 		# If there's no primary key, we want all records
-		if _id == None:
+		if _id is None:
 			pass
 
 		# If we are using the primary key
@@ -692,7 +711,7 @@ class Record(Record_Base.Record):
 			# Append the ID check
 			lWhere.append('`%s` %s' % (
 				dStruct['primary'],
-				self.processValue(dStruct, dStruct['primary'], _id)
+				cls.processValue(dStruct, dStruct['primary'], _id)
 			))
 
 		# If we want to filter the data further
@@ -702,18 +721,17 @@ class Record(Record_Base.Record):
 			for n,v in filter.items():
 
 				# Generate theSQL and append it to the list
-				lWhere.append(
-					'`%s` %s' % (
-						n,
-						cls.processValue(dStruct, n, v)
+				lWhere.append('`%s` %s' % (
+					n,
+					cls.processValue(dStruct, n, v)
 				))
 
 		# Build the statement
 		sSQL = 'SELECT COUNT(*) FROM `%s`.`%s` ' \
-				'WHERE %s ' % (
+				'%s ' % (
 					dStruct['db'],
 					dStruct['table'],
-					' AND '.join(lWhere)
+					lWhere and 'WHERE %s' % ' AND '.join(lWhere) or ''
 				)
 
 		# Run the request and return the count
@@ -748,7 +766,11 @@ class Record(Record_Base.Record):
 			if (f != self._dStruct['primary'] or not self._dStruct['auto_primary']) and f in self._dRecord:
 				lTemp[0].append('`%s`' % f)
 				if self._dRecord[f] != None:
-					lTemp[1].append(self.processValue(self._dStruct, f, self._dRecord[f]))
+					lTemp[1].append(self.escape(
+						self._dStruct['host'],
+						self._dStruct['tree'][f].type(),
+						self._dRecord[f]
+					))
 				else:
 					lTemp[1].append('NULL')
 
@@ -817,12 +839,16 @@ class Record(Record_Base.Record):
 					dChanges[k] = changes[k]
 
 			# Generate the INSERT statement
-			sSQL = 'INSERT `%s`, `created`, `items` INTO `%s`.`%s_changes`' \
+			sSQL = 'INSERT INTO `%s`.`%s_changes` (`%s`, `created`, `items`) ' \
 					'VALUES(%s, CURRENT_TIMESTAMP, \'%s\')' % (
-						self._dStruct['primary'],
 						self._dStruct['db'],
 						self._dStruct['table'],
-						self.processValue(self._dStruct, self._dStruct['primary'], self._dRecord[self._dStruct['primary']]),
+						self._dStruct['primary'],
+						self.escape(
+							self._dStruct['host'],
+							self._dStruct['tree'][self._dStruct['primary']].type(),
+							self._dRecord[self._dStruct['primary']]
+						),
 						json.dumps(dChanges)
 					)
 
@@ -850,7 +876,7 @@ class Record(Record_Base.Record):
 			raise KeyError(self._dStruct['primary'])
 
 		# Generate the DELETE statement
-		sSQL = 'DELETE FROM `%s`.`%s` WHERE `%s` = %s' % (
+		sSQL = 'DELETE FROM `%s`.`%s` WHERE `%s` %s' % (
 			self._dStruct['db'],
 			self._dStruct['table'],
 			self._dStruct['primary'],
@@ -889,12 +915,16 @@ class Record(Record_Base.Record):
 					dChanges[k] = changes[k]
 
 			# Generate the INSERT statement
-			sSQL = 'INSERT `%s`, `created`, `items` INTO `%s`.`%s_changes`' \
+			sSQL = 'INSERT INTO `%s`.`%s_changes` (`%s`, `created`, `items`) ' \
 					'VALUES(%s, CURRENT_TIMESTAMP, \'%s\')' % (
-						self._dStruct['primary'],
 						self._dStruct['db'],
 						self._dStruct['table'],
-						self.processValue(self._dStruct, self._dStruct['primary'], self._dRecord[self._dStruct['primary']]),
+						self._dStruct['primary'],
+						self.escape(
+							self._dStruct['host'],
+							self._dStruct['tree'][self._dStruct['primary']].type(),
+							self._dRecord[self._dStruct['primary']]
+						),
 						json.dumps(dChanges)
 					)
 
@@ -994,7 +1024,7 @@ class Record(Record_Base.Record):
 					return (value in ('true', 'True', 'TRUE', 't', 'T', '1') and '1' or '0')
 
 			# Else if it's a date, md5, or UUID, return as is
-			elif type_ in ('base64', 'date', 'datetime', 'md5', 'time', 'uuid'):
+			elif type_ in ('base64', 'date', 'datetime', 'md5', 'time', 'uuid', 'uuid4'):
 				return "'%s'" % value
 
 			# Else if the value is a decimal value
@@ -1043,7 +1073,7 @@ class Record(Record_Base.Record):
 
 	# filter static method
 	@classmethod
-	def filter(cls, fields, raw=None, orderby=None, custom={}):
+	def filter(cls, fields, raw=None, orderby=None, limit=None, custom={}):
 		"""Filter
 
 		Finds records based on the specific fields and values passed
@@ -1054,6 +1084,7 @@ class Record(Record_Base.Record):
 			raw (bool|list} -- Return raw data (dict) for all or a set list of
 				fields
 			orderby {str|str[]} -- A field or fields to order the results by
+			limit {int|tuple} -- The limit and possible starting point
 			custom {dict} -- Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
@@ -1062,18 +1093,21 @@ class Record(Record_Base.Record):
 			Record[]|dict[]
 		"""
 
+		# By default we will return multiple records
+		bMulti = True
+
 		# Fetch the record structure
 		dStruct = cls.struct(custom)
 
 		# Generate the SELECT fields
-		if not isinstance(raw, bool):
-			sFields = '`%s`' % '`,`'.join(raw)
-		else:
+		if raw is None or raw is True:
 			sFields = '`%s`' % '`,`'.join(dStruct['tree'].keys())
+		else:
+			sFields = '`%s`' % '`,`'.join(raw)
 
 		# Go through each value
 		lWhere = [];
-		for n,v in obj.items():
+		for n,v in fields.items():
 
 			# Generate theSQL and append it to the list
 			lWhere.append(
@@ -1081,7 +1115,7 @@ class Record(Record_Base.Record):
 			)
 
 		# If the order isn't set
-		if orderby is not None:
+		if orderby is None:
 			sOrderBy = ''
 
 		# Else, generate it
@@ -1093,7 +1127,7 @@ class Record(Record_Base.Record):
 				# Go through each field
 				lOrderBy = []
 				for i in orderby:
-					if instanceof(i, (list,tuple)):
+					if isinstance(i, (list,tuple)):
 						lOrderBy.append('`%s` %s' % (i[0], i[1]))
 					else:
 						lOrderBy.append('`%s`' % i)
@@ -1104,7 +1138,7 @@ class Record(Record_Base.Record):
 				sOrderBy = 'ORDER BY `%s`' % orderby
 
 		# If the limit isn't set
-		if limit is not None:
+		if limit is None:
 			sLimit = ''
 
 		# Else, generate it
@@ -1118,7 +1152,7 @@ class Record(Record_Base.Record):
 
 			# If we got a tuple/list
 			elif isinstance(limit, (list,tuple)):
-				sLimit = 'LIMIT %d %d' % (limit[0], limit[2])
+				sLimit = 'LIMIT %d, %d' % (limit[0], limit[1])
 				if limit[1] == 1:
 					bMulti = False
 
@@ -1198,23 +1232,27 @@ class Record(Record_Base.Record):
 		dStruct = cls.struct(custom)
 
 		# Generate the SELECT fields
-		if not isinstance(raw, bool):
-			sFields = '`%s`' % '`,`'.join(raw)
-		else:
+		if raw is None or raw is True:
 			sFields = '`%s`' % '`,`'.join(dStruct['tree'].keys())
+		else:
+			sFields = '`%s`' % '`,`'.join(raw)
 
 		# Init the where fields
 		lWhere = [];
 
-		# Add the primary
-		lWhere.append('`%s` %s' % (
-			dStruct['primary'],
-			self.processValue(dStruct, dStruct['primary'], _id)
-		))
+		# If there's an id
+		if _id is not None:
 
-		# Check if the id_ is a single value
-		if not isinstance(_id, (object,dict,list,tuple)):
-			bMulti = False
+			# Add the primary
+			lWhere.append('`%s` %s' % (
+				dStruct['primary'],
+				cls.processValue(dStruct, dStruct['primary'], _id)
+			))
+
+			# Check if the id_ is a single value
+			if not isinstance(_id, (object,dict,list,tuple)) or \
+				isinstance(_id, str):
+				bMulti = False
 
 		# If there's an additional filter
 		if filter:
@@ -1228,7 +1266,7 @@ class Record(Record_Base.Record):
 				)
 
 		# If the order isn't set
-		if orderby is not None:
+		if orderby is None:
 			sOrderBy = ''
 
 		# Else, generate it
@@ -1240,7 +1278,7 @@ class Record(Record_Base.Record):
 				# Go through each field
 				lOrderBy = []
 				for i in orderby:
-					if instanceof(i, (list,tuple)):
+					if isinstance(i, (list,tuple)):
 						lOrderBy.append('`%s` %s' % (i[0], i[1]))
 					else:
 						lOrderBy.append('`%s`' % i)
@@ -1251,7 +1289,7 @@ class Record(Record_Base.Record):
 				sOrderBy = 'ORDER BY `%s`' % orderby
 
 		# If the limit isn't set
-		if limit is not None:
+		if limit is None:
 			sLimit = ''
 
 		# Else, generate it
@@ -1265,7 +1303,7 @@ class Record(Record_Base.Record):
 
 			# If we got a tuple/list
 			elif isinstance(limit, (list,tuple)):
-				sLimit = 'LIMIT %d %d' % (limit[0], limit[2])
+				sLimit = 'LIMIT %d, %d' % (limit[0], limit[1])
 				if limit[1] == 1:
 					bMulti = False
 
@@ -1334,7 +1372,7 @@ class Record(Record_Base.Record):
 		dStruct = cls.struct(custom)
 
 		# If the order isn't set
-		if orderby is not None:
+		if orderby is None:
 			sOrderBy = ''
 
 		# Else, generate it
@@ -1346,7 +1384,7 @@ class Record(Record_Base.Record):
 				# Go through each field
 				lOrderBy = []
 				for i in orderby:
-					if instanceof(i, (list,tuple)):
+					if isinstance(i, (list,tuple)):
 						lOrderBy.append('`%s` %s' % (i[0], i[1]))
 					else:
 						lOrderBy.append('`%s`' % i)
@@ -1358,7 +1396,7 @@ class Record(Record_Base.Record):
 
 		# Generate the SELECT statement
 		sSQL = 'SELECT `%s`, `created`, `items` ' \
-				'FROM `%s`.`%s` ' \
+				'FROM `%s`.`%s_changes` ' \
 				'WHERE `%s` %s ' \
 				'%s' % (
 			dStruct['primary'],
@@ -1366,7 +1404,7 @@ class Record(Record_Base.Record):
 			dStruct['table'],
 			dStruct['primary'],
 			cls.processValue(dStruct, dStruct['primary'], _id),
-			sOrder
+			sOrderBy
 		)
 
 		# Fetch all records
@@ -1481,7 +1519,7 @@ class Record(Record_Base.Record):
 		Returns:
 			bool
 		"""
-		raise Exception('remove not available for Record_MySQL')
+		raise Exception('remove method not available in Record_MySQL')
 
 	def save(self, replace=False, changes=None):
 		"""Save
@@ -1560,7 +1598,7 @@ class Record(Record_Base.Record):
 		for f in dValues.keys():
 			if f != self._dStruct['primary'] or not self._dStruct['auto_primary']:
 				if dValues[f] != None:
-					lValues.append('`%s` %s`' % (
+					lValues.append('`%s` %s' % (
 						f, self.processValue(self._dStruct, f, dValues[f])
 					))
 				else:
@@ -1574,9 +1612,9 @@ class Record(Record_Base.Record):
 					', '.join(lValues),
 					self._dStruct['primary'],
 					self.escape(
-						self._dStruct,
-						self._dStruct['primary'],
-						self._dData[self._dStruct['primary']]
+						self._dStruct['host'],
+						self._dStruct['tree'][self._dStruct['primary']].type(),
+						self._dRecord[self._dStruct['primary']]
 					)
 				)
 
@@ -1608,15 +1646,14 @@ class Record(Record_Base.Record):
 					dChanges[k] = changes[k]
 
 			# Generate the INSERT statement
-			sSQL = 'INSERT `%s`, `created`, `items` ' \
-					'INTO `%s`.`%s_changes`' \
+			sSQL = 'INSERT INTO `%s`.`%s_changes` (`%s`, `created`, `items`) ' \
 					'VALUES(%s, CURRENT_TIMESTAMP, \'%s\')' % (
-						self._dStruct['primary'],
 						self._dStruct['db'],
 						self._dStruct['table'],
-						self.processValue(
-							self._dStruct,
-							self._dStruct['primary'],
+						self._dStruct['primary'],
+						self.escape(
+							self._dStruct['host'],
+							self._dStruct['tree'][self._dStruct['primary']].type(),
 							self._dRecord[self._dStruct['primary']]
 						),
 						json.dumps(dChanges)
@@ -1735,7 +1772,7 @@ class Record(Record_Base.Record):
 			# Generate the CREATE statement
 			sSQL = 'CREATE TABLE IF NOT EXISTS `%s`.`%s_changes` (' \
 					'`%s` %s NOT NULL %s, ' \
-					'`created` timestamp NOT NULL, ' \
+					'`created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, ' \
 					'`items` text NOT NULL, ' \
 					'index `%s` (`%s`)) ' \
 					'ENGINE=%s CHARSET=%s COLLATE=%s' % (
@@ -1823,6 +1860,9 @@ class Record(Record_Base.Record):
 		if index is not None:
 			raise Exception('index not a valid argument in Record_MySQL.updateField')
 
+		# Fetch the record structure
+		dStruct = cls.struct(custom)
+
 		# If the field doesn't exist
 		if field not in dStruct['tree']:
 			raise ValueError('%s not a valid field' % field)
@@ -1834,7 +1874,7 @@ class Record(Record_Base.Record):
 		if _id is not None:
 			lWhere.append('`%s` %s' % (
 				dStruct['primary'],
-				self.processValue(dStruct, dStruct['primary'], _id)
+				cls.processValue(dStruct, dStruct['primary'], _id)
 			))
 
 		# If there's an additional filter
@@ -1848,20 +1888,17 @@ class Record(Record_Base.Record):
 					'`%s` %s' % (n, cls.processValue(dStruct, n, v))
 				)
 
-		# Add the old value
-		lWhere.append('`%s` %s' % (field, cls.processValue(dStruct, field, old_val)))
-
 		# Generate the SQL to update the field
 		sSQL = 'UPDATE `%s`.`%s` ' \
 				'SET `%s` %s ' \
-				'WHERE %s' % (
+				'%s' % (
 			dStruct['db'], dStruct['table'],
-			field, cls.processValue(field, new_val, dStruct),
-			' AND '.join(lWhere)
+			field, cls.processValue(dStruct, field, value),
+			lWhere and ('WHERE %s' % ' AND '.join(lWhere)) or ''
 		)
 
 		# Update all the records and return the number of rows changed
-		return MySQL.execute(dStruct['host'], sSQL)
+		return Commands.execute(dStruct['host'], sSQL)
 
 	@classmethod
 	def uuid(cls, custom={}):
