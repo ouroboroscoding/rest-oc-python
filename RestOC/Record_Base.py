@@ -285,7 +285,10 @@ class Record(abc.ABC):
 		Returns:
 			list
 		"""
-		return self._dChanged.keys()
+		if self._dChanged is True:
+			return True
+		else:
+			return self._dChanged.keys()
 
 	@abc.abstractclassmethod
 	def config(cls):
@@ -499,7 +502,7 @@ class Record(abc.ABC):
 		return self
 
 	@abc.abstractclassmethod
-	def filter(cls, fields, raw=None, orderby=None, custom={}):
+	def filter(cls, fields, raw=None, orderby=None, limit=None, custom={}):
 		"""Filter
 
 		Finds records based on the specific fields and values passed
@@ -510,6 +513,7 @@ class Record(abc.ABC):
 			raw {bool|list} -- Return raw data (dict) for all or a set list of
 				fields
 			orderby {str|str[]} -- A field or fields to order the results by
+			limit {int|tuple} -- The limit and possible starting point
 			custom {dict} -- Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
