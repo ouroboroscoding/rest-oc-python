@@ -33,7 +33,7 @@ def _connect(host, error_count=0):
 	Internal module function to fetch a connection to a specific RethinkDB host
 
 	Arguments:
-		host {str} -- The name the host is stored under using addHost()
+		host {str} -- The name the host is stored using addHost()
 		error_count {int} -- The number of times the function has failed
 
 	Raises:
@@ -270,7 +270,7 @@ class Record(Record_Base.Record):
 				.run(oCon)
 
 	@classmethod
-	def count(cls, _id, index=None, filter=None, custom={}):
+	def count(cls, _id=None, index=None, filter=None, custom={}):
 		"""Count
 
 		Returns the number of records associated with index or filter
@@ -784,7 +784,7 @@ class Record(Record_Base.Record):
 
 	# filter static method
 	@classmethod
-	def filter(cls, fields, raw=None, orderby=None, custom={}):
+	def filter(cls, fields, raw=None, orderby=None, limit=None, custom={}):
 		"""Filter
 
 		Finds records based on the specific fields and values passed
@@ -795,6 +795,7 @@ class Record(Record_Base.Record):
 			raw (bool|list} -- Return raw data (dict) for all or a set list of
 				fields
 			orderby {str|str[]} -- A field or fields to order the results by
+			limit {int|tuple} -- The limit and possible starting point
 			custom {dict} -- Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
@@ -802,6 +803,9 @@ class Record(Record_Base.Record):
 		Returns:
 			Record[]|dict[]
 		"""
+
+		# By default we will return multiple records
+		bMulti = True
 
 		# Fetch the record structure
 		dStruct = cls.struct(custom)
@@ -834,19 +838,64 @@ class Record(Record_Base.Record):
 				else:
 					raise ValueError('orderby', orderby)
 
+			# If we recieved a limit
+			if limit is not None:
+
+				# If we got an int, we are only limiting
+				if isinstance(limit, int):
+					iLimitParams = 1
+					oCur = oCur.limit(limit)
+
+				# If we got a tuple
+				elif isinstance(limit, (list,tuple)):
+					iLimitParams = 2
+					oCur = oCur.skip(limit[0]).limit(limit[1])
+
+				# Else we got something invalid
+				else:
+					raise ValueError('limit', limit)
+
 			# Run the request
 			itRes = oCur.run(oCon)
 
-			# If we got no records back
+			# If there's no data, return None or an empty list
 			if not itRes:
-				return []
+				if bMulti: return []
+				else: return None
 
-			# If the user wants raw data
+			# If we are expecting a single record
+			if (iLimitParams == 1 and limit == 1) or \
+				(iLimitParams == 2 and limit[1] == 1):
+
+				# If we got a list
+				if isinstance(itRes, (tuple,list)):
+
+					# If there's no data
+					if not len(itRes):
+						return None
+
+					# Store the row
+					dRow = itRes[0]
+
+				# Else it's a cursor
+				else:
+
+					# Try to get one row
+					try:
+						dRow = itRes.next()
+					except rnet.DefaultCursorEmpty as e:
+						return None
+
+				# If it's raw, don't instantiate it
+				return (raw and dRow or cls(dRow, custom))
+
+			# If Raw requested, return as is
 			if raw:
 				return [d for d in itRes]
 
-			# Create instances of the records
-			return [cls(d, custom) for d in itRes]
+			# Else create instances for each
+			else:
+				return [cls(d, custom) for d in itRes]
 
 	@classmethod
 	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, orderby=None, limit=None, custom={}):
@@ -1147,6 +1196,7 @@ class Record(Record_Base.Record):
 			else:
 				return raw and itRes or cls(itRes, custom)
 
+	@classmethod
 	def getChanges(cls, _id, orderby=None, custom={}):
 		"""Get Changes
 
@@ -1309,7 +1359,7 @@ class Record(Record_Base.Record):
 			if self._dStruct['revisions']:
 
 				# Store the old revision
-				sRev = self._dRecord['_rev']
+				sRev = self._dRecord[self._dStruct['rev_field']]
 
 				# If updating the revision fails
 				if not self._revision():
@@ -1320,7 +1370,7 @@ class Record(Record_Base.Record):
 					.db(self._dStruct['db']) \
 					.table(self._dStruct['table']) \
 					.get(self._dRecord[self._dStruct['primary']]) \
-					.pluck(['_rev']) \
+					.pluck([self._dStruct['rev_field']]) \
 					.default(None) \
 					.run(oCon)
 
@@ -1329,7 +1379,7 @@ class Record(Record_Base.Record):
 					return False
 
 				# If it is found, but the revisions don't match up
-				if dRecord['_rev'] != sRev:
+				if dRecord[self._dStruct['rev_field']] != sRev:
 					raise Record_Base.RevisionException(self._dRecord[self._dStruct['primary']])
 
 			# Update the record
