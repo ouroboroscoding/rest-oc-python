@@ -362,8 +362,6 @@ class Commands(object):
 
 			try:
 
-				print(sql)
-
 				# If the sql arg is a tuple we've been passed a string with a list for the purposes
 				#	of replacing parameters
 				if isinstance(sql, tuple):
@@ -429,8 +427,6 @@ class Commands(object):
 		with _wcursor(host) as oCursor:
 
 			try:
-
-				print(sql)
 
 				# If the sql arg is a tuple we've been passed a string with a list for the purposes
 				#	of replacing parameters
@@ -505,8 +501,6 @@ class Commands(object):
 		with _wcursor(host, bDictCursor) as oCursor:
 
 			try:
-
-				print(sql)
 
 				# If the sql arg is a tuple we've been passed a string with a list for the purposes
 				#	of replacing parameters
