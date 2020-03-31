@@ -161,7 +161,7 @@ class Record(abc.ABC):
 		Returns:
 			None
 		"""
-		self.d(field);
+		self.fieldDelete(field);
 
 	def __getitem__(self, field):
 		"""__getitem__
