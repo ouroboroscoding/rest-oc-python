@@ -758,7 +758,16 @@ class Record(Record_Base.Record):
 		#	auto incremented
 		lTemp = [[], []]
 		for f in self._dStruct['tree'].keys():
-			if (f != self._dStruct['primary'] or not self._dStruct['auto_primary']) and f in self._dRecord:
+
+			# If it's the primary key with auto_primary on
+			if f == self._dStruct['primary'] and self._dStruct['auto_primary']:
+
+				# If it's a string
+				if isinstance(self._dStruct['auto_primary'], str):
+					lTemp[0].append('`%s`' % f)
+					lTemp[1].append(self._dStruct['auto_primary'])
+
+			elif f in self._dRecord:
 				lTemp[0].append('`%s`' % f)
 				if self._dRecord[f] != None:
 					lTemp[1].append(self.escape(
@@ -1720,9 +1729,18 @@ class Record(Record_Base.Record):
 		lFields = ['`%s` %s %s%s' % (
 			f,
 			dStruct['tree'][f].special('sql_type', default=cls.__nodeToSQL[dStruct['tree'][f].type()]),
-			(not dStruct['tree'][f].optional() and 'not null ' or ''),
+			(not dStruct['tree'][f].optional() and 'NOT NULL ' or ''),
 			dStruct['tree'][f].special('sql_opts', default='')
 		) for f in dStruct['create']]
+
+		# Push the primary key to the front
+		lFields.insert(0, '`%s` %s %s%s%s' % (
+			dStruct['primary'],
+			dStruct['tree'][dStruct['primary']].special('sql_type', default=cls.__nodeToSQL[dStruct['tree'][dStruct['primary']].type()])
+			(not dStruct['tree'][f].optional() and 'NOT NULL ' or ''),
+			(dStruct['auto_primary'] is True and 'AUTO_INCREMENT ' or ''),
+			dStruct['tree'][f].special('sql_opts', default=''),
+		))
 
 		# Init the list of indexes
 		lIndexes = ['primary key (`%s`)' % dStruct['primary']]
