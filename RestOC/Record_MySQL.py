@@ -770,8 +770,8 @@ class Record(Record_Base.Record):
 
 		# If we have replace for conflicts
 		if conflict == 'replace':
-			sUpdate = 'ON DUPLICATE KEY UPDATE %s' % ''.join([
-				"%s = VALUES(%s)\n" % (lTemp[0][i], lTemp[0][i])
+			sUpdate = 'ON DUPLICATE KEY UPDATE %s' % ',\n'.join([
+				"%s = VALUES(%s)" % (lTemp[0][i], lTemp[0][i])
 				for i in range(len(lTemp[0]))
 			])
 
