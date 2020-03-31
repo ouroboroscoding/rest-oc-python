@@ -762,10 +762,13 @@ class Record(Record_Base.Record):
 			# If it's the primary key with auto_primary on
 			if f == self._dStruct['primary'] and self._dStruct['auto_primary']:
 
-				# If it's a string
+				# If it's a string, add the field and set the value to the
+				#	SQL variable
 				if isinstance(self._dStruct['auto_primary'], str):
+
+					# Add the field and set the value to the SQL variable
 					lTemp[0].append('`%s`' % f)
-					lTemp[1].append(self._dStruct['auto_primary'])
+					lTemp[1].append('@_AUTO_PRIMARY')
 
 			elif f in self._dRecord:
 				lTemp[0].append('`%s`' % f)
@@ -797,10 +800,10 @@ class Record(Record_Base.Record):
 		del lTemp
 
 		# Generate the INSERT statement
-		sSQL = 'INSERT %s INTO `%s`.`%s` (%s)\n' \
+		sSQL = 'INSERT %sINTO `%s`.`%s` (%s)\n' \
 				' VALUES (%s)\n' \
 				'%s' % (
-					(conflict == 'ignore' and 'IGNORE' or ''),
+					(conflict == 'ignore' and 'IGNORE ' or ''),
 					self._dStruct['db'],
 					self._dStruct['table'],
 					sFields,
@@ -808,11 +811,36 @@ class Record(Record_Base.Record):
 					sUpdate
 				)
 
-		# If the primary key does not auto increment don't worry about storing
-		#	the new ID
+		# If the primary key is auto generated
 		if self._dStruct['auto_primary']:
-			self._dRecord[self._dStruct['primary']] = Commands.insert(self._dStruct['host'], sSQL)
+
+			# If it's a string
+			if isinstance(self._dStruct['auto_primary'], str):
+
+				# Set the SQL variable to the requested value
+				Commands.execute(self._dStruct['host'], 'SET @_AUTO_PRIMARY = %s' % self._dStruct['auto_primary'])
+
+				# Execute the regular SQL
+				Commands.execute(self._dStruct['host'], sSQL)
+
+				# Fetch the SQL variable
+				self._dRecord[self._dStruct['primary']] = Commands.select(
+					self._dStruct['host'],
+					'SELECT @_AUTO_PRIMARY',
+					ESelect.CELL
+				)
+
+			# Else, assume auto_increment
+			else:
+				self._dRecord[self._dStruct['primary']] = Commands.insert(
+					self._dStruct['host'],
+					sSQL
+				)
+
+			# Get the return from the primary key
 			mRet = self._dRecord[self._dStruct['primary']]
+
+		# Else, the primary key was passed, we don't need to fetch it
 		else:
 			if not Commands.execute(self._dStruct['host'], sSQL):
 				mRet = None
@@ -1713,9 +1741,13 @@ class Record(Record_Base.Record):
 		if 'create' not in dStruct:
 			raise ValueError('Record_MySQL.tableCreate requires \'create\' in config. i.e. ["_id", "field1", "field2", "etc"]')
 
+		# If the primary key is added, remove it
+		if dStruct['primary'] in dStruct['create']:
+			dStruct['create'].remove(dStruct['primary'])
+
 		# Get all child node keys
 		lNodeKeys = dStruct['tree'].keys()
-		lMissing = [s for s in lNodeKeys if s not in dStruct['create']]
+		lMissing = [s for s in lNodeKeys if s not in dStruct['create'] and s != dStruct['primary']]
 
 		# If any are missing
 		if lMissing:
@@ -1729,17 +1761,17 @@ class Record(Record_Base.Record):
 		lFields = ['`%s` %s %s%s' % (
 			f,
 			dStruct['tree'][f].special('sql_type', default=cls.__nodeToSQL[dStruct['tree'][f].type()]),
-			(not dStruct['tree'][f].optional() and 'NOT NULL ' or ''),
+			((not dStruct['tree'][f].optional()) and 'NOT NULL ' or ''),
 			dStruct['tree'][f].special('sql_opts', default='')
 		) for f in dStruct['create']]
 
 		# Push the primary key to the front
 		lFields.insert(0, '`%s` %s %s%s%s' % (
 			dStruct['primary'],
-			dStruct['tree'][dStruct['primary']].special('sql_type', default=cls.__nodeToSQL[dStruct['tree'][dStruct['primary']].type()])
-			(not dStruct['tree'][f].optional() and 'NOT NULL ' or ''),
+			dStruct['tree'][dStruct['primary']].special('sql_type', default=cls.__nodeToSQL[dStruct['tree'][dStruct['primary']].type()]),
+			((not dStruct['tree'][dStruct['primary']].optional()) and 'NOT NULL ' or ''),
 			(dStruct['auto_primary'] is True and 'AUTO_INCREMENT ' or ''),
-			dStruct['tree'][f].special('sql_opts', default=''),
+			dStruct['tree'][dStruct['primary']].special('sql_opts', default=''),
 		))
 
 		# Init the list of indexes
