@@ -1168,6 +1168,10 @@ class Record(Record_Base.Record):
 			# Get all the records
 			lRecords = Commands.select(dStruct['host'], sSQL, ESelect.ALL)
 
+			# If there's no data, return an empty list
+			if not lRecords:
+				return []
+
 			# If Raw requested, return as is
 			if raw:
 				return lRecords
@@ -1181,6 +1185,10 @@ class Record(Record_Base.Record):
 
 			# Get one row
 			dRecord = Commands.select(dStruct['host'], sSQL, ESelect.ROW)
+
+			# If there's no data, return None
+			if not dRecord:
+				return None
 
 			# If Raw requested, return as is
 			if raw:
@@ -1319,6 +1327,10 @@ class Record(Record_Base.Record):
 			# Get all the records
 			lRecords = Commands.select(dStruct['host'], sSQL, ESelect.ALL)
 
+			# If there's no data, return an empty list
+			if not lRecords:
+				return []
+
 			# If Raw requested, return as is
 			if raw:
 				return lRecords
@@ -1332,6 +1344,10 @@ class Record(Record_Base.Record):
 
 			# Get one row
 			dRecord = Commands.select(dStruct['host'], sSQL, ESelect.ROW)
+
+			# If there's no data, return None
+			if not dRecord:
+				return None
 
 			# If Raw requested, return as is
 			if raw:
