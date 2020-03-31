@@ -10,6 +10,7 @@ __version__ = "1.0.0"
 __created__ = "2020-02-12"
 
 # Python imports
+import datetime
 from enum import IntEnum
 from hashlib import md5
 import json
