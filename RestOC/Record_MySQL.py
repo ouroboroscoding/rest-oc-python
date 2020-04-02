@@ -625,6 +625,64 @@ class Record(Record_Base.Record):
 	"""
 
 	@classmethod
+	def addChanges(cls, _id, changes, custom={}):
+		"""Add Changes
+
+		Adds a record to the tables associated _changes table. Useful for
+		Record types that can't handle multiple levels and have children
+		tables that shouldn't be updated for every change in a single record
+
+		Arguments:
+			_id {mixed} -- The ID of the record the change is associated with
+			changes {dict} -- The dictionary of changes to add
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			bool
+		"""
+
+		# Fetch the record structure
+		dStruct = cls.struct(custom)
+
+		# If the table doesn't want changes
+		if not dStruct['changes']:
+			raise Exception('%s doesn\'t allow for changes' % dStruct['tree']._name)
+
+		# If changes isn't a dict
+		if not isinstance(changes, dict):
+			raise ValueError('changes', 'must be a dict')
+
+		# If Changes requires fields
+		if isinstance(dStruct['changes'], list):
+
+			# If any of the fields are missing
+			for k in dStruct['changes']:
+				if k not in changes:
+					raise Exception('"%s" missing from changes' % k)
+
+		# Generate the INSERT statement
+		sSQL = 'INSERT INTO `%s`.`%s_changes` (`%s`, `created`, `items`) ' \
+				'VALUES(%s, CURRENT_TIMESTAMP, \'%s\')' % (
+					dStruct['db'],
+					dStruct['table'],
+					dStruct['primary'],
+					cls.escape(
+						dStruct['host'],
+						dStruct['tree'][dStruct['primary']].type(),
+						_id
+					),
+					json.dumps(changes)
+				)
+
+		# Create the changes record
+		mRet = Commands.execute(dStruct['host'], sSQL)
+
+		# Return based on the rows changed
+		return mRet and True or False
+
+	@classmethod
 	def append(cls, _id, array, item, custom={}):
 		"""Append
 
