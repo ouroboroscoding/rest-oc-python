@@ -375,6 +375,24 @@ class Record(abc.ABC):
 		"""
 		raise NotImplementedError('Must implement the "create" method')
 
+	@abc.abstractclassmethod
+	def createMany(cls, records, conflict='error', custom={}):
+		"""Create Many
+
+		Inserts multiple records at once
+
+		Arguments:
+			records {Record[]} -- A list of Record instances to insert
+			conflict {str} -- What to do on a conflict, Record type specific
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			mixed|None
+		"""
+		raise NotImplementedError('Must implement the "createMany" method')
+
 	@abc.abstractmethod
 	def delete(self, changes=None):
 		"""Delete
