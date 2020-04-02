@@ -1265,7 +1265,7 @@ class Record(Record_Base.Record):
 		if index is not None:
 
 			# Use filter to check for the record
-			if not cls.filter({index: _id}, raw=[dStruct['primary']], limit=1, custom=custom)
+			if not cls.filter({index: _id}, raw=[dStruct['primary']], limit=1, custom=custom):
 				return False
 
 		# Else, assume an ID
