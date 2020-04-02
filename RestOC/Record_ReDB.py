@@ -558,7 +558,7 @@ class Record(Record_Base.Record):
 		return self._dRecord[self._dStruct['primary']]
 
 	@classmethod
-	def createMany(cls, records, replace=False, custom={}):
+	def createMany(cls, records, conflict='error', custom={}):
 		"""Create Many
 
 		Inserts multiple records at once, returning all their primary keys
@@ -567,7 +567,7 @@ class Record(Record_Base.Record):
 
 		Arguments:
 			records {Record[]} -- A list of Record instances to insert
-			replace {bool} -- Set to true to replace duplicate primary keys
+			conflict {str} -- Must be one of 'error', 'replace', or 'update'
 			custom {dict} -- Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
@@ -575,6 +575,10 @@ class Record(Record_Base.Record):
 		Returns:
 			mixed[]
 		"""
+
+		# Make sure conflict arg is valid
+		if conflict not in ('error', 'replace', 'update'):
+			raise ValueError('conflict', conflict)
 
 		# Fetch the record structure
 		dStruct = cls.struct(custom)
@@ -603,7 +607,7 @@ class Record(Record_Base.Record):
 			dRes = r \
 				.db(dStruct['db']) \
 				.table(dStruct['table']) \
-				.insert(lRecords, conflict=(replace and 'replace' or 'error')) \
+				.insert(lRecords, conflict=conflict) \
 				.run(oCon)
 
 			# If the record was not inserted for some reason
