@@ -677,10 +677,10 @@ class Record(Record_Base.Record):
 				)
 
 		# Create the changes record
-		mRet = Commands.execute(dStruct['host'], sSQL)
+		iRet = Commands.execute(dStruct['host'], sSQL)
 
 		# Return based on the rows changed
-		return mRet and True or False
+		return iRet and True or False
 
 	@classmethod
 	def append(cls, _id, array, item, custom={}):
@@ -947,6 +947,114 @@ class Record(Record_Base.Record):
 
 		# Return
 		return mRet
+
+	@classmethod
+	def createMany(cls, records, conflict='error', custom={}):
+		"""Create Many
+
+		Inserts multiple records at once, returning all their primary keys
+		if auto_primary is true, else just returning the number of records
+		inserted (or replaced if replace is set to True)
+
+		Arguments:
+			records {Record[]} -- A list of Record instances to insert
+			conflict {str} -- Must be one of 'error', 'ignore', 'replace'
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			bool
+		"""
+
+		# Make sure conflict arg is valid
+		if conflict not in ('error', 'ignore', 'replace'):
+			raise ValueError('conflict', conflict)
+
+		# Fetch the record structure
+		dStruct = cls.struct(custom)
+
+		# If changes are required
+		if dStruct['changes']:
+			raise RuntimeError('Tables with \'changes\' flag can\'t be inserted using createMany')
+
+		# Create the list of fields
+		lFields = []
+		for f in dStruct['tree'].keys():
+
+			# If it's not the primary key, or it is but it's not auto incrmented
+			if f != dStruct['primary'] or \
+				dStruct['auto_primary'] is not True:
+				lFields.append(f)
+
+		# If we have revisions, add the field
+		if dStruct['revisions']:
+			lFields.append(dStruct['rev_field'])
+
+		# Initialise a list of records
+		lRecords = []
+
+		# Loop through the records
+		for o in records:
+
+			# If the record requires revisions
+			if dStruct['revisions']:
+				o._revision(True)
+
+			# Loop through the fields
+			lValues = []
+			for f in lFields:
+
+				# If it's the primary, and auto_primary is a string
+				if f == dStruct['primary'] and \
+					dStruct['auto_primary'] is not False:
+
+					# If we generate the key ourselves, add it
+					if isinstance(dStruct['auto_primary'], str):
+						lValues.append('%s' % dStruct['auto_primary'])
+
+				else:
+
+					if f in o and o[f] != None:
+						lValues.append(cls.escape(
+							dStruct['host'],
+							dStruct['tree'][f].type(),
+							o[f]
+						))
+					else:
+						lValues.append('NULL')
+
+			# Add the record
+			lRecords.append("%s" % ','.join(lValues))
+
+		# If we want to replace duplicate keys
+		if conflict == 'replace':
+			sUpdate = 'ON DUPLICATE KEY UPDATE %s' % ',\n'.join([
+				"`%s` = VALUES(`%s`)" % (lFields[i], lFields[i])
+				for i in range(len(lFields))
+			])
+
+		# Else, no update
+		else:
+			sUpdate = ''
+
+		# Generate the INSERT statements
+		sSQL = 'INSERT %sINTO `%s`.`%s` (`%s`) ' \
+				'VALUES (%s) ' \
+				'%s' % (
+			(conflict == 'ignore' and 'IGNORE ' or ''),
+			dStruct['db'],
+			dStruct['table'],
+			'`,`'.join(lFields),
+			'),('.join(lRecords),
+			sUpdate
+		)
+
+		# Run the statment
+		iRes = Commands.execute(dStruct['host'], sSQL)
+
+		# Return based on the result
+		return iRes and True or False
 
 	def delete(self, changes=None):
 		"""Delete
