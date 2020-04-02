@@ -189,6 +189,26 @@ class Record(Record_Base.Record):
 	"""
 
 	@classmethod
+	def addChanges(cls, _id, changes, customer={}):
+		"""Add Changes
+
+		Adds a record to the tables associated _changes table. Useful for
+		Record types that can't handle multiple levels and have children
+		tables that shouldn't be updated for every change in a single record
+
+		Arguments:
+			_id {mixed} -- The ID of the record the change is associated with
+			changes {dict} -- The dictionary of changes to add
+			custom {dict} -- Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			bool
+		"""
+		raise Exception('addChanges method not available in Record_ReDB')
+
+	@classmethod
 	def append(cls, _id, array, item, custom={}):
 		"""Append
 
