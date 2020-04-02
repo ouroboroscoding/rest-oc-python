@@ -1261,10 +1261,19 @@ class Record(Record_Base.Record):
 		# Fetch the record structure
 		dStruct = cls.struct(custom)
 
-		# Use the get method to avoid duplicate code and check if anything was
-		#	returned
-		if not cls.get(_id, raw=[dStruct['primary']], custom=custom):
-			return False
+		# If an index was passed
+		if index is not None:
+
+			# Use filter to check for the record
+			if not cls.filter({index: _id}, raw=[dStruct['primary']], limit=1, custom=custom)
+				return False
+
+		# Else, assume an ID
+		else:
+
+			# Use the get method to check for the record
+			if not cls.get(_id, raw=[dStruct['primary']], custom=custom):
+				return False
 
 		# If anything was returned, the key exists
 		return True
