@@ -256,7 +256,7 @@ def addHost(name, info, update=False):
 	# Nothing to do, not OK
 	return False
 
-def dbCreate(name, host = 'primary'):
+def dbCreate(name, host = 'primary', charset=None, collate=None):
 	"""DB Create
 
 	Creates a DB on the given host
@@ -264,13 +264,22 @@ def dbCreate(name, host = 'primary'):
 	Arguments:
 		name {str} -- The name of the DB to create
 		host {str} -- The name of the host the DB will be on
+		charset {str} -- Optional default charset
+		collate {str} -- Optional default collate, charset must be set to use
 
 	Returns:
 		bool
 	"""
 
+	# Generate the statement
+	sSQL = 'CREATE DATABASE IF NOT EXISTS `%s%s`' % (Record_Base.dbPrepend(), name)
+	if charset:
+		sSQL += ' DEFAULT CHARACTER SET %s' % charset
+		if collate:
+			sSQL += ' COLLATE %s' % collate
+
 	# Create the DB
-	Commands.execute(host, 'CREATE DATABASE IF NOT EXISTS `%s%s`' % (Record_Base.dbPrepend(), name))
+	Commands.execute(host, sSQL)
 	return True
 
 def dbDrop(name, host = 'primary'):
