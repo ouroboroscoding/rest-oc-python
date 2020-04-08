@@ -517,7 +517,7 @@ class EffectException(Exception):
 		Exception
 	"""
 
-	def __init__(self, effect):
+	def __init__(self, data = None, error = None, warning = None):
 		"""Constructor
 
 		Dumb dumb python
@@ -529,12 +529,8 @@ class EffectException(Exception):
 			EffectException
 		"""
 
-		# If we didn't get a proper Effect
-		if not isinstance(effect, Effect):
-			raise ValueError('effect')
-
-		# Pass to the parent
-		super().__init__(effect)
+		# Construct the Effect and pass it to the parent
+		super().__init__(Effect(data, error, warning))
 
 class Service(object):
 	"""Service
@@ -562,7 +558,7 @@ class Service(object):
 		# Generate the method name from the URI
 		sMethod = self.pathToMethod(path, '_create')
 
-		# Try to call the method
+		# Try to find the method
 		try:
 			f = getattr(self, sMethod)
 
@@ -575,13 +571,14 @@ class Service(object):
 			else:
 				raise
 
-		# Effect thrown
-		except Effect as e:
-			return e
+		# Try to call the method
+		try:
+			if sesh: return f(data, sesh)
+			else: return f(data)
 
-		# Call the method
-		if sesh: return f(data, sesh)
-		else: return f(data)
+			# Effect thrown
+		except EffectException as e:
+			return e.args[0]
 
 	def delete(self, path, data, sesh=None):
 		"""Delete
@@ -600,7 +597,7 @@ class Service(object):
 		# Generate the method name from the URI
 		sMethod = self.pathToMethod(path, '_delete')
 
-		# Try to call the method
+		# Try to find the method
 		try:
 			f = getattr(self, sMethod)
 
@@ -613,13 +610,14 @@ class Service(object):
 			else:
 				raise
 
-		# Effect thrown
-		except Effect as e:
-			return e
+		# Try to call the method
+		try:
+			if sesh: return f(data, sesh)
+			else: return f(data)
 
-		# Call the method
-		if sesh: return f(data, sesh)
-		else: return f(data)
+			# Effect thrown
+		except EffectException as e:
+			return e.args[0]
 
 	def initialise(self):
 		"""Initialise
@@ -663,7 +661,7 @@ class Service(object):
 		# Generate the method name from the URI
 		sMethod = self.pathToMethod(path, '_read')
 
-		# Try to call the method
+		# Try to find the method
 		try:
 			f = getattr(self, sMethod)
 
@@ -676,13 +674,14 @@ class Service(object):
 			else:
 				raise
 
-		# Effect thrown
-		except Effect as e:
-			return e
+		# Try to call the method
+		try:
+			if sesh: return f(data, sesh)
+			else: return f(data)
 
-		# Call the method
-		if sesh: return f(data, sesh)
-		else: return f(data)
+			# Effect thrown
+		except EffectException as e:
+			return e.args[0]
 
 	def update(self, path, data, sesh=None):
 		"""Update
@@ -701,7 +700,7 @@ class Service(object):
 		# Generate the method name from the URI
 		sMethod = self.pathToMethod(path, '_update')
 
-		# Try to call the method
+		# Try to find the method
 		try:
 			f = getattr(self, sMethod)
 
@@ -714,13 +713,14 @@ class Service(object):
 			else:
 				raise
 
-		# Effect thrown
-		except Effect as e:
-			return e
+		# Try to call the method
+		try:
+			if sesh: return f(data, sesh)
+			else: return f(data)
 
-		# Call the method
-		if sesh: return f(data, sesh)
-		else: return f(data)
+			# Effect thrown
+		except EffectException as e:
+			return e.args[0]
 
 	@staticmethod
 	def pathToMethod(path, append=''):
