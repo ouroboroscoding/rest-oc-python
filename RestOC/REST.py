@@ -145,17 +145,14 @@ class _Route(object):
 			oSession = None
 
 		# Call the appropriate API method based on the HTTP/request method
-		try:
-			if bottle.request.method == 'DELETE':
-				oEffect = Services.delete(self.service, self.path, mData, oSession)
-			elif bottle.request.method == 'GET':
-				oEffect = Services.read(self.service, self.path, mData, oSession)
-			elif bottle.request.method == 'POST':
-				oEffect = Services.create(self.service, self.path, mData, oSession)
-			elif bottle.request.method == 'PUT':
-				oEffect = Services.update(self.service, self.path, mData, oSession)
-		except Services.EffectException as e:
-			return str(e.args[0])
+		if bottle.request.method == 'DELETE':
+			oEffect = Services.delete(self.service, self.path, mData, oSession)
+		elif bottle.request.method == 'GET':
+			oEffect = Services.read(self.service, self.path, mData, oSession)
+		elif bottle.request.method == 'POST':
+			oEffect = Services.create(self.service, self.path, mData, oSession)
+		elif bottle.request.method == 'PUT':
+			oEffect = Services.update(self.service, self.path, mData, oSession)
 
 		# Return the effect as a string
 		return str(oEffect)
