@@ -62,6 +62,8 @@ class Literal(object):
 	"""
 
 	def __init__(self, text):
+		if not isinstance(text, str):
+			raise ValueError('first argument to Literal must be a string')
 		self._text = text;
 	def __str__(self):
 		return self._text
@@ -1287,6 +1289,32 @@ class Record(Record_Base.Record):
 		# If anything was returned, the key exists
 		return True
 
+	def fieldSet(self, field, val):
+		"""Field Set
+
+		Overwrites Record_Base.Record.fieldSet to allow for setting Literals,
+		values that are not verified and then sent to the server as is
+
+		Arguments:
+			field {str} -- The name of the field to set
+			val {mixed} -- The value to set the field to
+
+		Returns:
+			self for chaining
+
+		Raises:
+			KeyError: field doesn't exist in the structure of the record
+			ValueError: value is not valid for the field
+		"""
+
+		# If the value is actually a literal, accept it as is
+		if isinstance(val, Literal):
+			self._dRecord[field] = val
+
+		# Else, allow the parent to validate the value
+		else:
+			super().fieldSet(field, val)
+
 	# filter static method
 	@classmethod
 	def filter(cls, fields, raw=None, orderby=None, limit=None, custom={}):
@@ -1533,12 +1561,12 @@ class Record(Record_Base.Record):
 
 		# Build the statement
 		sSQL = 'SELECT %s FROM `%s`.`%s` ' \
-				'WHERE %s ' \
+				'%s ' \
 				'%s %s' % (
 					sFields,
 					dStruct['db'],
 					dStruct['table'],
-					' AND '.join(lWhere),
+					lWhere and 'WHERE %s' % ' AND '.join(lWhere) or '',
 					sOrderBy,
 					sLimit
 				)
@@ -1831,7 +1859,11 @@ class Record(Record_Base.Record):
 			if f != self._dStruct['primary'] or not self._dStruct['auto_primary']:
 				if dValues[f] != None:
 					lValues.append('`%s` %s' % (
-						f, self.processValue(self._dStruct, f, dValues[f])
+						f, self.escape(
+							self._dStruct['host'],
+							self._dStruct['tree'][f].type(),
+							dValues[f]
+						)
 					))
 				else:
 					lValues.append('`%s` = NULL' % f)
