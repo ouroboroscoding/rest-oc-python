@@ -1858,7 +1858,7 @@ class Record(Record_Base.Record):
 		for f in dValues.keys():
 			if f != self._dStruct['primary'] or not self._dStruct['auto_primary']:
 				if dValues[f] != None:
-					lValues.append('`%s` %s' % (
+					lValues.append('`%s` = %s' % (
 						f, self.escape(
 							self._dStruct['host'],
 							self._dStruct['tree'][f].type(),
