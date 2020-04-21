@@ -1181,18 +1181,9 @@ class Record(Record_Base.Record):
 		# Build the statement
 		sSQL = 'DELETE FROM `%s`.`%s`' % (dStruct['db'], dStruct['table'])
 
-		# If we have IDs
+		# If we have ID(s)
 		if _id is not None:
-
-			# If there's only one
-			if not isinstance(_id, (tuple,list)):
-				sSQL += ' WHERE `%s` = %s' % (index, cls.processValue(dStruct, index, _id))
-
-			else:
-				sSQL += ' WHERE `%s` IN (%s)' % (index, ','.join([
-					cls.processValue(dStruct, index, s)
-					for s in _id
-				]))
+			sSQL += ' WHERE `%s` %s' % (index, cls.processValue(dStruct, index, _id))
 
 		# Delete the records
 		return Commands.execute(dStruct['host'], sSQL)
