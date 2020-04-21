@@ -1186,7 +1186,7 @@ class Record(Record_Base.Record):
 
 			# If there's only one
 			if not isinstance(_id, (tuple,list)):
-				sSQL += ' WHERE `%s` = %s' % (index, cls.processValue(dStruct, index, id_))
+				sSQL += ' WHERE `%s` = %s' % (index, cls.processValue(dStruct, index, _id))
 
 			else:
 				sSQL += ' WHERE `%s` IN (%s)' % (index, ','.join([
@@ -1501,7 +1501,7 @@ class Record(Record_Base.Record):
 				cls.processValue(dStruct, dStruct['primary'], _id)
 			))
 
-			# Check if the id_ is a single value
+			# Check if the _id is a single value
 			if not isinstance(_id, (object,dict,list,tuple)) or \
 				isinstance(_id, str):
 				bMulti = False
