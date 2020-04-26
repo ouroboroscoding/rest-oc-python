@@ -1493,7 +1493,7 @@ class Record(Record_Base.Record):
 			))
 
 			# Check if the _id is a single value
-			if not isinstance(_id, (object,dict,list,tuple)) or \
+			if not isinstance(_id, (dict,list,tuple)) or \
 				isinstance(_id, str):
 				bMulti = False
 
