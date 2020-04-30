@@ -206,7 +206,7 @@ def _cursor(host, dictCur = False):
 			oCursor = oCon.cursor()
 
 		# Make sure we're on UTF8
-		oCursor.execute('SET NAMES utf8')
+		oCursor.execute('SET NAMES %s' % __mdHosts[host]['charset'])
 
 	except :
 		# Clear the connection and try again
@@ -250,9 +250,17 @@ def addHost(name, info, update=False):
 		bool
 	"""
 
-	# If the info isn't already stored, or we want to overwrite it, store it
+	# If the info isn't already stored, or we want to overwrite it
 	if name not in __mdHosts or update:
+
+		# Add default charset if it wasn't passed
+		if 'charset' not in info:
+			info['charset'] = 'utf8'
+
+		# Store the info
 		__mdHosts[name] = info
+
+		# Return OK
 		return True
 
 	# Nothing to do, not OK
