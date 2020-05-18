@@ -644,6 +644,79 @@ class Record(Record_Base.Record):
 	"""
 
 	@classmethod
+	def _nodeToType(cls, node, host):
+		"""Node To Type
+
+		Converts the Node type to a valid MySQL field type
+
+		Arguments:
+			node {FormatOC.Node} -- The node we need an SQL type for
+			host {str} -- The host in case we need to escape anything
+
+		Raises:
+			ValueError
+
+		Returns:
+			str
+		"""
+
+		# Get the node's type
+		sType = node.type()
+
+		# Can't use any in MySQL
+		if sType == 'any':
+			raise ValueError('"any" nodes can not be used in Record_MySQL')
+
+		# If the type is a string
+		elif sType in ['base64', 'string']:
+
+			# If we have options
+			lOptions = node.options()
+			if not lOptions is None:
+
+				# Create an enum
+				return 'enum(%s)' % (','.join([
+					cls.escape(host, sType, s)
+					for s in lOptions
+				]))
+
+			# Else, need maximum
+			else:
+
+				# Get min/max values
+				dMinMax = node.minmax()
+
+				# If we have don't have a maximum
+				if dMinMax['maximum'] is None:
+					raise ValueError('"string" nodes must have a __maximum__ value if __sql__.type is not set in Record_MySQL')
+
+				# If the minimum matches the maximum
+				if dMinMax['minimum'] == dMinMax['maximum']:
+
+					# It's a char as all characters must be filled
+					return 'char(%d)' % dMinMax['maximum']
+
+				else:
+
+					# long text
+					if dMinMax['maximum'] == 4294967296:
+						return 'longtext'
+					elif dMinMax['maximum'] == 16777216:
+						return 'mediumtext'
+					elif dMinMax['maximum'] == 65536:
+						return 'text'
+					else:
+						return 'varchar(%d)' % dMinMax['maximum']
+
+		# Else, get the default
+		elif sType in cls.__nodeToSQL:
+			return cls.__nodeToSQL[sType]
+
+		# Else
+		else:
+			raise ValueError('"%s" is not a known type to Record_MySQL')
+
+	@classmethod
 	def addChanges(cls, _id, changes, custom={}):
 		"""Add Changes
 
@@ -1973,20 +2046,43 @@ class Record(Record_Base.Record):
 			))
 
 		# Generate the list of fields
-		lFields = ['`%s` %s %s%s' % (
-			f,
-			dStruct['tree'][f].special('sql_type', default=cls.__nodeToSQL[dStruct['tree'][f].type()]),
-			((not dStruct['tree'][f].optional()) and 'NOT NULL ' or ''),
-			dStruct['tree'][f].special('sql_opts', default='')
-		) for f in dStruct['create']]
+		lFields = []
+		for f in dStruct['create']:
+
+			# Get the sql special data
+			dSQL = dStruct['tree'][f].special('sql', default={})
+
+			# If it's a string
+			if isinstance(dSQL, str):
+				dSQL = {"type": dSQL}
+
+			# Add the line
+			lFields.append('`%s` %s %s%s' % (
+				f,
+				('type' in dSQL and dSQL['type'] or cls._nodeToType(dStruct['tree'][f], dStruct['host'])),
+				((not dStruct['tree'][f].optional()) and 'not null ' or ''),
+				('opts' in dSQL and dSQL['opts'] or '')
+			))
 
 		# Push the primary key to the front
+		#	Get the sql special data
+		dSQL = dStruct['tree'][dStruct['primary']].special('sql', default={})
+
+		# If it's a string
+		if isinstance(dSQL, str):
+			dSQL = {"type": dSQL}
+
+		# Primary key type
+		sIDType = 'type' in dSQL and dSQL['type'] or cls._nodeToType(dStruct['tree'][dStruct['primary']], dStruct['host'])
+		sIDOpts = 'opts' in dSQL and dSQL['opts'] or ''
+
+		# Add the line
 		lFields.insert(0, '`%s` %s %s%s%s' % (
 			dStruct['primary'],
-			dStruct['tree'][dStruct['primary']].special('sql_type', default=cls.__nodeToSQL[dStruct['tree'][dStruct['primary']].type()]),
-			((not dStruct['tree'][dStruct['primary']].optional()) and 'NOT NULL ' or ''),
-			(dStruct['auto_primary'] is True and 'AUTO_INCREMENT ' or ''),
-			dStruct['tree'][dStruct['primary']].special('sql_opts', default=''),
+			sIDType,
+			((not dStruct['tree'][dStruct['primary']].optional()) and 'not null ' or ''),
+			(dStruct['auto_primary'] is True and 'auto_increment ' or ''),
+			sIDOpts
 		))
 
 		# Init the list of indexes
@@ -2047,16 +2143,16 @@ class Record(Record_Base.Record):
 
 			# Generate the CREATE statement
 			sSQL = 'CREATE TABLE IF NOT EXISTS `%s`.`%s_changes` (' \
-					'`%s` %s NOT NULL %s, ' \
-					'`created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, ' \
-					'`items` text NOT NULL, ' \
+					'`%s` %s not null %s, ' \
+					'`created` datetime not null DEFAULT CURRENT_TIMESTAMP, ' \
+					'`items` text not null, ' \
 					'index `%s` (`%s`)) ' \
 					'ENGINE=%s CHARSET=%s COLLATE=%s' % (
 				dStruct['db'],
 				dStruct['table'],
 				dStruct['primary'],
-				dStruct['tree'][dStruct['primary']].special('sql_type', default=cls.__nodeToSQL[dStruct['tree'][dStruct['primary']].type()]),
-				dStruct['tree'][dStruct['primary']].special('sql_opts', default=''),
+				sIDType,
+				sIDOpts,
 				dStruct['primary'], dStruct['primary'],
 				'engine' in dStruct and dStruct['engine'] or 'InnoDB',
 				'charset' in dStruct and dStruct['charset'] or 'utf8',
