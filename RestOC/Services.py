@@ -44,11 +44,11 @@ def __request(service, action, path, data, sesh=None):
 	Internal method to convert REST requests into HTTP requests
 
 	Arguments:
-		service {str} -- The service we are requesting data from
-		action {str} -- The action to take on the service
-		path {str} -- The path of the request
-		data {mixed} -- The data being sent with the request
-		sesh {Sesh._Session} -- The optional session to pass with the request
+		service (str): The service we are requesting data from
+		action (str): The action to take on the service
+		path (str): The path of the request
+		data (mixed): The data being sent with the request
+		sesh (Sesh._Session): The optional session to pass with the request
 
 	Raises:
 		ServiceException
@@ -134,9 +134,9 @@ def create(service, path, data, sesh=None):
 	Make a POST request
 
 	Arguments:
-		service {str} -- The service to call
-		path {str} -- The path on the service
-		data {mixed} -- The data to pass to the request
+		service (str): The service to call
+		path (str): The path on the service
+		data (mixed): The data to pass to the request
 		sesh {Sesh._Session}: The optional session to send with the request
 
 	Returns:
@@ -150,9 +150,9 @@ def delete(service, path, data, sesh=None):
 	Make a DELETE request
 
 	Arguments:
-		service {str} -- The service to call
-		path {str} -- The path on the service
-		data {mixed} -- The data to pass to the request
+		service (str): The service to call
+		path (str): The path on the service
+		data (mixed): The data to pass to the request
 		sesh {Sesh._Session}: The optional session to send with the request
 
 	Returns:
@@ -167,7 +167,7 @@ def internalKey(key = None):
 	each other
 
 	Arguments:
-		key {str} -- Passed to validate a key
+		key (str): Passed to validate a key
 
 	Returns:
 		bool
@@ -217,9 +217,9 @@ def read(service, path, data, sesh=None):
 	Make a GET request
 
 	Arguments:
-		service {str} -- The service to call
-		path {str} -- The path on the service
-		data {mixed} -- The data to pass to the request
+		service (str): The service to call
+		path (str): The path on the service
+		data (mixed): The data to pass to the request
 		sesh {Sesh._Session}: The optional session to send with the request
 
 	Returns:
@@ -234,9 +234,9 @@ def register(services, restconf, salt):
 	services which will be found via the config
 
 	Arguments:
-		services {dict} -- Services being registered
-		restconf {dict} -- Configuration variables for remote services
-		salt {str} -- The salt used for internal key generation
+		services (dict): Services being registered
+		restconf (dict): Configuration variables for remote services
+		salt (str): The salt used for internal key generation
 
 	Raises:
 		ValueError
@@ -294,9 +294,9 @@ def update(service, path, data, sesh=None):
 	Make a PUT request
 
 	Arguments:
-		service {str} -- The service to call
-		path {str} -- The path on the service
-		data {mixed} -- The data to pass to the request
+		service (str): The service to call
+		path (str): The path on the service
+		data (mixed): The data to pass to the request
 		sesh {Sesh._Session}: The optional session to send with the request
 
 	Returns:
@@ -310,7 +310,7 @@ def verbose(flag=True):
 	Puts Services in verbose mode for easy tracking of requests
 
 	Arguments:
-		flag {bool} -- defaults to True
+		flag (bool): defaults to True
 
 	Returns:
 		None
@@ -330,9 +330,6 @@ class Effect(object):
 	"""Effect
 
 	Represents a standard result from any/all requests
-
-	Extends:
-		object
 	"""
 
 	def __init__(self, data = None, error = None, warning = None):
@@ -341,10 +338,10 @@ class Effect(object):
 		Initialises a new Effect instance
 
 		Arguments:
-			data {mixed} -- If a request returns data this should be set
-			error {mixed} -- If a request has an error, this can be filled with
+			data (mixed): If a request returns data this should be set
+			error (mixed): If a request has an error, this can be filled with
 				a code and message string
-			warning {mixed} -- If a request returns a warning this should be set
+			warning (mixed): If a request returns a warning this should be set
 
 		Raises:
 			ValueError
@@ -452,7 +449,7 @@ class Effect(object):
 		Converts a dict back into an Effect
 
 		Arguments:
-			val {dict} -- A valid dict
+			val (dict): A valid dict
 
 		Returns:
 			Effect
@@ -483,7 +480,7 @@ class Effect(object):
 		Tries to convert a string made from str() back into an Effect
 
 		Arguments:
-			val {str} -- A valid JSON string
+			val (str): A valid JSON string
 
 		Returns:
 			Effect
@@ -512,9 +509,6 @@ class EffectException(Exception):
 	"""Effect Exception
 
 	Stupid python won't let you raise anything that doesn't extend BaseException
-
-	Extends:
-		Exception
 	"""
 
 	def __init__(self, data = None, error = None, warning = None):
@@ -523,7 +517,10 @@ class EffectException(Exception):
 		Dumb dumb python
 
 		Arguments:
-			effect {Effect} -- The Effect to throw/raise
+			data (mixed): If a request returns data this should be set
+			error (mixed): If a request has an error, this can be filled with
+				a code and message string
+			warning (mixed): If a request returns a warning this should be set
 
 		Returns:
 			EffectException
@@ -536,9 +533,6 @@ class Service(object):
 	"""Service
 
 	The object to build all Services from
-
-	Extends:
-		object
 	"""
 
 	def create(self, path, data, sesh=None):
@@ -547,9 +541,9 @@ class Service(object):
 		Create a new object
 
 		Arguments:
-			path {str} -- The path passed to the request
-			data {mixed} -- The data sent with the request
-			sesh {Sesh._Session} -- The session passed to the request
+			path (str): The path passed to the request
+			data (mixed): The data sent with the request
+			sesh (Sesh._Session): The session passed to the request
 
 		Return:
 			Effect
@@ -586,9 +580,9 @@ class Service(object):
 		Delete an existing object
 
 		Arguments:
-			path {str} -- The path passed to the request
-			data {mixed} -- The data sent with the request
-			sesh {Sesh._Session} -- The session passed to the request
+			path (str): The path passed to the request
+			data (mixed): The data sent with the request
+			sesh (Sesh._Session): The session passed to the request
 
 		Return:
 			Effect
@@ -650,9 +644,9 @@ class Service(object):
 		Read an existing object
 
 		Arguments:
-			path {str} -- The path passed to the request
-			data {mixed} -- The data sent with the request
-			sesh {Sesh._Session} -- The session passed to the request
+			path (str): The path passed to the request
+			data (mixed): The data sent with the request
+			sesh (Sesh._Session): The session passed to the request
 
 		Return:
 			Effect
@@ -689,9 +683,9 @@ class Service(object):
 		Update an existing object
 
 		Arguments:
-			path {str} -- The path passed to the request
-			data {mixed} -- The data sent with the request
-			sesh {Sesh._Session} -- The session passed to the request
+			path (str): The path passed to the request
+			data (mixed): The data sent with the request
+			sesh (Sesh._Session): The session passed to the request
 
 		Return:
 			Effect
@@ -729,8 +723,8 @@ class Service(object):
 		Takes a path and converts it to the standard naming for Service methods
 
 		Arguments:
-			path {str} -- The path to parse
-			append {str} -- If set, appended to method name
+			path (str): The path to parse
+			append (str): If set, appended to method name
 
 		Returns:
 			str

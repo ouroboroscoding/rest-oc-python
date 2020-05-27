@@ -37,9 +37,6 @@ class _Route(object):
 	"""Route
 
 	A callable class used to store rest routes in the server
-
-	Extends:
-		object
 	"""
 
 	def __init__(self, service, path, sesh, cors=None):
@@ -48,10 +45,10 @@ class _Route(object):
 		Initialises an instance of the route
 
 		Arguments:
-			service {str} -- The service we are routing to
-			path {str} -- The path in the service we are routing to
-			sesh {bool} -- True if the route requires a session
-			cors {dict} -- Optionsl CORS values
+			service (str): The service we are routing to
+			path (str): The path in the service we are routing to
+			sesh (bool): True if the route requires a session
+			cors (dict): Optionsl CORS values
 
 		Returns:
 			None
@@ -161,9 +158,6 @@ class Config(object):
 	"""Config class
 
 	Represents configuration data for connecting to/loading services
-
-	Extends:
-		object
 	"""
 
 	def __contains__(self, service):
@@ -172,7 +166,7 @@ class Config(object):
 		Python magic method for checking a key exists in a dict like object
 
 		Arguments:
-			service {str} -- The service to check for
+			service (str): The service to check for
 
 		Returns:
 			bool
@@ -348,9 +342,6 @@ class Server(bottle.Bottle):
 	"""Server
 
 	Creates an HTTP server for use with REST requests
-
-	Extends:
-		bottle.Bottle
 	"""
 
 	def __init__(self, routes, service = '', cors=None):
@@ -359,9 +350,9 @@ class Server(bottle.Bottle):
 		Instantiates the server instance
 
 		Arguments:
-			routes {dict|list} -- Routes to the server
-			service {str} -- The service to use if none exists in a route
-			cors {str} -- The regex to identify allowed domains
+			routes (dict|list): Routes to the server
+			service (str): The service to use if none exists in a route
+			cors (str): The regex to identify allowed domains
 
 		Returns:
 			None
@@ -431,15 +422,15 @@ class Server(bottle.Bottle):
 		Overrides Bottle's run to default gunicorn and other fields
 
 		Arguments:
-			server {str} -- Server adapter to use
-			host {str} -- Server address to bind to
-			port {int} -- Server port to bind to
-			reloader {bool} -- Start auto-reloading server?
-			interval {int} -- Auto-reloader interval in seconds
-			quiet {bool} -- Suppress output to stdout and stderr?
-			plugins {list} -- List of plugins to the server
-			debug {bool} -- Debug mode
-			maxfile {int} -- Maximum size of requests
+			server (str): Server adapter to use
+			host (str): Server address to bind to
+			port (int): Server port to bind to
+			reloader (bool): Start auto-reloading server?
+			interval (int): Auto-reloader interval in seconds
+			quiet (bool): Suppress output to stdout and stderr?
+			plugins (list): List of plugins to the server
+			debug (bool): Debug mode
+			maxfile (int): Maximum size of requests
 
 		Returns:
 			None

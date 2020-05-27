@@ -24,10 +24,10 @@ def get(key = None, default = None, conf = '_'):
 	Gets a single value from a conf, returns default if not found
 
 	Arguments:
-		key {string|tuple} -- A tuple to find a child key, or a string to find a
+		key (string|tuple): A tuple to find a child key, or a string to find a
 			parent key
-		default {mixed} -- What to return if the key isn't found
-		conf {string} -- The conf to fetch from
+		default (mixed): What to return if the key isn't found
+		conf (string): The conf to fetch from
 
 	Returns:
 		mixed
@@ -86,8 +86,8 @@ def load(file, conf = '_'):
 	Loads a conf into the specified conf, or 'default', if not set
 
 	Argurments:
-		file {str} -- A file to be loaded into the conf
-		conf {string} -- The conf to store in
+		file (str): A file to be loaded into the conf
+		conf (string): The conf to store in
 
 	Returns:
 		None
@@ -106,8 +106,8 @@ def load_merge(file, conf = '_'):
 	Loads a conf and merges it into whatever already exists
 
 	Args:
-		file {str} -- A file to be loaded
-		conf {string} -- The conf to update
+		file (str): A file to be loaded
+		conf (string): The conf to update
 
 	Returns:
 		None
@@ -133,10 +133,10 @@ def set(key, val, conf = '_'):
 	Sets a key in the given conf, returns the previous value
 
 	Arguments:
-		key {string|tuple} -- A tuple to set a child key, or a string to set a
+		key (string|tuple): A tuple to set a child key, or a string to set a
 			parent key
-		val {mixed} -- The value to set for the key
-		conf {str} -- The conf to set the key for
+		val (mixed): The value to set for the key
+		conf (str): The conf to set the key for
 
 	Returns:
 		mixed

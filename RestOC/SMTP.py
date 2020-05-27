@@ -41,11 +41,11 @@ def init(host="localhost", port=25, tls=False, user=None, passwd=None):
 	Called to change/set any SMTP information before sending out any e-mails
 
 	Args:
-		host {str} -- The hostname of the SMTP server
-		port {uint} -- The port on the host
-		tls {bool} -- Set to True if we need TLS
-		user {str} -- The authorization username
-		passwd {str} -- The authorization password
+		host (str): The hostname of the SMTP server
+		port (uint): The port on the host
+		tls (bool): Set to True if we need TLS
+		user (str): The authorization username
+		passwd (str): The authorization password
 
 	Returns:
 		None
@@ -91,11 +91,11 @@ def send(to, subject, text_body = None, html_body = None, from_='root@localhost'
 	Sends an e-mail to one or many addresses
 
 	Arguments:
-		to {str|str[]} -- One or email addresses to send to
-		subject {str} -- The email's subject
-		body {str} -- The main content of the email
-		from_ {str} -- The from address of the email, optional
-		bcc {str|str[]} -- Blind carbon copy addresses, optional
+		to (str|str[]): One or email addresses to send to
+		subject (str): The email's subject
+		body (str): The main content of the email
+		from_ (str): The from address of the email, optional
+		bcc (str|str[]): Blind carbon copy addresses, optional
 		attachments
 
 	Returns:
