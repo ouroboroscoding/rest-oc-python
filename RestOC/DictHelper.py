@@ -19,7 +19,7 @@ def clone(src):
 	don't have any references
 
 	Arguments:
-		src {dict} -- The source dict
+		src (dict): The source dict
 
 	Returns:
 		dict
@@ -61,8 +61,8 @@ def combine(first, second):
 	overwrite values in first
 
 	Arguments:
-		first {dict} -- The dict to be changed/overwritten
-		second {dict} -- The dict that will do the overwriting
+		first (dict): The dict to be changed/overwritten
+		second (dict): The dict that will do the overwriting
 
 	Returns:
 		dict
@@ -100,8 +100,8 @@ def eval(src, contains):
 	Goes through a dict looking for keys from contains
 
 	Arguments:
-		src {dict} -- The dict we are evaluating
-		contains {list} -- A list of values to check for, if the value is a dict
+		src (dict): The dict we are evaluating
+		contains (list): A list of values to check for, if the value is a dict
 			rather than a string, epects keys to be keys pointing to further
 			lists of keys
 

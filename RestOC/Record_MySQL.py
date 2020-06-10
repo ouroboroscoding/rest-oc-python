@@ -46,9 +46,6 @@ class DuplicateException(Exception):
 	"""DuplicateException class
 
 	Used for raising issues with duplicate records
-
-	Extends:
-		Exception
 	"""
 	pass
 
@@ -56,9 +53,6 @@ class Literal(object):
 	"""Literal
 
 	Used as a value that won't be escaped or parsed
-
-	Extends:
-		object
 	"""
 
 	def __init__(self, text):
@@ -76,7 +70,7 @@ def _clearConnection(host):
 	Handles removing a connection from the module list
 
 	Args:
-		host {str} -- The host to clear
+		host (str): The host to clear
 
 	Returns:
 		None
@@ -109,8 +103,8 @@ def _connection(host, errcnt = 0):
 	Returns a connection to the given host
 
 	Args:
-		host {str} -- The name of the host to connect to
-		errcnt {uint} -- The current error count
+		host (str): The name of the host to connect to
+		errcnt (uint): The current error count
 
 	Returns:
 		Connection
@@ -188,8 +182,8 @@ def _cursor(host, dictCur = False):
 	Returns a cursor for the given host
 
 	Args:
-		host {str} -- The name of the host
-		dictCur {bool} -- If true, cursor will use dicts
+		host (str): The name of the host
+		dictCur (bool): If true, cursor will use dicts
 
 	Return:
 		Cursor
@@ -221,9 +215,6 @@ class _wcursor(object):
 
 	Used with the special Python with method to create a connection that will
 	always be closed regardless of exceptions
-
-	Extends:
-		object
 	"""
 
 	def __init__(self, host, dictCur = False):
@@ -243,8 +234,8 @@ def addHost(name, info, update=False):
 	Add a host that can be used by Records
 
 	Arguments:
-		name {str} -- The name that will be used to fetch the host credentials
-		info {dict} -- The necessary credentials to connect to the host
+		name (str): The name that will be used to fetch the host credentials
+		info (dict): The necessary credentials to connect to the host
 
 	Returns:
 		bool
@@ -272,10 +263,10 @@ def dbCreate(name, host = 'primary', charset=None, collate=None):
 	Creates a DB on the given host
 
 	Arguments:
-		name {str} -- The name of the DB to create
-		host {str} -- The name of the host the DB will be on
-		charset {str} -- Optional default charset
-		collate {str} -- Optional default collate, charset must be set to use
+		name (str): The name of the DB to create
+		host (str): The name of the host the DB will be on
+		charset (str): Optional default charset
+		collate (str): Optional default collate, charset must be set to use
 
 	Returns:
 		bool
@@ -298,8 +289,8 @@ def dbDrop(name, host = 'primary'):
 	Drops a DB on the given host
 
 	Arguments:
-		name {str} -- The name of the DB to delete
-		host {str} -- The name of the host the DB is on
+		name (str): The name of the DB to delete
+		host (str): The name of the host the DB is on
 
 	Returns:
 		bool
@@ -314,9 +305,6 @@ class Commands(object):
 	"""Commands class
 
 	Used to directly interface with MySQL
-
-	Extends:
-		object
 	"""
 
 	@classmethod
@@ -613,9 +601,6 @@ class Record(Record_Base.Record):
 	"""Record
 
 	Extends the base Record class
-
-	Extends:
-		Record_Base.Record
 	"""
 
 	__nodeToSQL = {
@@ -650,8 +635,8 @@ class Record(Record_Base.Record):
 		Converts the Node type to a valid MySQL field type
 
 		Arguments:
-			node {FormatOC.Node} -- The node we need an SQL type for
-			host {str} -- The host in case we need to escape anything
+			node (FormatOC.Node): The node we need an SQL type for
+			host (str): The host in case we need to escape anything
 
 		Raises:
 			ValueError
@@ -725,9 +710,9 @@ class Record(Record_Base.Record):
 		tables that shouldn't be updated for every change in a single record
 
 		Arguments:
-			_id {mixed} -- The ID of the record the change is associated with
-			changes {dict} -- The dictionary of changes to add
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record the change is associated with
+			changes (dict): The dictionary of changes to add
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -781,10 +766,10 @@ class Record(Record_Base.Record):
 		Adds an item to a given array/list for a specific record
 
 		Arguments:
-			_id {mixed} -- The ID of the record to append to
-			array {str} -- The name of the field with the array
-			item {mixed} -- The value to append to the array
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to append to
+			array (str): The name of the field with the array
+			item (mixed): The value to append to the array
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -811,10 +796,10 @@ class Record(Record_Base.Record):
 		Checks if a specific item exist inside a given array/list
 
 		Arguments:
-			_id {mixed} -- The ID of the record to check
-			array {str} -- The name of the field with the array
-			item {mixed} -- The value to check for in the array
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to check
+			array (str): The name of the field with the array
+			item (mixed): The value to check for in the array
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -830,9 +815,9 @@ class Record(Record_Base.Record):
 		Returns the number of records associated with index or filter
 
 		Arguments:
-			_id {mixed} -- The ID(s) to check
-			filter {dict} -- Additional filter
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID(s) to check
+			filter (dict): Additional filter
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -888,8 +873,8 @@ class Record(Record_Base.Record):
 		Adds the record to the DB and returns the primary key
 
 		Arguments:
-			conflict {str} -- Must be one of 'error', 'ignore', 'replace'
-			changes {dict} -- Data needed to store a change record, is
+			conflict (str): Must be one of 'error', 'ignore', 'replace'
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -1049,9 +1034,9 @@ class Record(Record_Base.Record):
 		inserted (or replaced if replace is set to True)
 
 		Arguments:
-			records {Record[]} -- A list of Record instances to insert
-			conflict {str} -- Must be one of 'error', 'ignore', 'replace'
-			custom {dict} -- Custom Host and DB info
+			records (Record_MySQL.Record[]): A list of Record instances to insert
+			conflict (str): Must be one of 'error', 'ignore', 'replace'
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1154,7 +1139,7 @@ class Record(Record_Base.Record):
 		Deletes the record represented by the instance
 
 		Arguments:
-			changes {dict} -- Data needed to store a change record, is
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -1235,10 +1220,10 @@ class Record(Record_Base.Record):
 		were found/deleted
 
 		Arguments:
-			_id {mixed|mixed[]} -- The primary key(s) to delete or None for all
+			_id (mixed|mixed[]): The primary key(s) to delete or None for all
 				records
-			index {str} -- Used as the index instead of the primary key
-			custom {dict} -- Custom Host and DB info
+			index (str): Used as the index instead of the primary key
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1277,9 +1262,9 @@ class Record(Record_Base.Record):
 		Takes a value and turns it into an acceptable string for SQL
 
 		Args:
-			host {str} -- The name of the host if we need to call the server
-			type_ {str} -- The type of data to escape
-			value {mixed} -- The value to escape
+			host (str): The name of the host if we need to call the server
+			type_ (str): The type of data to escape
+			value (mixed): The value to escape
 
 		Returns:
 			str
@@ -1288,6 +1273,9 @@ class Record(Record_Base.Record):
 		# If it's a literal
 		if isinstance(value, Literal):
 			return value.get()
+
+		elif value is None:
+			return 'NULL'
 
 		else:
 
@@ -1331,9 +1319,9 @@ class Record(Record_Base.Record):
 		Returns true if the specified primary key or unique index value exists
 
 		Arguments:
-			_id {mixed} -- The primary key to check
-			index {str} -- Used as the index instead of the primary key
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The primary key to check
+			index (str): Used as the index instead of the primary key
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1368,8 +1356,8 @@ class Record(Record_Base.Record):
 		values that are not verified and then sent to the server as is
 
 		Arguments:
-			field {str} -- The name of the field to set
-			val {mixed} -- The value to set the field to
+			field (str): The name of the field to set
+			val (mixed): The value to set the field to
 
 		Returns:
 			self for chaining
@@ -1395,13 +1383,13 @@ class Record(Record_Base.Record):
 		Finds records based on the specific fields and values passed
 
 		Arguments:
-			fields {dict} -- A dictionary of field names to the values they
+			fields (dict): A dictionary of field names to the values they
 				should match
 			raw (bool|list} -- Return raw data (dict) for all or a set list of
 				fields
-			orderby {str|str[]} -- A field or fields to order the results by
-			limit {int|tuple} -- The limit and possible starting point
-			custom {dict} -- Custom Host and DB info
+			orderby (str|str[]): A field or fields to order the results by
+			limit (int|tuple): The limit and possible starting point
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1527,15 +1515,15 @@ class Record(Record_Base.Record):
 		Returns records by primary key or index, can also be given an extra filter
 
 		Arguments:
-			_id {str|str[]} -- The primary key(s) to fetch from the table
-			index {str} -- N/A in MySQL
+			_id (str|str[]): The primary key(s) to fetch from the table
+			index (str): N/A in MySQL
 			filter (dict} -- Additional filter
-			match {tuple} -- N/A in MySQL
+			match (tuple): N/A in MySQL
 			raw (bool|list} -- Return raw data (dict) for all or a set list of
 				fields
-			orderby {str|str[]} -- A field or fields to order the results by
-			limit {int|tuple} -- The limit and possible starting point
-			custom {dict} -- Custom Host and DB info
+			orderby (str|str[]): A field or fields to order the results by
+			limit (int|tuple): The limit and possible starting point
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1687,9 +1675,9 @@ class Record(Record_Base.Record):
 		Used by Record types that have the 'changes' flag set
 
 		Arguments:
-			_id {mixed} -- The of the primary record to fetch changes for
-			orderby {str|str[]} -- A field or fields to order the results by
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The of the primary record to fetch changes for
+			orderby (str|str[]): A field or fields to order the results by
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1758,9 +1746,9 @@ class Record(Record_Base.Record):
 		to look up the values for the field
 
 		Args:
-			struct {dict} -- The structure associated with the record
-			field {str} -- The name of the field
-			value {mixed} -- The value as a single item, list, or dictionary
+			struct (dict): The structure associated with the record
+			field (str): The name of the field
+			value (mixed): The value as a single item, list, or dictionary
 
 		Returns:
 			str
@@ -1822,13 +1810,14 @@ class Record(Record_Base.Record):
 
 				# Else, it must be a single value
 				else:
-					sRet = '!= ' + cls.escape(struct['host'], sType, value['neq'])
+					if value['neq'] is None: sRet = 'IS NOT NULL'
+					else: sRet = '!= ' + cls.escape(struct['host'], sType, value['neq'])
 
 		# Else, it must be a single value
 		else:
 
 			# If it's None
-			if value is None: sRet = '= NULL'
+			if value is None: sRet = 'IS NULL'
 			else: sRet = '= ' + cls.escape(struct['host'], sType, value)
 
 		# Return the processed value
@@ -1841,10 +1830,10 @@ class Record(Record_Base.Record):
 		Removes an item from a given array/list for a specific record
 
 		Arguments:
-			_id {mixed} -- The ID of the record to remove from
-			array {str} -- The name of the field with the array
-			index {uint} -- The index of the array to remove
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to remove from
+			array (str): The name of the field with the array
+			index (uint): The index of the array to remove
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1860,8 +1849,8 @@ class Record(Record_Base.Record):
 		or a new revision number of the record is revisionable
 
 		Arguments:
-			replace {bool} -- If true, replace all fields instead of updating
-			changes {dict} -- Data needed to store a change record, is
+			replace (bool): If true, replace all fields instead of updating
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -2014,7 +2003,7 @@ class Record(Record_Base.Record):
 		Creates the record's table/collection/etc in the DB
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -2172,7 +2161,7 @@ class Record(Record_Base.Record):
 		Deletes the record's table/collection/etc in the DB
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -2215,12 +2204,12 @@ class Record(Record_Base.Record):
 		table
 
 		Arguments:
-			field {str} -- The name of the field to update
-			value {mixed} -- The value to set the field to
-			_id {mixed} -- Optional ID(s) to filter by
-			index {str} -- Optional name of the index to use instead of primary
-			filter {dict} -- Optional filter list to decide what records get updated
-			custom {dict} -- Custom Host and DB info
+			field (str): The name of the field to update
+			value (mixed): The value to set the field to
+			_id (mixed): Optional ID(s) to filter by
+			index (str): Optional name of the index to use instead of primary
+			filter (dict): Optional filter list to decide what records get updated
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -2279,7 +2268,7 @@ class Record(Record_Base.Record):
 		Returns a universal unique ID
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 

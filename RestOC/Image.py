@@ -44,7 +44,7 @@ def apply_rotation(image):
 	Uses exif data to rotate the image to the proper position
 
 	Arguments:
-		image {str} -- A raw image as a string
+		image (str): A raw image as a string
 
 	Returns:
 		str
@@ -92,7 +92,7 @@ def convertToJPEG(image):
 	Changes any valid image into a JPEG
 
 	Arguments:
-		image {str} -- A raw image as a string
+		image (str): A raw image as a string
 
 	Returns:
 		str
@@ -129,7 +129,7 @@ def info(image):
 	Returns information about an image: resolution, length, type, and mime
 
 	Arguments:
-		image {str} -- A raw image as a string
+		image (str): A raw image as a string
 
 	Returns:
 		dict
@@ -168,9 +168,9 @@ def resize(image, dims, crop=False):
 	Given raw data and a size, a new image is created and returned as raw data
 
 	Arguments:
-		image {str} -- Raw image data to be loaded and resized
-		dims {str|dict} -- New dimensions of the image, "WWWxHHH" or {"w":, "h":}
-		crop {bool} -- Set to true to crop the photo rather than add whitespace
+		image (str): Raw image data to be loaded and resized
+		dims (str|dict): New dimensions of the image, "WWWxHHH" or {"w":, "h":}
+		crop (bool): Set to true to crop the photo rather than add whitespace
 
 	Returns:
 		str

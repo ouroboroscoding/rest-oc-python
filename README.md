@@ -5,3 +5,7 @@ A python 3 set of modules used for setting up REST microservices
 ```
 pip install rest-oc
 ```
+
+# Documentation
+
+http://ouroboroscoding.com/rest-oc/

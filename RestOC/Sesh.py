@@ -30,7 +30,7 @@ def create(id = None):
 	generated
 
 	Arguments:
-		id {str} -- The ID to use for the session
+		id (str): The ID to use for the session
 
 	Returns:
 		Session
@@ -45,8 +45,8 @@ def init(conf, expire=86400):
 	Initialises the module
 
 	Arguments:
-		conf {dict} -- The necessary Redis config
-		expire {uint} -- Length in seconds for the session to remain active
+		conf (dict): The necessary Redis config
+		expire (uint): Length in seconds for the session to remain active
 
 	Returns:
 		None
@@ -67,7 +67,7 @@ def load(id):
 	Loads an existing session from the cache
 
 	Arguments:
-		id {str} -- The unique id of an existing session
+		id (str): The unique id of an existing session
 
 	Returns:
 		Session
@@ -86,9 +86,6 @@ class _Session(object):
 	"""Session
 
 	A wrapper for the session data
-
-	Extends:
-		object
 	"""
 
 	def __init__(self, id, data={}):
@@ -97,8 +94,8 @@ class _Session(object):
 		Intialises the instance, which is just setting up the dict
 
 		Arguments:
-			id {str} -- The ID of the session
-			data {dict} -- The data in the session
+			id (str): The ID of the session
+			data (dict): The data in the session
 
 		Returns:
 			Session
@@ -112,7 +109,7 @@ class _Session(object):
 		True if the key exists in the session
 
 		Arguments:
-			key {str} -- The field to check for
+			key (str): The field to check for
 
 		Returns:
 			bool
@@ -125,7 +122,7 @@ class _Session(object):
 		Removes a key from a session
 
 		Arguments:
-			key {str} -- The key to remove
+			key (str): The key to remove
 
 		Returns:
 			None
@@ -138,7 +135,7 @@ class _Session(object):
 		Returns the given key
 
 		Arguments:
-			key {str} -- The key to return
+			key (str): The key to return
 
 		Returns:
 			mixed
@@ -171,8 +168,8 @@ class _Session(object):
 		Sets the given key
 
 		Arguments:
-			key {str} -- The key to set
-			value {mixed} -- The value for the key
+			key (str): The key to set
+			value (mixed): The value for the key
 
 		Returns:
 			None

@@ -29,7 +29,7 @@ def dbPrepend(pre = None):
 	Gets or sets the global prefix for all DBs, useful for testing/development
 
 	Arguments:
-		pre {str} -- The prefix to store
+		pre (str): The prefix to store
 
 	Returns:
 		str|None
@@ -50,7 +50,7 @@ def getType(type_):
 	Returns the module used to work with the specific type
 
 	Arguments:
-		type_ {str} -- The name of the type of DB
+		type_ (str): The name of the type of DB
 
 	Returns:
 		module
@@ -63,8 +63,8 @@ def registerType(type_, module_):
 	Sets the class instance used for a specific DB type
 
 	Arguments:
-		type_ {str} -- The name used for the type of DB
-		module_ {module} -- The module being registered
+		type_ (str): The name used for the type of DB
+		module_ (module): The module being registered
 
 	Throws:
 		ValueError
@@ -89,9 +89,6 @@ class RevisionException(Exception):
 	"""Revision Exception
 
 	Raised if a record can not be updated do to Revision failure
-
-	Extends:
-		Exception
 	"""
 	pass
 
@@ -99,9 +96,6 @@ class Record(abc.ABC):
 	"""Record
 
 	The base class for all child record classes
-
-	Extends:
-		abc.ABC
 	"""
 
 	def __init__(self, record={}, custom={}):
@@ -110,8 +104,8 @@ class Record(abc.ABC):
 		Initialises the instance and returns it
 
 		Arguments:
-			record {dict} -- The record data
-			custom {dict} -- Custom Host and DB info
+			record (dict): The record data
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -143,7 +137,7 @@ class Record(abc.ABC):
 		Python magic method for checking a key exists in a dict like object
 
 		Arguments:
-			field {str} -- The field to check for
+			field (str): The field to check for
 
 		Returns:
 			bool
@@ -156,7 +150,7 @@ class Record(abc.ABC):
 		Python magic method for deleting a key from a dict like object
 
 		Arguments:
-			field {str} -- The field to delete
+			field (str): The field to delete
 
 		Returns:
 			None
@@ -169,7 +163,7 @@ class Record(abc.ABC):
 		Python magic method for getting a key from a dict like object
 
 		Arguments:
-			field {str} -- The field to return
+			field (str): The field to return
 
 		Raises:
 			KeyError
@@ -185,8 +179,8 @@ class Record(abc.ABC):
 		Python magic method for setting a key in a dict like object
 
 		Arguments:
-			field {str} -- The field to set
-			val {mixed} -- The value of the field
+			field (str): The field to set
+			val (mixed): The value of the field
 
 		Returns:
 			None
@@ -209,8 +203,8 @@ class Record(abc.ABC):
 		Internal method for setting revision values
 
 		Arguments:
-			struct {dict} -- The structure for the record
-			init {bool} -- True to set a new value
+			struct (dict): The structure for the record
+			init (bool): True to set a new value
 
 		Returns:
 			bool
@@ -267,9 +261,9 @@ class Record(abc.ABC):
 		tables that shouldn't be updated for every change in a single record
 
 		Arguments:
-			_id {mixed} -- The ID of the record the change is associated with
-			changes {dict} -- The dictionary of changes to add
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record the change is associated with
+			changes (dict): The dictionary of changes to add
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -285,10 +279,10 @@ class Record(abc.ABC):
 		Adds an item to a given array/list for a specific record
 
 		Arguments:
-			_id {mixed} -- The ID of the record to append to
-			array {str} -- The name of the field with the array
-			item {mixed} -- The value to append to the array
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to append to
+			array (str): The name of the field with the array
+			item (mixed): The value to append to the array
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -328,10 +322,10 @@ class Record(abc.ABC):
 		Checks if a specific item exist inside a given array/list
 
 		Arguments:
-			_id {mixed} -- The ID of the record to check
-			array {str} -- The name of the field with the array
-			item {mixed} -- The value to check for in the array
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to check
+			array (str): The name of the field with the array
+			item (mixed): The value to check for in the array
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -347,10 +341,10 @@ class Record(abc.ABC):
 		Returns the number of records associated with index or filter
 
 		Arguments:
-			_ids {mixed} -- The ID to check
-			index {str} -- Used as the index instead of the primary key
-			filter {dict} -- Additional filter
-			custom {dict} -- Custom Host and DB info
+			_ids (mixed): The ID to check
+			index (str): Used as the index instead of the primary key
+			filter (dict): Additional filter
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -366,8 +360,8 @@ class Record(abc.ABC):
 		Adds the record to the DB and returns the primary key
 
 		Arguments:
-			conflict {str} -- Must be one of 'error', 'replace', or 'update'
-			changes {dict} -- Data needed to store a change record, is
+			conflict (str): Must be one of 'error', 'replace', or 'update'
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -382,9 +376,9 @@ class Record(abc.ABC):
 		Inserts multiple records at once
 
 		Arguments:
-			records {Record[]} -- A list of Record instances to insert
-			conflict {str} -- What to do on a conflict, Record type specific
-			custom {dict} -- Custom Host and DB info
+			records (Record_Base.Record[]): A list of Record instances to insert
+			conflict (str): What to do on a conflict, Record type specific
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -400,7 +394,7 @@ class Record(abc.ABC):
 		Deletes the record represented by the instance
 
 		Arguments:
-			changes {dict} -- Data needed to store a change record, is
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -416,9 +410,9 @@ class Record(abc.ABC):
 		found/deleted
 
 		Arguments:
-			_id {mixed|mixed[]} -- The ID(s) to delete or None for all records
-			index {str} -- Used as the index instead of the primary key
-			custom {dict} -- Custom Host and DB info
+			_id (mixed|mixed[]): The ID(s) to delete or None for all records
+			index (str): Used as the index instead of the primary key
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -434,9 +428,9 @@ class Record(abc.ABC):
 		Returns true if the specified ID or unique index value exists
 
 		Arguments:
-			_id {mixed} -- The ID to check
-			index {str} -- Used as the index instead of the primary key
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID to check
+			index (str): Used as the index instead of the primary key
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -451,7 +445,7 @@ class Record(abc.ABC):
 		Deletes a specific field from a record (used by __delitem__)
 
 		Arguments:
-			field {str} -- The field to delete
+			field (str): The field to delete
 
 		Raises:
 			KeyError
@@ -479,8 +473,8 @@ class Record(abc.ABC):
 		Returns a specific field, if it's not found, returns the default
 
 		Arguments:
-			field {str} -- The field to get
-			default {mixed} -- Returned if the field doesn't exist
+			field (str): The field to get
+			default (mixed): Returned if the field doesn't exist
 
 		Returns:
 			mixed
@@ -499,8 +493,8 @@ class Record(abc.ABC):
 		Sets a specific field in a record (used by __setitem__)
 
 		Arguments:
-			field {str} -- The name of the field to set
-			val {mixed} -- The value to set the field to
+			field (str): The name of the field to set
+			val (mixed): The value to set the field to
 
 		Returns:
 			self for chaining
@@ -546,13 +540,13 @@ class Record(abc.ABC):
 		Finds records based on the specific fields and values passed
 
 		Arguments:
-			fields {dict} -- A dictionary of field names to the values they
+			fields (dict): A dictionary of field names to the values they
 				should match
-			raw {bool|list} -- Return raw data (dict) for all or a set list of
+			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
-			orderby {str|str[]} -- A field or fields to order the results by
-			limit {int|tuple} -- The limit and possible starting point
-			custom {dict} -- Custom Host and DB info
+			orderby (str|str[]): A field or fields to order the results by
+			limit (int|tuple): The limit and possible starting point
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -568,8 +562,8 @@ class Record(abc.ABC):
 		Generates the list of changes between two records
 
 		Arguments:
-			old {dict} -- Old record
-			new {dict} -- New record
+			old (dict): Old record
+			new (dict): New record
 
 		Returns:
 			dict|None
@@ -681,8 +675,8 @@ class Record(abc.ABC):
 		Generates record specific config based on the Format-OC tree passed
 
 		Arguments:
-			tree {FormatOC.Tree} -- the tree associated with the record type
-			special {str} -- The special section used to identify the child info
+			tree (FormatOC.Tree): the tree associated with the record type
+			special (str): The special section used to identify the child info
 
 		Returns:
 			dict
@@ -715,15 +709,15 @@ class Record(abc.ABC):
 		Returns records by ID or index, can also be given an extra filter
 
 		Arguments:
-			_id {mixed|mixed[]} -- The ID(s) to fetch from the table
-			index {str} -- Index to use instead of primary key
-			filter {dict} -- Additional filter
-			match {tuple} -- Name/Match filter
-			raw {bool|list} -- Return raw data (dict) for all or a set list of
+			_id (mixed|mixed[]): The ID(s) to fetch from the table
+			index (str): Index to use instead of primary key
+			filter (dict): Additional filter
+			match (tuple): Name/Match filter
+			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
-			orderby {str|str[]} -- A field or fields to order the results by
-			limit {int|tuple} -- The limit and possible starting point
-			custom {dict} -- Custom Host and DB info
+			orderby (str|str[]): A field or fields to order the results by
+			limit (int|tuple): The limit and possible starting point
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -740,9 +734,9 @@ class Record(abc.ABC):
 		Used by Record types that have the 'changes' flag set
 
 		Arguments:
-			_id {mixed} -- The of the primary record to fetch changes for
-			orderby {str|str[]} -- A field or fields to order the results by
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The of the primary record to fetch changes for
+			orderby (str|str[]): A field or fields to order the results by
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -758,7 +752,7 @@ class Record(abc.ABC):
 		Returns structure info for the record based on the DB and Tree
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -800,10 +794,10 @@ class Record(abc.ABC):
 		Removes an item from a given array/list for a specific record
 
 		Arguments:
-			_id {mixed} -- The ID of the record to remove from
-			array {str} -- The name of the field with the array
-			index {uint} -- The index of the array to remove
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to remove from
+			array (str): The name of the field with the array
+			index (uint): The index of the array to remove
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -820,8 +814,8 @@ class Record(abc.ABC):
 		or a new revision number of the record is revisionable
 
 		Arguments:
-			replace {bool} -- If true, replace all fields instead of updating
-			changes {dict} -- Data needed to store a change record, is
+			replace (bool): If true, replace all fields instead of updating
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -837,7 +831,7 @@ class Record(abc.ABC):
 		Creates the record's table/collection/etc in the DB
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -855,7 +849,7 @@ class Record(abc.ABC):
 		Deletes the record's table/collection/etc in the DB
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -883,11 +877,11 @@ class Record(abc.ABC):
 		table. Returns the number of records altered
 
 		Arguments:
-			field {str} -- The name of the field to update
-			value {mixed} -- The value to set the field to
-			_id {mixed} -- Optional ID(s) to filter by
-			index {str} -- Optional name of the index to use instead of primary
-			filter {dict} -- Optional filter list to decide what records get updated
+			field (str): The name of the field to update
+			value (mixed): The value to set the field to
+			_id (mixed): Optional ID(s) to filter by
+			index (str): Optional name of the index to use instead of primary
+			filter (dict): Optional filter list to decide what records get updated
 
 		Returns:
 			uint
@@ -901,7 +895,7 @@ class Record(abc.ABC):
 		Returns a universal unique ID
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 

@@ -25,7 +25,7 @@ def init(folder):
 	Initialise the Templates module
 
 	Arguments:
-		folder {str} -- The folder to find templates in
+		folder (str): The folder to find templates in
 
 	Returns:
 		None
@@ -47,11 +47,11 @@ def generate(tpl, data = {}, locale = 'en_US', pdf = False):
 	Generate content from a template and return it
 
 	Arguments:
-		tpl {str} -- The template to load
-		data {dict} -- The keys/values to use in the template
-		locale {str} -- The language to use, i.e. which folder to get the
+		tpl (str): The template to load
+		data (dict): The keys/values to use in the template
+		locale (str): The language to use, i.e. which folder to get the
 			template from
-		pdf {bool} -- Set to True to return a PDF of the generated template
+		pdf (bool): Set to True to return a PDF of the generated template
 
 	Returns:
 		str

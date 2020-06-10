@@ -35,8 +35,8 @@ def decrypt(key, val):
 	16 bytes
 
 	Arguments:
-		key {str} -- A key that was used to encrypt the original value
-		val {str} -- The value to decrypt
+		key (str): A key that was used to encrypt the original value
+		val (str): The value to decrypt
 
 	Returns:
 		str
@@ -72,8 +72,8 @@ def encrypt(key, val):
 	multiples of 16 bytes
 
 	Arguments:
-		key {str} -- The key used to encrypt the value
-		val {str} -- The value to encrypt and return
+		key (str): The key used to encrypt the value
+		val (str): The value to encrypt and return
 
 	Returns:
 		str
@@ -108,7 +108,7 @@ def normalize(val):
 	Replaces all special alpha characters with their ascii equivalent
 
 	Args:
-		val {str} -- The text to normalize
+		val (str): The text to normalize
 
 	Returns:
 		str
@@ -137,15 +137,15 @@ def random(length = 8, sets='_aZ', duplicates=True):
 	character string using lowercase letters with possible repeating characters
 
 	Arguments:
-		length {int} -- Requested length of the password
-		sets {str|str[]} -- A list of names from the standard sets, a string
+		length (int): Requested length of the password
+		sets (str|str[]): A list of names from the standard sets, a string
 			starting with an underscore representing one named set, or any other
 			string to be used as an array of characters to chose from. If you
 			want certain characters to have a greater chance of appearing, use
 			them more times, e.g. twice the 'A's, "AABC", or three times the
 			'B's, "ABBBC". Make sure not to turn off duplicates for this to be
 			effective
-		duplicates {bool} -- Defaults to True, allowing characters to be used
+		duplicates (bool): Defaults to True, allowing characters to be used
 			more than once
 
 	Sets:

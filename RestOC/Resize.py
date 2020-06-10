@@ -15,10 +15,10 @@ def crop(w, h, bw, bh):
 	Makes sure one side fits and crops the other
 
 	Arguments:
-		w {int} -- The current width
-		h {int} -- The current height
-		bw {int} -- The boundary width
-		bh {int} -- The boundary height
+		w (int): The current width
+		h (int): The current height
+		bw (int): The boundary width
+		bh (int): The boundary height
 
 	Returns:
 		dict
@@ -62,10 +62,10 @@ def fit(w, h, bw, bh):
 	Makes sure one side fits and makes the other smaller than necessary
 
 	Arguments:
-		w {int} -- The current width
-		h {int} -- The current height
-		bw {int} -- The boundary width
-		bh {int} -- The boundary height
+		w (int): The current width
+		h (int): The current height
+		bw (int): The boundary width
+		bh (int): The boundary height
 
 	Returns:
 		list [w, h]
@@ -110,10 +110,10 @@ def region(w, h, bw, bh):
 	the bounding box
 
 	Arguments:
-		w {int} -- The current width
-		h {int} -- The current height
-		bw {int} -- The boundary width
-		bh {int} -- The boundary height
+		w (int): The current width
+		h (int): The current height
+		bw (int): The boundary width
+		bh (int): The boundary height
 
 	Returns:
 		dict

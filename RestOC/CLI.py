@@ -15,10 +15,7 @@ import sys
 class ProgressBar(object):
 	"""Progress Bar
 
-	Generates a progress bar for used in terminals
-
-	Extends:
-		object
+	Generates a progress bar for use in terminals
 	"""
 
 	def __init__(self, title="Progress Bar", total=100, sections=20, start=0):
@@ -27,10 +24,10 @@ class ProgressBar(object):
 		Initialises the instance of the object
 
 		Arguments:
-			title {str} -- The text before the progress bar
-			total {int} -- The total count of items
-			sections {int} -- The number of sections in the progress bar
-			start {int} -- Optional, defaults to 0
+			title (str): The text before the progress bar
+			total (int): The total count of items
+			sections (int): The number of sections in the progress bar
+			start (int): Optional, defaults to 0
 
 		Returns:
 			ProgressBar
@@ -65,7 +62,7 @@ class ProgressBar(object):
 		Handles adding to the count
 
 		Arguments:
-			other {uint} -- Should be an unsigned number
+			other (uint): Should be an unsigned number
 
 		Returns:
 			None

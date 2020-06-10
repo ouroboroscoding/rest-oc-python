@@ -33,8 +33,8 @@ def _connect(host, error_count=0):
 	Internal module function to fetch a connection to a specific RethinkDB host
 
 	Arguments:
-		host {str} -- The name the host is stored using addHost()
-		error_count {int} -- The number of times the function has failed
+		host (str): The name the host is stored using addHost()
+		error_count (int): The number of times the function has failed
 
 	Raises:
 		ConnectionError
@@ -74,9 +74,6 @@ class _with(object):
 
 	Used with the special Python with method to create a connection that will
 	always be closed regardless of exceptions
-
-	Extends:
-		object
 	"""
 
 	def __init__(self, host):
@@ -96,8 +93,8 @@ def addHost(name, info, update=False):
 	Add a host that can be used by Records
 
 	Arguments:
-		name {str} -- The name that will be used to fetch the host credentials
-		info {dict} -- The necessary credentials to connect to the host
+		name (str): The name that will be used to fetch the host credentials
+		info (dict): The necessary credentials to connect to the host
 
 	Returns:
 		bool
@@ -117,8 +114,8 @@ def dbCreate(name, host = 'primary'):
 	Creates a DB on the given host
 
 	Arguments:
-		name {str} -- The name of the DB to create
-		host {str} -- The name of the host the DB will be on
+		name (str): The name of the DB to create
+		host (str): The name of the host the DB will be on
 
 	Returns:
 		bool
@@ -153,8 +150,8 @@ def dbDrop(name, host = 'primary'):
 	Drops a DB on the given host
 
 	Arguments:
-		name {str} -- The name of the DB to delete
-		host {str} -- The name of the host the DB is on
+		name (str): The name of the DB to delete
+		host (str): The name of the host the DB is on
 
 	Returns:
 		bool
@@ -183,9 +180,6 @@ class Record(Record_Base.Record):
 	"""Record
 
 	Extends the base Record class
-
-	Extends:
-		Record_Base.Record
 	"""
 
 	@classmethod
@@ -197,9 +191,9 @@ class Record(Record_Base.Record):
 		tables that shouldn't be updated for every change in a single record
 
 		Arguments:
-			_id {mixed} -- The ID of the record the change is associated with
-			changes {dict} -- The dictionary of changes to add
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record the change is associated with
+			changes (dict): The dictionary of changes to add
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -215,10 +209,10 @@ class Record(Record_Base.Record):
 		Adds an item to a given array/list for a specific record
 
 		Arguments:
-			_id {mixed} -- The ID of the record to append to
-			array {str} -- The name of the field with the array
-			item {mixed} -- The value to append to the array
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to append to
+			array (str): The name of the field with the array
+			item (mixed): The value to append to the array
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -264,10 +258,10 @@ class Record(Record_Base.Record):
 		Checks if a specific item exist inside a given array/list
 
 		Arguments:
-			_id {mixed} -- The ID of the record to check
-			array {str} -- The name of the field with the array
-			item {mixed} -- The value to check for in the array
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to check
+			array (str): The name of the field with the array
+			item (mixed): The value to check for in the array
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -296,10 +290,10 @@ class Record(Record_Base.Record):
 		Returns the number of records associated with index or filter
 
 		Arguments:
-			_ids {mixed} -- The ID to check
-			index {str} -- Used as the index instead of the primary key
-			filter {dict} -- Additional filter
-			custom {dict} -- Custom Host and DB info
+			_ids (mixed): The ID to check
+			index (str): Used as the index instead of the primary key
+			filter (dict): Additional filter
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -484,8 +478,8 @@ class Record(Record_Base.Record):
 		Adds the record to the DB and returns the primary key
 
 		Arguments:
-			conflict {str} -- Must be one of 'error', 'replace', or 'update'
-			changes {dict} -- Data needed to store a change record, is
+			conflict (str): Must be one of 'error', 'replace', or 'update'
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -566,9 +560,9 @@ class Record(Record_Base.Record):
 		inserted (or replaced if replace is set to True)
 
 		Arguments:
-			records {Record[]} -- A list of Record instances to insert
-			conflict {str} -- Must be one of 'error', 'replace', or 'update'
-			custom {dict} -- Custom Host and DB info
+			records (Record_ReDB.Record[]): A list of Record instances to insert
+			conflict (str): Must be one of 'error', 'replace', or 'update'
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -633,7 +627,7 @@ class Record(Record_Base.Record):
 		Deletes the record represented by the instance
 
 		Arguments:
-			changes {dict} -- Data needed to store a change record, is
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -709,10 +703,10 @@ class Record(Record_Base.Record):
 		were found/deleted
 
 		Arguments:
-			_id {mixed|mixed[]} -- The primary key(s) to delete or None for all
+			_id (mixed|mixed[]): The primary key(s) to delete or None for all
 				records
-			index {str} -- Used as the index instead of the primary key
-			custom {dict} -- Custom Host and DB info
+			index (str): Used as the index instead of the primary key
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -785,9 +779,9 @@ class Record(Record_Base.Record):
 		Returns true if the specified primary key or unique index value exists
 
 		Arguments:
-			_id {mixed} -- The primary key to check
-			index {str} -- Used as the index instead of the primary key
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The primary key to check
+			index (str): Used as the index instead of the primary key
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -814,13 +808,13 @@ class Record(Record_Base.Record):
 		Finds records based on the specific fields and values passed
 
 		Arguments:
-			fields {dict} -- A dictionary of field names to the values they
+			fields (dict): A dictionary of field names to the values they
 				should match
 			raw (bool|list} -- Return raw data (dict) for all or a set list of
 				fields
-			orderby {str|str[]} -- A field or fields to order the results by
-			limit {int|tuple} -- The limit and possible starting point
-			custom {dict} -- Custom Host and DB info
+			orderby (str|str[]): A field or fields to order the results by
+			limit (int|tuple): The limit and possible starting point
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -928,15 +922,15 @@ class Record(Record_Base.Record):
 		Returns records by primary key or index, can also be given an extra filter
 
 		Arguments:
-			_id {str|str[]} -- The primary key(s) to fetch from the table
-			index {str} -- Index to use instead of primary key
+			_id (str|str[]): The primary key(s) to fetch from the table
+			index (str): Index to use instead of primary key
 			filter (dict} -- Additional filter
-			match {tuple} -- Name/Match filter
+			match (tuple): Name/Match filter
 			raw (bool|list} -- Return raw data (dict) for all or a set list of
 				fields
-			orderby {str|str[]} -- A field or fields to order the results by
-			limit {int|tuple} -- The limit and possible starting point
-			custom {dict} -- Custom Host and DB info
+			orderby (str|str[]): A field or fields to order the results by
+			limit (int|tuple): The limit and possible starting point
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1228,9 +1222,9 @@ class Record(Record_Base.Record):
 		Used by Record types that have the 'changes' flag set
 
 		Arguments:
-			_id {mixed} -- The of the primary record to fetch changes for
-			orderby {str|str[]} -- A field or fields to order the results by
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The of the primary record to fetch changes for
+			orderby (str|str[]): A field or fields to order the results by
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1308,10 +1302,10 @@ class Record(Record_Base.Record):
 		Removes an item from a given array/list for a specific record
 
 		Arguments:
-			_id {mixed} -- The ID of the record to remove from
-			array {str} -- The name of the field with the array
-			index {uint} -- The index of the array to remove
-			custom {dict} -- Custom Host and DB info
+			_id (mixed): The ID of the record to remove from
+			array (str): The name of the field with the array
+			index (uint): The index of the array to remove
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1346,8 +1340,8 @@ class Record(Record_Base.Record):
 		or a new revision number of the record is revisionable
 
 		Arguments:
-			replace {bool} -- If true, replace all fields instead of updating
-			changes {dict} -- Data needed to store a change record, is
+			replace (bool): If true, replace all fields instead of updating
+			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
 		Returns:
@@ -1466,7 +1460,7 @@ class Record(Record_Base.Record):
 		Creates the record's table/collection/etc in the DB
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1545,7 +1539,7 @@ class Record(Record_Base.Record):
 		Deletes the record's table/collection/etc in the DB
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1594,12 +1588,12 @@ class Record(Record_Base.Record):
 		table
 
 		Arguments:
-			field {str} -- The name of the field to update
-			value {mixed} -- The value to set the field to
-			_id {mixed} -- Optional ID(s) to filter by
-			index {str} -- Optional name of the index to use instead of primary
-			filter {dict} -- Optional filter list to decide what records get updated
-			custom {dict} -- Custom Host and DB info
+			field (str): The name of the field to update
+			value (mixed): The value to set the field to
+			_id (mixed): Optional ID(s) to filter by
+			index (str): Optional name of the index to use instead of primary
+			filter (dict): Optional filter list to decide what records get updated
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
@@ -1761,7 +1755,7 @@ class Record(Record_Base.Record):
 		Returns a universal unique ID
 
 		Arguments:
-			custom {dict} -- Custom Host and DB info
+			custom (dict): Custom Host and DB info
 				'host' the name of the host to get/set data on
 				'append' optional postfix for dynamic DBs
 
