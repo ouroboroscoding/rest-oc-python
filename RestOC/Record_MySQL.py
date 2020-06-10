@@ -1274,6 +1274,9 @@ class Record(Record_Base.Record):
 		if isinstance(value, Literal):
 			return value.get()
 
+		elif value is None:
+			return 'NULL'
+
 		else:
 
 			# If we're escaping a bool
@@ -1807,13 +1810,14 @@ class Record(Record_Base.Record):
 
 				# Else, it must be a single value
 				else:
-					sRet = '!= ' + cls.escape(struct['host'], sType, value['neq'])
+					if value['neq'] is None: sRet = 'IS NOT NULL'
+					else: sRet = '!= ' + cls.escape(struct['host'], sType, value['neq'])
 
 		# Else, it must be a single value
 		else:
 
 			# If it's None
-			if value is None: sRet = '= NULL'
+			if value is None: sRet = 'IS NULL'
 			else: sRet = '= ' + cls.escape(struct['host'], sType, value)
 
 		# Return the processed value
