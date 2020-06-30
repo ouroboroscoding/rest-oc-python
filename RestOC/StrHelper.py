@@ -25,7 +25,8 @@ _mdRandomSets = {
 	"AZ*":	"ABCDEFGHJKLMNPQRSTUVWXYZ",
 	"aZ":	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
 	"aZ*":	"abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ",
-	"!":	"!@#$%^&*-_+.?"
+	"!":	"!@#$%^&*-_+.?",
+	"!*":	"!@$^*-_."
 }
 
 def decrypt(key, val):
@@ -159,6 +160,7 @@ def random(length = 8, sets='_aZ', duplicates=True):
 		aZ:		abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 		aZ*:	abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ
 		!:		!@#$%^&*-_+.?
+		!*:		!@$%^*-_.
 
 	Examples:
 		> random(8, '_0x')
