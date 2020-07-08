@@ -116,8 +116,6 @@ def __request(service, action, path, data, sesh=None):
 			# Else turn the content into an Effect and return it
 			oEffect = Effect.fromJSON(oRes.text)
 
-			print('As Effect: %s' % str(oEffect))
-
 		# If verbose requested
 		if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), str(oEffect)))
 
