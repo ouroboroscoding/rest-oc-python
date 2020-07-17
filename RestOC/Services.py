@@ -124,7 +124,7 @@ def __request(service, action, path, data, sesh=None):
 
 	# Service not registered
 	else:
-		raise Effect(error=(Errors.SERVICE_NOT_REGISTERED, service))
+		raise EffectException(error=(Errors.SERVICE_NOT_REGISTERED, service))
 
 def create(service, path, data, sesh=None):
 	"""Create
