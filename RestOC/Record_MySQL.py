@@ -1813,6 +1813,10 @@ class Record(Record_Base.Record):
 					if value['neq'] is None: sRet = 'IS NOT NULL'
 					else: sRet = '!= ' + cls.escape(struct['host'], sType, value['neq'])
 
+			# No valid key in dictionary
+			else:
+				raise ValueError('key must be one of "between", "lt", "gt", "lte", "gte", or "neq"')
+
 		# Else, it must be a single value
 		else:
 

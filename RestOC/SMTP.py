@@ -4,6 +4,9 @@
 Wrapper for python smtp module
 """
 
+# Compatibility
+from past.builtins import basestring
+
 __author__ = "Chris Nasr"
 __copyright__ = "FUEL for the FIRE"
 __version__ = "1.0.0"
