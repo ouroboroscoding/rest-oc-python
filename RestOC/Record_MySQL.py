@@ -316,7 +316,7 @@ class Commands(object):
 		Args:
 			host (str): The name of the connection to escape for
 			value (str): The value to escape
-			rel (str): The relationship of the server, master or slave
+			rel (str): The relationship of the server, main or subordinate
 
 		Returns:
 			str
