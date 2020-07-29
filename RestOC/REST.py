@@ -118,8 +118,8 @@ class _Route(object):
 			except Exception as e:
 				return str(Services.Effect(error=(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e)))))
 
-		# If the request should have sent a session
-		if self.sesh:
+		# If the request should have sent a session, or one was sent anyway
+		if self.sesh or 'Authorization' in bottle.request.headers:
 
 			# Is there an Authorization token
 			if 'Authorization' not in bottle.request.headers:
