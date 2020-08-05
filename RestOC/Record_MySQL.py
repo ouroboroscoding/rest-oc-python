@@ -873,7 +873,8 @@ class Record(Record_Base.Record):
 		Adds the record to the DB and returns the primary key
 
 		Arguments:
-			conflict (str): Must be one of 'error', 'ignore', 'replace'
+			conflict (str|list): Must be one of 'error', 'ignore', 'replace',
+				or a list of fields to update
 			changes (dict): Data needed to store a change record, is
 				dependant on the 'changes' config value
 
@@ -882,7 +883,8 @@ class Record(Record_Base.Record):
 		"""
 
 		# Make sure conflict arg is valid
-		if conflict not in ('error', 'ignore', 'replace'):
+		if not isinstance(conflict, (tuple,list)) and \
+			conflict not in ('error', 'ignore', 'replace'):
 			raise ValueError('conflict', conflict)
 
 		# If the record requires revisions, make the first one
@@ -919,8 +921,14 @@ class Record(Record_Base.Record):
 		# If we have replace for conflicts
 		if conflict == 'replace':
 			sUpdate = 'ON DUPLICATE KEY UPDATE %s' % ',\n'.join([
-				"%s = VALUES(%s)" % (lTemp[0][i], lTemp[0][i])
-				for i in range(len(lTemp[0]))
+				"%s = VALUES(%s)" % (s, s)
+				for s in lTemp[0]
+			])
+
+		elif isinstance(conflict, (tuple,list)):
+			sUpdate = 'ON DUPLICATE KEY UPDATE %s' % ',\n'.join([
+				"%s = VALUES(%s)" % (s, s)
+				for s in conflict
 			])
 
 		# Else, no update
