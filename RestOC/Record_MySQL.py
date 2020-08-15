@@ -1796,11 +1796,11 @@ class Record(Record_Base.Record):
 
 			# Else if we have a less than equal
 			elif 'lte' in value:
-				sRet = '<= ' + cls.escape(struct['host'], sType, value['lteq'])
+				sRet = '<= ' + cls.escape(struct['host'], sType, value['lte'])
 
 			# Else if we have a greater than equal
 			elif 'gte' in value:
-				sRet = '>= ' + cls.escape(struct['host'], sType, value['gteq'])
+				sRet = '>= ' + cls.escape(struct['host'], sType, value['gte'])
 
 			# Else if we have a not equal
 			elif 'neq' in value:
