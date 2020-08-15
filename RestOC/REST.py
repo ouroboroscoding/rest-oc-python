@@ -10,7 +10,10 @@ __version__ = "1.0.0"
 __created__ = "2018-11-11"
 
 # Python imports
-import json, re
+import json
+import re
+import sys
+import traceback
 
 # Pip imports
 import bottle
@@ -141,15 +144,25 @@ class _Route(object):
 		else:
 			oSession = None
 
-		# Call the appropriate API method based on the HTTP/request method
-		if bottle.request.method == 'DELETE':
-			oEffect = Services.delete(self.service, self.path, mData, oSession)
-		elif bottle.request.method == 'GET':
-			oEffect = Services.read(self.service, self.path, mData, oSession)
-		elif bottle.request.method == 'POST':
-			oEffect = Services.create(self.service, self.path, mData, oSession)
-		elif bottle.request.method == 'PUT':
-			oEffect = Services.update(self.service, self.path, mData, oSession)
+		# In case the service crashes
+		try:
+
+			# Call the appropriate API method based on the HTTP/request method
+			if bottle.request.method == 'DELETE':
+				oEffect = Services.delete(self.service, self.path, mData, oSession)
+			elif bottle.request.method == 'GET':
+				oEffect = Services.read(self.service, self.path, mData, oSession)
+			elif bottle.request.method == 'POST':
+				oEffect = Services.create(self.service, self.path, mData, oSession)
+			elif bottle.request.method == 'PUT':
+				oEffect = Services.update(self.service, self.path, mData, oSession)
+
+		except Exception as e:
+			print(traceback.format_exc(), file=sys.stderr)
+			return str(Services.Effect(error=(
+				Errors.SERVICE_CRASHED,
+				'%s:%s' % (self.service, self.path)
+			)))
 
 		# Return the effect as a string
 		return str(oEffect)
