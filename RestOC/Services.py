@@ -54,7 +54,7 @@ def __request(service, action, path, data, sesh=None):
 		ServiceException
 
 	Return:
-		Effect
+		Response
 	"""
 
 	# If we have a registered service
@@ -67,7 +67,7 @@ def __request(service, action, path, data, sesh=None):
 			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, str(data)))
 
 			# Directly call the action
-			oEffect = getattr(__mdRegistered[service]['instance'], action)(
+			oResponse = getattr(__mdRegistered[service]['instance'], action)(
 				path, data, sesh
 			)
 
@@ -75,7 +75,7 @@ def __request(service, action, path, data, sesh=None):
 		else:
 
 			try: __funcToRequest[action]
-			except KeyError: Effect(error=(Errors.SERVICE_ACTION, action))
+			except KeyError: Response(error=(Errors.SERVICE_ACTION, action))
 
 			# Generate the URL to reach the service
 			sURL = __mdRegistered[service]['url'] + path
@@ -103,28 +103,28 @@ def __request(service, action, path, data, sesh=None):
 
 				# If the request wasn't successful
 				if oRes.status_code != 200:
-					return Effect(error=(Errors.SERVICE_STATUS, '%d: %s' % (oRes.status_code, oRes.content)))
+					return Response(error=(Errors.SERVICE_STATUS, '%d: %s' % (oRes.status_code, oRes.content)))
 
 				# If we got the wrong content type
 				if oRes.headers['Content-Type'].lower() != 'application/json; charset=utf-8':
-					return Effect(error=(Errors.SERVICE_CONTENT_TYPE, '%s' % oRes.headers['content-type']))
+					return Response(error=(Errors.SERVICE_CONTENT_TYPE, '%s' % oRes.headers['content-type']))
 
 			# If we couldn't connect to the service
 			except requests.ConnectionError as e:
-				return Effect(error=(Errors.SERVICE_UNREACHABLE, str(e)))
+				return Response(error=(Errors.SERVICE_UNREACHABLE, str(e)))
 
-			# Else turn the content into an Effect and return it
-			oEffect = Effect.fromJSON(oRes.text)
+			# Else turn the content into an Response and return it
+			oResponse = Response.fromJSON(oRes.text)
 
 		# If verbose requested
-		if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), str(oEffect)))
+		if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), str(oResponse)))
 
 		# Return the effect of the request
-		return oEffect
+		return oResponse
 
 	# Service not registered
 	else:
-		raise EffectException(error=(Errors.SERVICE_NOT_REGISTERED, service))
+		raise ResponseException(error=(Errors.SERVICE_NOT_REGISTERED, service))
 
 def create(service, path, data, sesh=None):
 	"""Create
@@ -138,7 +138,7 @@ def create(service, path, data, sesh=None):
 		sesh {Sesh._Session}: The optional session to send with the request
 
 	Returns:
-		Effect
+		Response
 	"""
 	return __request(service, 'create', path, data, sesh)
 
@@ -154,7 +154,7 @@ def delete(service, path, data, sesh=None):
 		sesh {Sesh._Session}: The optional session to send with the request
 
 	Returns:
-		Effect
+		Response
 	"""
 	return __request(service, 'delete', path, data, sesh)
 
@@ -221,7 +221,7 @@ def read(service, path, data, sesh=None):
 		sesh {Sesh._Session}: The optional session to send with the request
 
 	Returns:
-		Effect
+		Response
 	"""
 	return __request(service, 'read', path, data, sesh)
 
@@ -298,7 +298,7 @@ def update(service, path, data, sesh=None):
 		sesh {Sesh._Session}: The optional session to send with the request
 
 	Returns:
-		Effect
+		Response
 	"""
 	return __request(service, 'update', path, data, sesh)
 
@@ -324,8 +324,8 @@ def verbose(flag=True):
 	if __mbVerbose:
 		print('Service verbose mode has been turned on')
 
-class Effect(object):
-	"""Effect
+class Response(object):
+	"""Response
 
 	Represents a standard result from any/all requests
 	"""
@@ -333,7 +333,7 @@ class Effect(object):
 	def __init__(self, data = None, error = None, warning = None):
 		"""Constructor
 
-		Initialises a new Effect instance
+		Initialises a new Response instance
 
 		Arguments:
 			data (mixed): If a request returns data this should be set
@@ -345,7 +345,7 @@ class Effect(object):
 			ValueError
 
 		Returns:
-			Effect
+			Response
 		"""
 
 		# If there's data, store it as is
@@ -374,8 +374,8 @@ class Effect(object):
 			# If we got an exception
 			elif isinstance(error, Exception):
 
-				# If we got another Effect in the Exception, store the error from it
-				if isinstance(error.args[0], Effect):
+				# If we got another Response in the Exception, store the error from it
+				if isinstance(error.args[0], Response):
 					self.error = error.args[0].error
 
 				# Else, try to pull out the code and message
@@ -421,7 +421,7 @@ class Effect(object):
 	def dataExists(self):
 		"""Data Exists
 
-		Returns True if there is data in the Effect
+		Returns True if there is data in the Response
 
 		Returns:
 			bool
@@ -432,7 +432,7 @@ class Effect(object):
 	def errorExists(self):
 		"""Error Exists
 
-		Returns True if there is an error in the Effect
+		Returns True if there is an error in the Response
 
 		Returns:
 			bool
@@ -444,13 +444,13 @@ class Effect(object):
 	def fromDict(cls, val):
 		"""From Dict
 
-		Converts a dict back into an Effect
+		Converts a dict back into an Response
 
 		Arguments:
 			val (dict): A valid dict
 
 		Returns:
-			Effect
+			Response
 		"""
 
 		# Create a new instance
@@ -475,13 +475,13 @@ class Effect(object):
 	def fromJSON(cls, val):
 		"""From JSON
 
-		Tries to convert a string made from str() back into an Effect
+		Tries to convert a string made from str() back into an Response
 
 		Arguments:
 			val (str): A valid JSON string
 
 		Returns:
-			Effect
+			Response
 		"""
 
 		# Try to convert the string to a dict
@@ -495,7 +495,7 @@ class Effect(object):
 	def warningExists(self):
 		"""Warning Exists
 
-		Returns True if there is a warning in the Effect
+		Returns True if there is a warning in the Response
 
 	Returns:
 			bool
@@ -503,8 +503,11 @@ class Effect(object):
 		try: return self.warning != None
 		except AttributeError: return False
 
-class EffectException(Exception):
-	"""Effect Exception
+# Backwards compatibilty
+Effect = Response
+
+class ResponseException(Exception):
+	"""Response Exception
 
 	Stupid python won't let you raise anything that doesn't extend BaseException
 	"""
@@ -521,11 +524,14 @@ class EffectException(Exception):
 			warning (mixed): If a request returns a warning this should be set
 
 		Returns:
-			EffectException
+			ResponseException
 		"""
 
-		# Construct the Effect and pass it to the parent
-		super().__init__(Effect(data, error, warning))
+		# Construct the Response and pass it to the parent
+		super().__init__(Response(data, error, warning))
+
+# Backwards compatibilty
+EffectException = ResponseException
 
 class Service(object):
 	"""Service
@@ -544,7 +550,7 @@ class Service(object):
 			sesh (Sesh._Session): The session passed to the request
 
 		Return:
-			Effect
+			Response
 		"""
 
 		# Generate the method name from the URI
@@ -559,7 +565,7 @@ class Service(object):
 
 			# If the method wasn't found
 			if "'%s'" % sMethod in e.args[0]:
-				return Effect(error=(Errors.SERVICE_NO_SUCH_NOUN, 'POST %s' % path))
+				return Response(error=(Errors.SERVICE_NO_SUCH_NOUN, 'POST %s' % path))
 			else:
 				raise
 
@@ -568,8 +574,8 @@ class Service(object):
 			if sesh: return f(data, sesh)
 			else: return f(data)
 
-			# Effect thrown
-		except EffectException as e:
+			# Response thrown
+		except ResponseException as e:
 			return e.args[0]
 
 	def delete(self, path, data, sesh=None):
@@ -583,7 +589,7 @@ class Service(object):
 			sesh (Sesh._Session): The session passed to the request
 
 		Return:
-			Effect
+			Response
 		"""
 
 		# Generate the method name from the URI
@@ -598,7 +604,7 @@ class Service(object):
 
 			# If the method wasn't found
 			if "'%s'" % sMethod in e.args[0]:
-				return Effect(error=(Errors.SERVICE_NO_SUCH_NOUN, 'DELETE %s' % path))
+				return Response(error=(Errors.SERVICE_NO_SUCH_NOUN, 'DELETE %s' % path))
 			else:
 				raise
 
@@ -607,8 +613,8 @@ class Service(object):
 			if sesh: return f(data, sesh)
 			else: return f(data)
 
-			# Effect thrown
-		except EffectException as e:
+			# Response thrown
+		except ResponseException as e:
 			return e.args[0]
 
 	def initialise(self):
@@ -647,7 +653,7 @@ class Service(object):
 			sesh (Sesh._Session): The session passed to the request
 
 		Return:
-			Effect
+			Response
 		"""
 
 		# Generate the method name from the URI
@@ -662,7 +668,7 @@ class Service(object):
 
 			# If the method wasn't found
 			if "'%s'" % sMethod in e.args[0]:
-				return Effect(error=(Errors.SERVICE_NO_SUCH_NOUN, 'GET %s' % path))
+				return Response(error=(Errors.SERVICE_NO_SUCH_NOUN, 'GET %s' % path))
 			else:
 				raise
 
@@ -671,8 +677,8 @@ class Service(object):
 			if sesh: return f(data, sesh)
 			else: return f(data)
 
-			# Effect thrown
-		except EffectException as e:
+			# Response thrown
+		except ResponseException as e:
 			return e.args[0]
 
 	def update(self, path, data, sesh=None):
@@ -686,7 +692,7 @@ class Service(object):
 			sesh (Sesh._Session): The session passed to the request
 
 		Return:
-			Effect
+			Response
 		"""
 
 		# Generate the method name from the URI
@@ -701,7 +707,7 @@ class Service(object):
 
 			# If the method wasn't found
 			if "'%s'" % sMethod in e.args[0]:
-				return Effect(error=(Errors.SERVICE_NO_SUCH_NOUN, 'PUT %s' % path))
+				return Response(error=(Errors.SERVICE_NO_SUCH_NOUN, 'PUT %s' % path))
 			else:
 				raise
 
@@ -710,8 +716,8 @@ class Service(object):
 			if sesh: return f(data, sesh)
 			else: return f(data)
 
-			# Effect thrown
-		except EffectException as e:
+			# Response thrown
+		except ResponseException as e:
 			return e.args[0]
 
 	@staticmethod
