@@ -98,7 +98,7 @@ class _Route(object):
 			try:
 				mData = json.loads(bottle.request.query['d'])
 			except Exception as e:
-				return str(Services.Effect(error=(Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
+				return str(Services.Response(error=(Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
 
 		# Else we most likely got the data in the body
 		else:
@@ -106,9 +106,9 @@ class _Route(object):
 			# Make sure the request send JSON
 			try:
 				if bottle.request.headers['Content-Type'].lower() not in ('application/json; charset=utf8', 'application/json; charset=utf-8'):
-					return str(Services.Effect(error=Errors.REST_CONTENT_TYPE))
+					return str(Services.Response(error=Errors.REST_CONTENT_TYPE))
 			except KeyError:
-				return str(Services.Effect(error=Errors.REST_CONTENT_TYPE))
+				return str(Services.Response(error=Errors.REST_CONTENT_TYPE))
 
 			# Store the body, if it's too big we need to read it rather than
 			#	use getvalue
@@ -119,7 +119,7 @@ class _Route(object):
 			try:
 				if sBody: mData = json.loads(sBody)
 			except Exception as e:
-				return str(Services.Effect(error=(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e)))))
+				return str(Services.Response(error=(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e)))))
 
 		# If the request should have sent a session, or one was sent anyway
 		if self.sesh or 'Authorization' in bottle.request.headers:
@@ -127,7 +127,7 @@ class _Route(object):
 			# Is there an Authorization token
 			if 'Authorization' not in bottle.request.headers:
 				bottle.response.status = 401
-				return str(Services.Effect(error=Errors.REST_AUTHORIZATION))
+				return str(Services.Response(error=Errors.REST_AUTHORIZATION))
 
 			# Get the session from the Authorization token
 			oSession = Sesh.load(bottle.request.headers['Authorization'])
@@ -135,7 +135,7 @@ class _Route(object):
 			# If the session is not found
 			if not oSession:
 				bottle.response.status = 401
-				return str(Services.Effect(error=Errors.REST_AUTHORIZATION))
+				return str(Services.Response(error=Errors.REST_AUTHORIZATION))
 
 			# Else, extend the session
 			else:
@@ -149,23 +149,23 @@ class _Route(object):
 
 			# Call the appropriate API method based on the HTTP/request method
 			if bottle.request.method == 'DELETE':
-				oEffect = Services.delete(self.service, self.path, mData, oSession)
+				oResponse = Services.delete(self.service, self.path, mData, oSession)
 			elif bottle.request.method == 'GET':
-				oEffect = Services.read(self.service, self.path, mData, oSession)
+				oResponse = Services.read(self.service, self.path, mData, oSession)
 			elif bottle.request.method == 'POST':
-				oEffect = Services.create(self.service, self.path, mData, oSession)
+				oResponse = Services.create(self.service, self.path, mData, oSession)
 			elif bottle.request.method == 'PUT':
-				oEffect = Services.update(self.service, self.path, mData, oSession)
+				oResponse = Services.update(self.service, self.path, mData, oSession)
 
 		except Exception as e:
 			print(traceback.format_exc(), file=sys.stderr)
-			return str(Services.Effect(error=(
+			return str(Services.Response(error=(
 				Errors.SERVICE_CRASHED,
 				'%s:%s' % (self.service, self.path)
 			)))
 
-		# Return the effect as a string
-		return str(oEffect)
+		# Return the Response as a string
+		return str(oResponse)
 
 class Config(object):
 	"""Config class
