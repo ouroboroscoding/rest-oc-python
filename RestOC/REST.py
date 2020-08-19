@@ -164,7 +164,7 @@ class _Route(object):
 				'%s:%s' % (self.service, self.path)
 			)))
 
-		# Return the effect as a string
+		# Return the Response as a string
 		return str(oResponse)
 
 class Config(object):

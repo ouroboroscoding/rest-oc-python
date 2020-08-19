@@ -119,7 +119,7 @@ def __request(service, action, path, data, sesh=None):
 		# If verbose requested
 		if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), str(oResponse)))
 
-		# Return the effect of the request
+		# Return the Response of the request
 		return oResponse
 
 	# Service not registered
