@@ -745,38 +745,6 @@ class Record(abc.ABC):
 		"""
 		raise NotImplementedError('Must implement the "get" method')
 
-	@classmethod
-	def struct(cls, custom={}):
-		"""Struct
-
-		Returns structure info for the record based on the DB and Tree
-
-		Arguments:
-			custom (dict): Custom Host and DB info
-				'host' the name of the host to get/set data on
-				'append' optional postfix for dynamic DBs
-
-		Returns:
-			dict
-		"""
-
-		# Get the config values associated with the Child record
-		dConfig = DictHelper.clone(cls.config())
-
-		# If the host value is overriden
-		if 'host' in custom:
-			dConfig['host'] = custom['host']
-
-		# Add the global prefix
-		dConfig['db'] = dbPrepend() + dConfig['db']
-
-		# If we received an append value
-		if 'append' in custom:
-			dConfig['db'] = "%s_%s" % (dConfig['db'], custom['append'])
-
-		# Return the structure
-		return dConfig
-
 	def record(self):
 		"""Record
 
@@ -822,6 +790,38 @@ class Record(abc.ABC):
 			bool|str
 		"""
 		raise NotImplementedError('Must implement the "update" method')
+
+	@classmethod
+	def struct(cls, custom={}):
+		"""Struct
+
+		Returns structure info for the record based on the DB and Tree
+
+		Arguments:
+			custom (dict): Custom Host and DB info
+				'host' the name of the host to get/set data on
+				'append' optional postfix for dynamic DBs
+
+		Returns:
+			dict
+		"""
+
+		# Get the config values associated with the Child record
+		dConfig = DictHelper.clone(cls.config())
+
+		# If the host value is overriden
+		if 'host' in custom:
+			dConfig['host'] = custom['host']
+
+		# Add the global prefix
+		dConfig['db'] = dbPrepend() + dConfig['db']
+
+		# If we received an append value
+		if 'append' in custom:
+			dConfig['db'] = "%s_%s" % (dConfig['db'], custom['append'])
+
+		# Return the structure
+		return dConfig
 
 	@classmethod
 	@abc.abstractmethod
