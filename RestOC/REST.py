@@ -42,7 +42,7 @@ class _Route(object):
 	A callable class used to store rest routes in the server
 	"""
 
-	def __init__(self, service, path, sesh, cors=None):
+	def __init__(self, service, path, sesh, environ, cors=None):
 		"""Constructor (__init__)
 
 		Initialises an instance of the route
@@ -51,6 +51,7 @@ class _Route(object):
 			service (str): The service we are routing to
 			path (str): The path in the service we are routing to
 			sesh (bool): True if the route requires a session
+			environ (bool): True if the route requires request environ
 			cors (dict): Optionsl CORS values
 
 		Returns:
@@ -59,6 +60,7 @@ class _Route(object):
 		self.service = service
 		self.path = path
 		self.sesh = sesh
+		self.environ = environ
 		self.cors = cors
 
 	def __call__(self):
@@ -144,18 +146,24 @@ class _Route(object):
 		else:
 			oSession = None
 
+		# If we need environ
+		if self.environ:
+			dEnviron = bottle.request.environ
+		else:
+			dEnviron = None
+
 		# In case the service crashes
 		try:
 
 			# Call the appropriate API method based on the HTTP/request method
 			if bottle.request.method == 'DELETE':
-				oResponse = Services.delete(self.service, self.path, mData, oSession)
+				oResponse = Services.delete(self.service, self.path, mData, oSession, dEnviron)
 			elif bottle.request.method == 'GET':
-				oResponse = Services.read(self.service, self.path, mData, oSession)
+				oResponse = Services.read(self.service, self.path, mData, oSession, dEnviron)
 			elif bottle.request.method == 'POST':
-				oResponse = Services.create(self.service, self.path, mData, oSession)
+				oResponse = Services.create(self.service, self.path, mData, oSession, dEnviron)
 			elif bottle.request.method == 'PUT':
-				oResponse = Services.update(self.service, self.path, mData, oSession)
+				oResponse = Services.update(self.service, self.path, mData, oSession, dEnviron)
 
 		except Exception as e:
 			print(traceback.format_exc(), file=sys.stderr)
@@ -415,6 +423,10 @@ class Server(bottle.Bottle):
 			if 'session' not in d:
 				d['session'] = False
 
+			# If the environ value is not passed, assume false
+			if 'environ' not in d:
+				d['environ'] = False
+
 			# If the path is not passed, generate it from the uri
 			if 'path' not in d:
 				d['path'] = d['uri'][1:]
@@ -423,7 +435,7 @@ class Server(bottle.Bottle):
 			self.route(
 				d['uri'],
 				lMethods,
-				_Route(d['service'], d['path'], d['session'], cors)
+				_Route(d['service'], d['path'], d['session'], d['environ'], cors)
 			)
 
 	# run method

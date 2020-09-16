@@ -38,7 +38,7 @@ __funcToRequest = {
 __msSalt = None
 """Internal Key Salt"""
 
-def __request(service, action, path, data, sesh=None):
+def __request(service, action, path, data, sesh=None, environ=None):
 	"""Request
 
 	Internal method to convert REST requests into HTTP requests
@@ -49,6 +49,7 @@ def __request(service, action, path, data, sesh=None):
 		path (str): The path of the request
 		data (mixed): The data being sent with the request
 		sesh (Sesh._Session): The optional session to pass with the request
+		environ (dict): Info related to the request
 
 	Raises:
 		ServiceException
@@ -68,7 +69,7 @@ def __request(service, action, path, data, sesh=None):
 
 			# Directly call the action
 			oResponse = getattr(__mdRegistered[service]['instance'], action)(
-				path, data, sesh
+				path, data, sesh, environ
 			)
 
 		# Else if the service is running elsewhere
@@ -126,7 +127,7 @@ def __request(service, action, path, data, sesh=None):
 	else:
 		raise ResponseException(error=(Errors.SERVICE_NOT_REGISTERED, service))
 
-def create(service, path, data, sesh=None):
+def create(service, path, data, sesh=None, environ=None):
 	"""Create
 
 	Make a POST request
@@ -136,13 +137,14 @@ def create(service, path, data, sesh=None):
 		path (str): The path on the service
 		data (mixed): The data to pass to the request
 		sesh {Sesh._Session}: The optional session to send with the request
+		environ (dict): Info related to the request
 
 	Returns:
 		Response
 	"""
-	return __request(service, 'create', path, data, sesh)
+	return __request(service, 'create', path, data, sesh, environ)
 
-def delete(service, path, data, sesh=None):
+def delete(service, path, data, sesh=None, environ=None):
 	"""Delete
 
 	Make a DELETE request
@@ -152,11 +154,12 @@ def delete(service, path, data, sesh=None):
 		path (str): The path on the service
 		data (mixed): The data to pass to the request
 		sesh {Sesh._Session}: The optional session to send with the request
+		environ (dict): Info related to the request
 
 	Returns:
 		Response
 	"""
-	return __request(service, 'delete', path, data, sesh)
+	return __request(service, 'delete', path, data, sesh, environ)
 
 def internalKey(key = None):
 	"""Internal Key
@@ -209,7 +212,7 @@ def internalKey(key = None):
 		except Exception:
 			return False
 
-def read(service, path, data, sesh=None):
+def read(service, path, data, sesh=None, environ=None):
 	"""Read
 
 	Make a GET request
@@ -219,11 +222,12 @@ def read(service, path, data, sesh=None):
 		path (str): The path on the service
 		data (mixed): The data to pass to the request
 		sesh {Sesh._Session}: The optional session to send with the request
+		environ (dict): Info related to the request
 
 	Returns:
 		Response
 	"""
-	return __request(service, 'read', path, data, sesh)
+	return __request(service, 'read', path, data, sesh, environ)
 
 def register(services, restconf, salt):
 	"""Register
@@ -286,7 +290,7 @@ def register(services, restconf, salt):
 		else:
 			raise ValueError('services.%s' % str(k))
 
-def update(service, path, data, sesh=None):
+def update(service, path, data, sesh=None, environ=None):
 	"""Update
 
 	Make a PUT request
@@ -296,11 +300,12 @@ def update(service, path, data, sesh=None):
 		path (str): The path on the service
 		data (mixed): The data to pass to the request
 		sesh {Sesh._Session}: The optional session to send with the request
+		environ (dict): Info related to the request
 
 	Returns:
 		Response
 	"""
-	return __request(service, 'update', path, data, sesh)
+	return __request(service, 'update', path, data, sesh, environ)
 
 def verbose(flag=True):
 	"""Verbose
@@ -539,7 +544,7 @@ class Service(object):
 	The object to build all Services from
 	"""
 
-	def create(self, path, data, sesh=None):
+	def create(self, path, data, sesh=None, environ=None):
 		"""Create
 
 		Create a new object
@@ -548,6 +553,7 @@ class Service(object):
 			path (str): The path passed to the request
 			data (mixed): The data sent with the request
 			sesh (Sesh._Session): The session passed to the request
+			environ (dict): Info related to the request
 
 		Return:
 			Response
@@ -569,16 +575,24 @@ class Service(object):
 			else:
 				raise
 
+		# Create the params
+		dParams = {"data": data}
+
+		# If we have a session
+		if sesh: dParams['sesh'] = sesh
+
+		# If we have environ
+		if environ: dParams['environ'] = environ
+
 		# Try to call the method
 		try:
-			if sesh: return f(data, sesh)
-			else: return f(data)
+			return f(**dParams)
 
 			# Response thrown
 		except ResponseException as e:
 			return e.args[0]
 
-	def delete(self, path, data, sesh=None):
+	def delete(self, path, data, sesh=None, environ=None):
 		"""Delete
 
 		Delete an existing object
@@ -587,6 +601,7 @@ class Service(object):
 			path (str): The path passed to the request
 			data (mixed): The data sent with the request
 			sesh (Sesh._Session): The session passed to the request
+			environ (dict): Info related to the request
 
 		Return:
 			Response
@@ -608,10 +623,18 @@ class Service(object):
 			else:
 				raise
 
+		# Create the params
+		dParams = {"data": data}
+
+		# If we have a session
+		if sesh: dParams['sesh'] = sesh
+
+		# If we have environ
+		if environ: dParams['environ'] = environ
+
 		# Try to call the method
 		try:
-			if sesh: return f(data, sesh)
-			else: return f(data)
+			return f(**dParams)
 
 			# Response thrown
 		except ResponseException as e:
@@ -642,7 +665,7 @@ class Service(object):
 		"""
 		raise NotImplementedError('Must implement the "install" method')
 
-	def read(self, path, data = {}, sesh=None):
+	def read(self, path, data = {}, sesh=None, environ=None):
 		"""Read
 
 		Read an existing object
@@ -651,6 +674,7 @@ class Service(object):
 			path (str): The path passed to the request
 			data (mixed): The data sent with the request
 			sesh (Sesh._Session): The session passed to the request
+			environ (dict): Info related to the request
 
 		Return:
 			Response
@@ -672,16 +696,24 @@ class Service(object):
 			else:
 				raise
 
+		# Create the params
+		dParams = {"data": data}
+
+		# If we have a session
+		if sesh: dParams['sesh'] = sesh
+
+		# If we have environ
+		if environ: dParams['environ'] = environ
+
 		# Try to call the method
 		try:
-			if sesh: return f(data, sesh)
-			else: return f(data)
+			return f(**dParams)
 
 			# Response thrown
 		except ResponseException as e:
 			return e.args[0]
 
-	def update(self, path, data, sesh=None):
+	def update(self, path, data, sesh=None, environ=None):
 		"""Update
 
 		Update an existing object
@@ -690,6 +722,7 @@ class Service(object):
 			path (str): The path passed to the request
 			data (mixed): The data sent with the request
 			sesh (Sesh._Session): The session passed to the request
+			environ (dict): Info related to the request
 
 		Return:
 			Response
@@ -711,10 +744,18 @@ class Service(object):
 			else:
 				raise
 
+		# Create the params
+		dParams = {"data": data}
+
+		# If we have a session
+		if sesh: dParams['sesh'] = sesh
+
+		# If we have environ
+		if environ: dParams['environ'] = environ
+
 		# Try to call the method
 		try:
-			if sesh: return f(data, sesh)
-			else: return f(data)
+			return f(**dParams)
 
 			# Response thrown
 		except ResponseException as e:

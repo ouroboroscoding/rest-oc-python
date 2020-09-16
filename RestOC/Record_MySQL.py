@@ -1393,7 +1393,7 @@ class Record(Record_Base.Record):
 		Arguments:
 			fields (dict): A dictionary of field names to the values they
 				should match
-			raw (bool|list} -- Return raw data (dict) for all or a set list of
+			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
 			orderby (str|str[]): A field or fields to order the results by
 			limit (int|tuple): The limit and possible starting point
@@ -1525,9 +1525,9 @@ class Record(Record_Base.Record):
 		Arguments:
 			_id (str|str[]): The primary key(s) to fetch from the table
 			index (str): N/A in MySQL
-			filter (dict} -- Additional filter
+			filter (dict): Additional filter
 			match (tuple): N/A in MySQL
-			raw (bool|list} -- Return raw data (dict) for all or a set list of
+			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
 			orderby (str|str[]): A field or fields to order the results by
 			limit (int|tuple): The limit and possible starting point
@@ -2065,29 +2065,35 @@ class Record(Record_Base.Record):
 				('opts' in dSQL and dSQL['opts'] or '')
 			))
 
-		# Push the primary key to the front
-		#	Get the sql special data
-		dSQL = dStruct['tree'][dStruct['primary']].special('sql', default={})
+		# If we have a primary key
+		if dStruct['primary']:
 
-		# If it's a string
-		if isinstance(dSQL, str):
-			dSQL = {"type": dSQL}
+			# Push the primary key to the front
+			#	Get the sql special data
+			dSQL = dStruct['tree'][dStruct['primary']].special('sql', default={})
 
-		# Primary key type
-		sIDType = 'type' in dSQL and dSQL['type'] or cls._nodeToType(dStruct['tree'][dStruct['primary']], dStruct['host'])
-		sIDOpts = 'opts' in dSQL and dSQL['opts'] or ''
+			# If it's a string
+			if isinstance(dSQL, str):
+				dSQL = {"type": dSQL}
 
-		# Add the line
-		lFields.insert(0, '`%s` %s %s%s%s' % (
-			dStruct['primary'],
-			sIDType,
-			((not dStruct['tree'][dStruct['primary']].optional()) and 'not null ' or ''),
-			(dStruct['auto_primary'] is True and 'auto_increment ' or ''),
-			sIDOpts
-		))
+			# Primary key type
+			sIDType = 'type' in dSQL and dSQL['type'] or cls._nodeToType(dStruct['tree'][dStruct['primary']], dStruct['host'])
+			sIDOpts = 'opts' in dSQL and dSQL['opts'] or ''
 
-		# Init the list of indexes
-		lIndexes = ['primary key (`%s`)' % dStruct['primary']]
+			# Add the line
+			lFields.insert(0, '`%s` %s %s%s%s' % (
+				dStruct['primary'],
+				sIDType,
+				((not dStruct['tree'][dStruct['primary']].optional()) and 'not null ' or ''),
+				(dStruct['auto_primary'] is True and 'auto_increment ' or ''),
+				sIDOpts
+			))
+
+			# Init the list of indexes
+			lIndexes = ['primary key (`%s`)' % dStruct['primary']]
+
+		else:
+			lIndexes = []
 
 		# If there are indexes
 		if dStruct['indexes']:
@@ -2140,7 +2146,7 @@ class Record(Record_Base.Record):
 		Commands.execute(dStruct['host'], sSQL)
 
 		# If changes are required
-		if dStruct['changes']:
+		if dStruct['primary'] and dStruct['changes']:
 
 			# Generate the CREATE statement
 			sSQL = 'CREATE TABLE IF NOT EXISTS `%s`.`%s_changes` (' \
