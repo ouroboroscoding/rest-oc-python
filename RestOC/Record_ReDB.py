@@ -810,7 +810,7 @@ class Record(Record_Base.Record):
 		Arguments:
 			fields (dict): A dictionary of field names to the values they
 				should match
-			raw (bool|list} -- Return raw data (dict) for all or a set list of
+			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
 			orderby (str|str[]): A field or fields to order the results by
 			limit (int|tuple): The limit and possible starting point
@@ -829,13 +829,13 @@ class Record(Record_Base.Record):
 		dStruct = cls.struct(custom)
 
 		# Get a connection to the host
-		with _with(sServer) as oCon:
+		with _with(dStruct['host']) as oCon:
 
 			# Use the passed fields to generate the request
 			oCur = r \
 				.db(dStruct['db']) \
 				.table(dStruct['table']) \
-				.filter(obj)
+				.filter(fields)
 
 			# If we only want specific fields
 			if isinstance(raw, (tuple,list)):
@@ -924,9 +924,9 @@ class Record(Record_Base.Record):
 		Arguments:
 			_id (str|str[]): The primary key(s) to fetch from the table
 			index (str): Index to use instead of primary key
-			filter (dict} -- Additional filter
+			filter (dict): Additional filter
 			match (tuple): Name/Match filter
-			raw (bool|list} -- Return raw data (dict) for all or a set list of
+			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
 			orderby (str|str[]): A field or fields to order the results by
 			limit (int|tuple): The limit and possible starting point
