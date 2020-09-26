@@ -79,6 +79,10 @@ def load(id):
 	# If there's no session or it expired
 	if s == None: return None
 
+	# Make sure we have a string, not a set of bytes
+	try: s = s.decode()
+	except (UnicodeDecodeError, AttributeError): pass
+
 	# Create a new instance with the decoded data
 	return _Session(id, json.loads(s))
 
