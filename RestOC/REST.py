@@ -117,6 +117,10 @@ class _Route(object):
 			try: sBody = bottle.request.body.getvalue()
 			except AttributeError as e: sBody = bottle.request.body.read()
 
+			# Make sure we have a string, not a set of bytes
+			try: sBody = sBody.decode()
+			except (UnicodeDecodeError, AttributeError): pass
+
 			# Convert the body and store it
 			try:
 				if sBody: mData = json.loads(sBody)
