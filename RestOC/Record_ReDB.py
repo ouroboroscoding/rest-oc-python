@@ -825,6 +825,9 @@ class Record(Record_Base.Record):
 		# By default we will return multiple records
 		bMulti = True
 
+		# By default there is no limit
+		iLimitParams = 0
+
 		# Fetch the record structure
 		dStruct = cls.struct(custom)
 
