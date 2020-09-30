@@ -1,5 +1,5 @@
 bottle==0.12.13
-format-oc==1.5.7
+format-oc==1.5.12
 gunicorn==19.9.0
 hiredis==0.2.0
 Jinja2==2.10.1
