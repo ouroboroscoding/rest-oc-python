@@ -18,6 +18,7 @@ import sys
 from time import sleep, time
 
 # Pip imports
+import arrow
 import pymysql
 
 # Framework imports
@@ -170,11 +171,8 @@ def _converterTimestamp(ts):
 	if ts == '0000-00-00 00:00:00':
 		return 0
 
-	# Get a datetime tuple
-	tDT = datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
-
-	# Convert it to a timestamp and return it
-	return int(tDT.strftime('%s'))
+	# Conver the string to a timestamp and return it
+	return arrow.get('%s+00:00' % ts).timestamp
 
 def _cursor(host, dictCur = False):
 	"""Cursor
