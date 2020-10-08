@@ -11,11 +11,10 @@ __created__ = "2018-11-11"
 
 # Python imports
 import abc
-import json
 from hashlib import md5
 
 # Framework imports
-from . import DictHelper
+from . import DictHelper, JSON
 
 # The global DB prefix
 __msPrepend = ''
@@ -218,7 +217,7 @@ class Record(abc.ABC):
 				del self._dRecord[struct['rev_field']]
 
 			# Generate and set the revision
-			self._dRecord[struct['rev_field']] = '1-%s' % md5(json.dumps(self._dRecord)).hexdigest()
+			self._dRecord[struct['rev_field']] = '1-%s' % md5(JSON.encode(self._dRecord)).hexdigest()
 
 			# Return OK
 			return True
@@ -234,7 +233,7 @@ class Record(abc.ABC):
 			sVer, sHash = sRev.split('-')
 
 			# Generate a new hash from the record data
-			sMD5 = md5(json.dumps(self._dRecord)).hexdigest()
+			sMD5 = md5(JSON.encode(self._dRecord)).hexdigest()
 
 			# If the old and new hash don't match
 			if sMD5 != sHash:

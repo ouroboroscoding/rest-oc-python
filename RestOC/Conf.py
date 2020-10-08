@@ -9,11 +9,8 @@ __copyright__ = "FUEL for the FIRE"
 __version__ = "1.0.0"
 __created__ = "2018-11-11"
 
-# Python imports
-import json
-
 # Framework imports
-from . import DictHelper
+from . import DictHelper, JSON
 
 # Confs available
 _dmConfs = {}
@@ -97,8 +94,7 @@ def load(file, conf = '_'):
 	global _dmConfs
 
 	# Open the file and store the contents
-	with open(file) as oF:
-		_dmConfs[conf] = json.load(oF)
+	_dmConfs[conf] = JSON.load(file)
 
 def load_merge(file, conf = '_'):
 	"""Load Merge
@@ -116,16 +112,13 @@ def load_merge(file, conf = '_'):
 	# Import the confs
 	global _dmConfs
 
-	# Open the file
-	with open(file) as oF:
+	# If we have no conf yet, just store it
+	if conf not in _dmConfs:
+		_dmConfs[conf] = JSON.load(file)
 
-		# If we have no conf yet, just store it
-		if conf not in _dmConfs:
-			_dmConfs[conf] = json.load(oF)
-
-		# Else, combine the data
-		else:
-			_dmConfs[conf] = DictHelper.combine(_dmConfs[conf], json.load(oF))
+	# Else, combine the data
+	else:
+		_dmConfs[conf] = DictHelper.combine(_dmConfs[conf], JSON.load(file))
 
 def set(key, val, conf = '_'):
 	"""Set

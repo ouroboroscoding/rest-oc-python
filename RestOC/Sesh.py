@@ -10,14 +10,13 @@ __version__ = "1.0.0"
 __created__ = "2018-11-11"
 
 # Python imports
-import json
 import uuid
 
 # Pip imports
 from redis import StrictRedis
 
 # Framework imports
-from . import StrHelper
+from . import JSON, StrHelper
 
 # Open redis connection
 _moRedis = None
@@ -84,7 +83,7 @@ def load(id):
 	except (UnicodeDecodeError, AttributeError): pass
 
 	# Create a new instance with the decoded data
-	return _Session(id, json.loads(s))
+	return _Session(id, JSON.decode(s))
 
 class _Session(object):
 	"""Session
@@ -228,4 +227,4 @@ class _Session(object):
 		Returns:
 			None
 		"""
-		_moRedis.setex(self.__id, _muiExpire, json.dumps(self.__dStore))
+		_moRedis.setex(self.__id, _muiExpire, JSON.encode(self.__dStore))

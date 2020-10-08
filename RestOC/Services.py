@@ -11,7 +11,6 @@ __created__ = "2018-11-11"
 
 # Python imports
 from hashlib import sha1
-import json
 from time import time
 from datetime import datetime
 
@@ -19,7 +18,7 @@ from datetime import datetime
 import requests
 
 # Framework imports
-from . import Errors, Sesh
+from . import Errors, JSON, Sesh
 
 __mbVerbose = False
 """Verbose Flag"""
@@ -86,7 +85,7 @@ def __request(service, action, path, data, sesh=None, environ=None):
 				print('%s: Calling %s %s %s)' % (str(datetime.now()), __funcToRequest[action][1], sURL, str(data)))
 
 			# Convert the data to JSON
-			sData = json.dumps(data)
+			sData = JSON.encode(data)
 
 			# Create the headers
 			dHeaders = {
@@ -421,7 +420,7 @@ class Response(object):
 		except AttributeError: pass
 
 		# Convert the dict and return it
-		return json.dumps(dRet)
+		return JSON.encode(dRet)
 
 	def dataExists(self):
 		"""Data Exists
@@ -490,7 +489,7 @@ class Response(object):
 		"""
 
 		# Try to convert the string to a dict
-		try: d = json.loads(val)
+		try: d = JSON.decode(val)
 		except ValueError as e: raise ValueError('val', str(e))
 		except TypeError as e: raise ValueError('val', str(e))
 
