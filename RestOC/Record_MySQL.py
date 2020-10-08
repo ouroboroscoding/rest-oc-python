@@ -13,7 +13,6 @@ __created__ = "2020-02-12"
 import datetime
 from enum import IntEnum
 from hashlib import md5
-import json
 import sys
 from time import sleep, time
 
@@ -22,7 +21,7 @@ import arrow
 import pymysql
 
 # Framework imports
-from . import DictHelper, Record_Base
+from . import DictHelper, JSON, Record_Base
 
 # List of available hosts
 __mdHosts = {}
@@ -748,7 +747,7 @@ class Record(Record_Base.Record):
 						dStruct['tree'][dStruct['primary']].type(),
 						_id
 					),
-					json.dumps(changes)
+					JSON.encode(changes)
 				)
 
 		# Create the changes record
@@ -1022,7 +1021,7 @@ class Record(Record_Base.Record):
 							self._dStruct['tree'][self._dStruct['primary']].type(),
 							self._dRecord[self._dStruct['primary']]
 						),
-						json.dumps(dChanges)
+						JSON.encode(dChanges)
 					)
 
 			# Create the changes record
@@ -1206,7 +1205,7 @@ class Record(Record_Base.Record):
 							self._dStruct['tree'][self._dStruct['primary']].type(),
 							self._dRecord[self._dStruct['primary']]
 						),
-						json.dumps(dChanges)
+						JSON.encode(dChanges)
 					)
 
 			# Insert the changes
@@ -1738,7 +1737,7 @@ class Record(Record_Base.Record):
 
 		# Go through each record and turn the items from JSON to dicts
 		for i in range(len(lRecords)):
-			lRecords[i]['items'] = json.loads(lRecords[i]['items'])
+			lRecords[i]['items'] = JSON.decode(lRecords[i]['items'])
 
 		# Return the records
 		return lRecords
@@ -1991,7 +1990,7 @@ class Record(Record_Base.Record):
 							self._dStruct['tree'][self._dStruct['primary']].type(),
 							self._dRecord[self._dStruct['primary']]
 						),
-						json.dumps(dChanges)
+						JSON.encode(dChanges)
 					)
 
 			# Create the changes record

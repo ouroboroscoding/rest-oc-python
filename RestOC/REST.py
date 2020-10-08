@@ -10,7 +10,6 @@ __version__ = "1.0.0"
 __created__ = "2018-11-11"
 
 # Python imports
-import json
 import re
 import sys
 import traceback
@@ -19,7 +18,7 @@ import traceback
 import bottle
 
 # Framework imports
-from . import Errors, Services, Sesh
+from . import Errors, JSON, Services, Sesh
 
 # Method bytes
 A		= 0xF
@@ -98,7 +97,7 @@ class _Route(object):
 
 			# Convert the GET and store the data
 			try:
-				mData = json.loads(bottle.request.query['d'])
+				mData = JSON.decode(bottle.request.query['d'])
 			except Exception as e:
 				return str(Services.Response(error=(Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
 
@@ -123,7 +122,7 @@ class _Route(object):
 
 			# Convert the body and store it
 			try:
-				if sBody: mData = json.loads(sBody)
+				if sBody: mData = JSON.decode(sBody)
 			except Exception as e:
 				return str(Services.Response(error=(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e)))))
 
