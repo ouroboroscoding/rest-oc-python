@@ -22,7 +22,7 @@ from . import JSON, StrHelper
 _moRedis = None
 _muiExpire = 86400
 
-def create(id = None):
+def create(id = None, expires=None):
 	"""Create
 
 	Returns a brand new session using the ID given, if no ID is passed, one is
@@ -30,13 +30,22 @@ def create(id = None):
 
 	Arguments:
 		id (str): The ID to use for the session
+		expires (uint): A specific expiry in seconds to override the global one
+						for this session
 
 	Returns:
 		Session
 	"""
 
+	# Init the data
+	dData = {}
+
+	# If we have an expires time
+	if expires:
+		dData['__expires'] = expires
+
 	# Create a new Session using a UUID as the id
-	return _Session(id and id or uuid.uuid4().hex)
+	return _Session(id and id or uuid.uuid4().hex, dData)
 
 def init(conf, expire=86400):
 	"""Init
@@ -202,12 +211,20 @@ class _Session(object):
 	def extend(self):
 		"""Extend
 
-		Keep the session alive by extending it's expire time
+		Keep the session alive by extending it's expire time by the internally
+		set expirty, or else by the global one set for the module
 
 		Returns:
 			None
 		"""
-		_moRedis.expire(self.__id, _muiExpire)
+
+		# Use internal time if we have one, else use the global
+		iExpire = '__expire' in self.__dStore and \
+					self.__dStore['__expire'] or \
+					_muiExpire
+
+		# Extend the session in Redis
+		_moRedis.expire(self.__id, iExpire)
 
 	def id(self):
 		"""ID
@@ -227,4 +244,9 @@ class _Session(object):
 		Returns:
 			None
 		"""
+
+		# Use internal time if we have one, else use the global
+		iExpire = '__expire' in self.__dStore and self.__dStore['__expire'] or _muiExpire
+
+		# Set the session in Redis
 		_moRedis.setex(self.__id, _muiExpire, JSON.encode(self.__dStore))
