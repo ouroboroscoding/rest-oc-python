@@ -2115,7 +2115,7 @@ class Record(Record_Base.Record):
 				# Else if it's a list
 				elif isinstance(mFields, (list,tuple)):
 					sType = 'index'
-					sFields = '`%s`' %  '`,`'.join(mFields[sType])
+					sFields = '`%s`' %  '`,`'.join(mFields)
 
 				# Else, must be a string or None
 				else:
