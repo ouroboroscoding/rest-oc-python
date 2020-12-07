@@ -11,7 +11,7 @@ __created__ = "2018-11-11"
 
 # Python imports
 from hashlib import sha1
-from time import time
+from time import sleep, time
 from datetime import datetime
 
 # Pip imports
@@ -98,20 +98,42 @@ def __request(service, action, path, data, sesh=None, environ=None):
 				dHeaders['Authorization'] = sesh.id()
 
 			# Try to make the request and store the response
-			try:
-				oRes = __funcToRequest[action][0](sURL, data=sData, headers=dHeaders)
+			iAttempts = 0
+			while True:
+				iAttempts += 1
+				try:
+					oRes = __funcToRequest[action][0](sURL, data=sData, headers=dHeaders)
 
-				# If the request wasn't successful
-				if oRes.status_code != 200:
-					return Response(error=(Errors.SERVICE_STATUS, '%d: %s' % (oRes.status_code, oRes.content)))
+					# If the request wasn't successful
+					if oRes.status_code != 200:
 
-				# If we got the wrong content type
-				if oRes.headers['Content-Type'].lower() != 'application/json; charset=utf-8':
-					return Response(error=(Errors.SERVICE_CONTENT_TYPE, '%s' % oRes.headers['content-type']))
+						# If we got a 401
+						if oRes.status_code == 401:
+							return Response.fromJSON(oRes.content)
+						else:
+							return Response(error=(Errors.SERVICE_STATUS, '%d: %s' % (oRes.status_code, oRes.content)))
 
-			# If we couldn't connect to the service
-			except requests.ConnectionError as e:
-				return Response(error=(Errors.SERVICE_UNREACHABLE, str(e)))
+					# If we got the wrong content type
+					if oRes.headers['Content-Type'].lower() != 'application/json; charset=utf-8':
+						return Response(error=(Errors.SERVICE_CONTENT_TYPE, '%s' % oRes.headers['content-type']))
+
+					# Success, break out of the loop
+					break
+
+				# If we couldn't connect to the service
+				except requests.ConnectionError as e:
+
+					# If we haven't exhausted attempts
+					if iAttempts < 3:
+
+						# Wait for a second
+						sleep(1)
+
+						# Loop back around
+						continue
+
+					# We've tried enough, return an error
+					return Response(error=(Errors.SERVICE_UNREACHABLE, str(e)))
 
 			# Else turn the content into an Response and return it
 			oResponse = Response.fromJSON(oRes.text)
@@ -777,7 +799,7 @@ class Service(object):
 		iLen = len(path)
 		i = 0
 		while i < iLen:
-			if(path[i] in ['/', '_']):
+			if(path[i] in ['/', '_', '-']):
 				i += 1
 				sRet += path[i].upper()
 			else:
