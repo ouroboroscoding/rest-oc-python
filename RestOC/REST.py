@@ -132,7 +132,7 @@ class _Route(object):
 			# Is there an Authorization token
 			if 'Authorization' not in bottle.request.headers:
 				bottle.response.status = 401
-				return str(Services.Response(error=Errors.REST_AUTHORIZATION))
+				return str(Services.Response(error=(Errors.REST_AUTHORIZATION, 'Unauthorized')))
 
 			# Get the session from the Authorization token
 			oSession = Sesh.load(bottle.request.headers['Authorization'])
@@ -140,7 +140,7 @@ class _Route(object):
 			# If the session is not found
 			if not oSession:
 				bottle.response.status = 401
-				return str(Services.Response(error=Errors.REST_AUTHORIZATION))
+				return str(Services.Response(error=(Errors.REST_AUTHORIZATION, 'Unauthorized')))
 
 			# Else, extend the session
 			else:
@@ -174,6 +174,17 @@ class _Route(object):
 				Errors.SERVICE_CRASHED,
 				'%s:%s' % (self.service, self.path)
 			)))
+
+		# If the response has an Authorization error
+		if oResponse.errorExists() and \
+			oResponse.error['code'] == Errors.REST_AUTHORIZATION:
+
+			# Set the http status to 401 Unauthorized
+			bottle.response.status = 401
+
+			# If the message is missing
+			if oResponse.error['msg'] == '':
+				oResponse.error['msg'] = 'Unauthorized'
 
 		# Return the Response as a string
 		return str(oResponse)
