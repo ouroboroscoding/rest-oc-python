@@ -532,6 +532,31 @@ class Response(object):
 # Backwards compatibilty
 Effect = Response
 
+class Error(Response):
+	"""Error
+
+	Shorthand form of Response(error=)
+	"""
+
+	def __init__(self, code, msg=None):
+		"""Constructor
+
+		Initialises a new Response instance
+
+		Arguments:
+			code (uint): The error code
+			msg (mixed): Optional message for more info on the error
+
+		Returns:
+			Error
+		"""
+
+		# Set the error code
+		self.error = {"code": code}
+
+		# If there's a message
+		self.error['msg'] = msg
+
 class ResponseException(Exception):
 	"""Response Exception
 
