@@ -510,6 +510,10 @@ class Record(abc.ABC):
 		if field not in dStruct['tree']:
 			raise KeyError(field)
 
+		# If the field hasn't changed
+		if val == self._dRecord[field]:
+			return self
+
 		# If the value isn't valid for the field
 		if not dStruct['tree'][field].valid(val, [field]):
 			raise ValueError(dStruct['tree'][field].validation_failures)
