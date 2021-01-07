@@ -511,7 +511,7 @@ class Record(abc.ABC):
 			raise KeyError(field)
 
 		# If the field hasn't changed
-		if val == self._dRecord[field]:
+		if field in self._dRecord and val == self._dRecord[field]:
 			return self
 
 		# If the value isn't valid for the field
