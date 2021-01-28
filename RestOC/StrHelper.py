@@ -66,6 +66,29 @@ def decrypt(key, val):
 	# Return the decrypted value
 	return oC.decrypt(val)
 
+def digits(val):
+	"""Digits
+
+	Returns only the digits in the string
+
+	Arguments:
+		val (str): The string to strip all non-digit characters from
+
+	Returns:
+		str
+	"""
+
+	# Init list of valid characters
+	lRet = []
+
+	# Go through each character in the string and only keep it if it's a digit
+	for c in val:
+		if c.isdigit():
+			lRet.append(c)
+
+	# Return the new string
+	return ''.join(lRet)
+
 def encrypt(key, val):
 	"""Encrypt
 
