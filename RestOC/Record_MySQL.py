@@ -603,7 +603,7 @@ class Record(Record_Base.Record):
 	__nodeToSQL = {
 		'any': False,
 		'base64': False,
-		'bool': 'tinyint(1)',
+		'bool': 'tinyint(1) unsigned',
 		'date': 'date',
 		'datetime': 'datetime',
 		'decimal': 'decimal',
