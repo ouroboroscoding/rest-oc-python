@@ -748,15 +748,31 @@ class Record(abc.ABC):
 		"""
 		raise NotImplementedError('Must implement the "get" method')
 
-	def record(self):
+	def record(self, fields=False):
 		"""Record
 
 		Returns the record data as a dict
 
+		Arguments:
+			fields (list): Optional list of fields to return, if not set,
+							returns all fields
+
 		Returns:
 			dict
 		"""
-		return DictHelper.clone(self._dRecord)
+
+		# If no specific fields requested
+		if not fields:
+			dRet =  self._dRecord
+
+		# Else, get each requested field and return
+		else:
+			dRet = {}
+			for f in fields:
+				dRet[f] = self._dRecord[f]
+
+		# Clone the results and return
+		return DictHelper.clone(dRet)
 
 	@abc.abstractclassmethod
 	def remove(cls, _id, array, index, custom={}):

@@ -113,7 +113,7 @@ def send(to, subject, text_body = None, html_body = None, from_='root@localhost'
 		to = [to]
 
 	# Create a new Mime MultiPart message
-	oMMP = MIMEMultipart()
+	oMMP = MIMEMultipart('alternative')
 	oMMP['From'] = from_
 	oMMP['To'] = ', '.join(to)
 	oMMP['Date'] = formatdate()
