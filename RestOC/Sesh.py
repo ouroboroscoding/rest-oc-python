@@ -42,7 +42,7 @@ def create(id = None, expires=None):
 
 	# If we have an expires time
 	if expires:
-		dData['__expires'] = expires
+		dData['__expire'] = expires
 
 	# Create a new Session using a UUID as the id
 	return _Session(id and id or uuid.uuid4().hex, dData)
