@@ -1514,6 +1514,23 @@ class Record(Record_Base.Record):
 				return cls(dRecord, custom)
 
 	@classmethod
+	def generateConfig(cls, tree, special='mysql', db=None):
+		"""Generate Config
+
+		Generates record specific config based on the Format-OC tree passed
+
+		Arguments:
+			tree (FormatOC.Tree): the tree associated with the record type
+			special (str): The special section used to identify the child info
+
+		Returns:
+			dict
+		"""
+
+		# Call the parent
+		return super().generateConfig(tree, special, db);
+
+	@classmethod
 	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, orderby=None, limit=None, custom={}):
 		"""Get
 
