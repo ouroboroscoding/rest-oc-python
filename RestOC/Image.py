@@ -11,7 +11,7 @@ __created__ = "2016-11-11"
 
 # Python imports
 import re
-from io import StringIO
+from io import BytesIO
 
 # Pip Imports
 from PIL import Image as Pillow, ImageFile as PillowFile
@@ -50,9 +50,9 @@ def apply_rotation(image):
 		str
 	"""
 
-	# Load the image into a new StringIO
-	sImg = StringIO(image)
-	sNewImg = StringIO('')
+	# Load the image into a new BytesIO
+	sImg = BytesIO(image)
+	sNewImg = BytesIO('')
 
 	# Create a new Pillow instance from the raw data
 	oImg = Pillow.open(sImg)
@@ -98,11 +98,11 @@ def convertToJPEG(image):
 		str
 	"""
 
-	# Load the image into a new StringIO
-	sImg = StringIO(image)
+	# Load the image into a new BytesIO
+	sImg = BytesIO(image)
 
-	# Create an empty StringIO for the new image
-	sNewImg = StringIO('')
+	# Create an empty BytesIO for the new image
+	sNewImg = BytesIO('')
 
 	# Create a new Pillow instance from the raw data
 	oImg = Pillow.open(sImg)
@@ -135,8 +135,8 @@ def info(image):
 		dict
 	"""
 
-	# Load the image into a new StringIO
-	sImg = StringIO(image)
+	# Load the image into a new BytesIO
+	sImg = BytesIO(image)
 
 	# Create a new Pillow instance from the raw data
 	oImg = Pillow.open(sImg)
@@ -151,9 +151,9 @@ def info(image):
 
 	# Check for exif rotation data
 	try:
-		dRet['orientation'] = oImg._getexif()[ORIENTATION_TAG]
+		dInfo['orientation'] = oImg._getexif()[ORIENTATION_TAG]
 	except Exception:
-		dRet['orientation'] = False
+		dInfo['orientation'] = False
 
 	# Cleanup
 	sImg.close()
@@ -184,9 +184,9 @@ def resize(image, dims, crop=False):
 		else:
 			raise ValueError('dims')
 
-	# Load the image into a new StringIO
-	sImg = StringIO(image)
-	sNewImg = StringIO('')
+	# Load the image into a new BytesIO
+	sImg = BytesIO(image)
+	sNewImg = BytesIO('')
 
 	# Create a new Pillow instance from the raw data
 	oImg = Pillow.open(sImg)
@@ -215,7 +215,7 @@ def resize(image, dims, crop=False):
 	# Paste the resized image onto the new canvas
 	oNewImg.paste(oImg, lOffset)
 
-	# Save the new image to a StringIO
+	# Save the new image to a BytesIO
 	oNewImg.save(sNewImg, oImg.format)
 
 	# Pull out the raw string

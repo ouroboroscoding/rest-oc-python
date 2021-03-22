@@ -290,6 +290,20 @@ class Record(abc.ABC):
 		"""
 		raise NotImplementedError('Must implement the "append" method')
 
+	def changed(self, field):
+		"""Changed
+
+		Returns whether a specific field has been changed, might give a false
+		positive if the entire record is marked as to be replaced
+
+		Arguments:
+			field (str): The field to check
+
+		Returns:
+			bool
+		"""
+		return self._dChanged is True or field in self._dChanged
+
 	def changes(self):
 		"""Changes
 
@@ -671,8 +685,8 @@ class Record(abc.ABC):
 		# No changes
 		return None
 
-	@staticmethod
-	def generateConfig(tree, special='db', db=None):
+	@classmethod
+	def generateConfig(cls, tree, special='db', db=None):
 		"""Generate Config
 
 		Generates record specific config based on the Format-OC tree passed
