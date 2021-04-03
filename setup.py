@@ -16,7 +16,7 @@ setup(
 		'format-oc==1.5.12',
 		'gunicorn==20.0.4',
 		'hiredis==1.1.0',
-		'Jinja2==2.11.2',
+		'Jinja2==2.11.3',
 		'pdfkit==0.6.1',
 		'Pillow==8.0.1',
 		'PyMySQL==0.10.1',
