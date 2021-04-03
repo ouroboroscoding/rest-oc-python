@@ -18,6 +18,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
 import smtplib
+import socket
 from os.path import basename
 
 # Init the local variables
@@ -36,7 +37,25 @@ OK = 0
 ERROR_UNKNOWN = -1
 ERROR_CONNECT = -2
 ERROR_LOGIN = -3
-ERROR_BODY = -4
+
+def _addresses(l):
+	"""Addresses
+
+	Takes a string or list of strings and returns them formatted for to:, cc:,
+	or bcc:
+
+	Arguments:
+		l (str|str[]): The address or list of addresses
+
+	Returns:
+		str
+	"""
+
+	# If we got a list, tuple, or set
+	if isinstance(l, (list,tuple,set)):
+		return ', '.join(l)
+	else:
+		return l
 
 def init(host="localhost", port=25, tls=False, user=None, passwd=None):
 	"""init
@@ -96,7 +115,8 @@ def send(to, subject, text_body = None, html_body = None, from_='root@localhost'
 	Arguments:
 		to (str|str[]): One or email addresses to send to
 		subject (str): The email's subject
-		body (str): The main content of the email
+		text_body (str): The text version of the main content of the email
+		html_body (str): The html version of the main content of the email
 		from_ (str): The from address of the email, optional
 		bcc (str|str[]): Blind carbon copy addresses, optional
 		attachments
@@ -105,36 +125,90 @@ def send(to, subject, text_body = None, html_body = None, from_='root@localhost'
 		bool
 	"""
 
+	# Opts
+	dOpts = {}
+
+	# Add available options
+	if text_body:	dOpts['text'] = text_body
+	if html_body:	dOpts['html'] = html_body
+	if from_:		dOpts['from'] = from_
+	if bcc:			dOpts['bcc'] = bcc
+	if attachments:	dOpts['attachments'] = attachments
+
+	# Call new method and return result
+	return Send(to, subject, dOpts)
+
+def Send(to, subject, opts):
+	"""Send
+
+	Sends an e-mail to one or many addresses based on a dictionary of options
+
+	Arguments:
+		to (str|str[]): The email or emails to send the email to
+		subject (str): The subject of the email
+		opts (dict): The options used to generate the email and any headers
+						'subject': str,
+						'html': str
+						'text': str
+						'from': str,
+						'reply-to': str
+						'cc': str|str[]
+						'bcc': str|str[]
+						'attachments': list(str|dict('body', 'filename'))
+							If an attachment is a string, a local filename is
+							assumed, else if we receive a dictionary, it should
+							contain the filename of the file, and the raw body
+							of the file
+
+	Returns:
+		bool
+	"""
+
 	# Import the module vars
 	global __msError, __mdSMTP
 
-	# If the to is not a list
-	if not isinstance(to, (list,tuple)):
-		to = [to]
+	# If from is missing
+	if 'from' not in opts:
+		opts['from'] = 'noreply@%s' % socket.gethostname()
 
 	# Create a new Mime MultiPart message
 	oMMP = MIMEMultipart('alternative')
-	oMMP['From'] = from_
-	oMMP['To'] = ', '.join(to)
-	oMMP['Date'] = formatdate()
-	oMMP['Subject'] = subject
+	oMMP['from'] = opts['from']
+	oMMP['to'] = _addresses(to)
+	oMMP['date'] = formatdate()
+	oMMP['subject'] = subject
+
+	# If we have a reply-to
+	if 'reply-to' in opts:
+		oMMP['reply-to'] = opts['reply-to']
+
+	# If we have cc
+	if 'cc' in opts:
+		oMMP['cc'] = _addresses(opts['cc'])
+
+	# If we have bcc
+	if 'bcc' in opts:
+		oMMP['bcc'] = _addresses(opts['bcc'])
 
 	# Check that text or html body is set
-	if not text_body and not html_body:
-		return ERROR_BODY
+	if 'text' not in opts and 'html' not in opts:
+		return ValueError('need one of "text" or "html" in Send options')
 
 	# Attach the main message
-	if text_body:
-		oMMP.attach(MIMEText(text_body, 'plain'))
-
-	if html_body:
-		oMMP.attach(MIMEText(html_body, 'html'))
+	if 'text' in opts and opts['text']:
+		oMMP.attach(MIMEText(opts['text'], 'plain'))
+	if 'html' in opts and opts['html']:
+		oMMP.attach(MIMEText(opts['html'], 'html'))
 
 	# If there's any attachments
-	if attachments:
+	if 'attachments' in opts:
+
+		# If we didn't get a list
+		if not isinstance(opts['attachments'], (list,tuple)):
+			raise ValueError('"attachments" must be a list if set')
 
 		# Loop through the attachments
-		for m in attachments:
+		for m in opts['attachments']:
 
 			# If we got a string
 			if isinstance(m, basestring):
@@ -159,7 +233,7 @@ def send(to, subject, text_body = None, html_body = None, from_='root@localhost'
 
 			# Unknown type
 			else:
-				raise ValueError(m)
+				raise ValueError('Invalid attachment', m)
 
 	# Generate the body
 	sBody = oMMP.as_string()
@@ -183,7 +257,7 @@ def send(to, subject, text_body = None, html_body = None, from_='root@localhost'
 			oSMTP.login(__mdSMTP['user'], __mdSMTP['passwd'])
 
 		# Try to send the message, then close the SMTP
-		oSMTP.sendmail(from_, to, sBody)
+		oSMTP.sendmail(opts['from'], _addresses(to), sBody)
 		oSMTP.close()
 
 		# Return ok
