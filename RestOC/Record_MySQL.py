@@ -2075,11 +2075,10 @@ class Record(Record_Base.Record):
 				dSQL = {"type": dSQL}
 
 			# Add the line
-			lFields.append('`%s` %s %s%s' % (
+			lFields.append('`%s` %s %s' % (
 				f,
 				('type' in dSQL and dSQL['type'] or cls._nodeToType(dStruct['tree'][f], dStruct['host'])),
-				((not dStruct['tree'][f].optional()) and 'not null ' or ''),
-				('opts' in dSQL and dSQL['opts'] or '')
+				('opts' in dSQL and dSQL['opts'] or (dStruct['tree'][f].optional() and 'null' or 'not null'))
 			))
 
 		# If we have a primary key
@@ -2095,13 +2094,12 @@ class Record(Record_Base.Record):
 
 			# Primary key type
 			sIDType = 'type' in dSQL and dSQL['type'] or cls._nodeToType(dStruct['tree'][dStruct['primary']], dStruct['host'])
-			sIDOpts = 'opts' in dSQL and dSQL['opts'] or ''
+			sIDOpts = 'opts' in dSQL and dSQL['opts'] or 'not null'
 
 			# Add the line
-			lFields.insert(0, '`%s` %s %s%s%s' % (
+			lFields.insert(0, '`%s` %s %s%s' % (
 				dStruct['primary'],
 				sIDType,
-				((not dStruct['tree'][dStruct['primary']].optional()) and 'not null ' or ''),
 				(dStruct['auto_primary'] is True and 'auto_increment ' or ''),
 				sIDOpts
 			))

@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
 	name='rest-oc',
-	version='0.7.9',
+	version='0.7.10',
 	url='https://github.com/ouroboroscoding/rest-oc-python',
 	description='RestOC is a library of python 3 modules for rapidly setting up REST microservices.',
 	keywords=['rest','microservices'],
@@ -16,9 +16,9 @@ setup(
 		'format-oc==1.5.12',
 		'gunicorn==20.0.4',
 		'hiredis==1.1.0',
-		'Jinja2==2.11.2',
+		'Jinja2==2.11.3',
 		'pdfkit==0.6.1',
-		'Pillow==8.0.1',
+		'Pillow==8.1.1',
 		'PyMySQL==0.10.1',
 		'redis==3.5.3',
 		'requests==2.25.0',
