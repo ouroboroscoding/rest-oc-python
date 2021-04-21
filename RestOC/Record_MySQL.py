@@ -1382,7 +1382,7 @@ class Record(Record_Base.Record):
 
 	# filter static method
 	@classmethod
-	def filter(cls, fields, raw=None, orderby=None, limit=None, custom={}):
+	def filter(cls, fields, raw=None, distinct=False, orderby=None, limit=None, custom={}):
 		"""Filter
 
 		Finds records based on the specific fields and values passed
@@ -1392,6 +1392,7 @@ class Record(Record_Base.Record):
 				should match
 			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
+			distinct (bool): Only return distinct data
 			orderby (str|str[]): A field or fields to order the results by
 			limit (int|tuple): The limit and possible starting point
 			custom (dict): Custom Host and DB info
@@ -1466,9 +1467,10 @@ class Record(Record_Base.Record):
 					bMulti = False
 
 		# Build the statement
-		sSQL = 'SELECT %s FROM `%s`.`%s` ' \
+		sSQL = 'SELECT %s%s FROM `%s`.`%s` ' \
 				'WHERE %s ' \
 				'%s %s' % (
+					distinct and 'DISTINCT ' or '',
 					sFields,
 					dStruct['db'],
 					dStruct['table'],
@@ -1531,7 +1533,7 @@ class Record(Record_Base.Record):
 		return super().generateConfig(tree, special, db);
 
 	@classmethod
-	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, orderby=None, limit=None, custom={}):
+	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, distinct=False, orderby=None, limit=None, custom={}):
 		"""Get
 
 		Returns records by primary key or index, can also be given an extra filter
@@ -1543,6 +1545,7 @@ class Record(Record_Base.Record):
 			match (tuple): N/A in MySQL
 			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
+			distinct (bool): Only return distinct data
 			orderby (str|str[]): A field or fields to order the results by
 			limit (int|tuple): The limit and possible starting point
 			custom (dict): Custom Host and DB info
@@ -1642,9 +1645,10 @@ class Record(Record_Base.Record):
 					bMulti = False
 
 		# Build the statement
-		sSQL = 'SELECT %s FROM `%s`.`%s` ' \
+		sSQL = 'SELECT %s%s FROM `%s`.`%s` ' \
 				'%s ' \
 				'%s %s' % (
+					distinct and 'DISTINCT ' or '',
 					sFields,
 					dStruct['db'],
 					dStruct['table'],

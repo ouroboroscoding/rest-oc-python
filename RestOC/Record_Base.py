@@ -551,7 +551,7 @@ class Record(abc.ABC):
 		return self
 
 	@abc.abstractclassmethod
-	def filter(cls, fields, raw=None, orderby=None, limit=None, custom={}):
+	def filter(cls, fields, raw=None, distinct=False, orderby=None, limit=None, custom={}):
 		"""Filter
 
 		Finds records based on the specific fields and values passed
@@ -561,6 +561,7 @@ class Record(abc.ABC):
 				should match
 			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
+			distinct (bool): Only return distinct data
 			orderby (str|str[]): A field or fields to order the results by
 			limit (int|tuple): The limit and possible starting point
 			custom (dict): Custom Host and DB info
@@ -720,7 +721,7 @@ class Record(abc.ABC):
 		return dRet
 
 	@abc.abstractclassmethod
-	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, orderby=None, limit=None, custom={}):
+	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, distinct=False, orderby=None, limit=None, custom={}):
 		"""Get
 
 		Returns records by ID or index, can also be given an extra filter
@@ -732,6 +733,7 @@ class Record(abc.ABC):
 			match (tuple): Name/Match filter
 			raw (bool|list): Return raw data (dict) for all or a set list of
 				fields
+			distinct (bool): Only return distinct data
 			orderby (str|str[]): A field or fields to order the results by
 			limit (int|tuple): The limit and possible starting point
 			custom (dict): Custom Host and DB info
