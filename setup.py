@@ -2,12 +2,12 @@ from setuptools import setup
 
 setup(
 	name='rest-oc',
-	version='0.7.10',
+	version='0.8.0',
 	url='https://github.com/ouroboroscoding/rest-oc-python',
 	description='RestOC is a library of python 3 modules for rapidly setting up REST microservices.',
 	keywords=['rest','microservices'],
 	author='Chris Nasr - OuroborosCoding',
-	author_email='ouroboroscode@gmail.com',
+	author_email='chris@ouroboroscoding.com',
 	license='Apache-2.0',
 	packages=['RestOC'],
 	install_requires=[

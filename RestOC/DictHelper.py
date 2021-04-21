@@ -150,3 +150,68 @@ def eval(src, contains):
 	# If there's any errors
 	if lErrs:
 		raise ValueError(*lErrs)
+
+def keysToInts(src):
+	"""Keys To Ints
+
+	Recursively goes through a dictionary and converts all keys that are
+	numeric but stored as strings to integers. Returns a new dict and doesn't
+	alter the original.
+
+	PLEASE NOTE: this method is not useful for classes, or anything complex, it
+	is meant primarily for converting JSON objects which don't allow ints as
+	keys. Passing a set, tuple, or iterable class will not result in the
+	expected result
+
+	Arguments:
+		src (dict|list): The dict we are modifying, accepts lists in order to
+							handle recursive following the data
+
+	Returns:
+		dict|list
+	"""
+
+	# If we got a dict
+	if isinstance(src, dict):
+
+		# Init the return value to an empty dict
+		mRet = {}
+
+		# Go through the each key of the source
+		for k in src:
+
+			# Is the value numeric?
+			try: mK = int(k)
+			except ValueError: mK = k
+
+			# If we got a dict or list, recurse it
+			if isinstance(src[k], (dict,list)):
+				mRet[mK] = keysToInts(src[k])
+
+			# Else, store as is
+			else:
+				mRet[mK] = src[k]
+
+	# Else, if we got a list
+	elif isinstance(src, list):
+
+		# Init the result value to a list
+		mRet = []
+
+		# Go through each item in the list
+		for i in range(len(src)):
+
+			# If we got a dict or list, recurse it
+			if isinstance(src[i], (dict,list)):
+				mRet.append(keysToInts(src[i]))
+
+			# Else, store as is
+			else:
+				mRet.append(src[k])
+
+	# Else, raise an error
+	else:
+		raise ValueError('src of %s must be a dict or list, received %s' % (sys._getframe().f_code.co_name, str(type(src))))
+
+	# Return the new data
+	return mRet
