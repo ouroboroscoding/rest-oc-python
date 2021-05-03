@@ -8,8 +8,9 @@ Wrapper for python smtp module
 from past.builtins import basestring
 
 __author__ = "Chris Nasr"
-__copyright__ = "FUEL for the FIRE"
+__copyright__ = "OuroborosCoding"
 __version__ = "1.0.0"
+__email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-17"
 
 # Python imports
