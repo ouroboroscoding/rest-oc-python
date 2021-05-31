@@ -7,6 +7,7 @@ Extends Record module to add support for SQL tables
 __author__ = "Chris Nasr"
 __copyright__ = "OuroborosCoding"
 __version__ = "1.0.0"
+__email__ = "chris@ouroboroscoding.com"
 __created__ = "2020-02-12"
 
 # Python imports

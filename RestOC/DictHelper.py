@@ -7,6 +7,7 @@ Several useful helper methods for use with dicts
 __author__ = "Chris Nasr"
 __copyright__ = "OuroborosCoding"
 __version__ = "1.0.0"
+__email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
 
 # Python imports
