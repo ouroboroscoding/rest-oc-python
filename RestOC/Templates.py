@@ -5,8 +5,9 @@ Holds methods for handling templates
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "FUEL for the FIRE"
+__copyright__ = "OuroborosCoding"
 __version__ = "1.0.0"
+__email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-17"
 
 # Pip imports
@@ -44,7 +45,8 @@ def init(folder):
 def generate(tpl, data = {}, locale = 'en_US', pdf = False):
 	"""Generate
 
-	Generate content from a template and return it
+	Generate content from a template and return it. Please note, when generating
+	PDFs, wkhtmltopdf must be be installed on your system
 
 	Arguments:
 		tpl (str): The template to load
@@ -72,7 +74,7 @@ def generate(tpl, data = {}, locale = 'en_US', pdf = False):
 
 	# If we want a PDF
 	if pdf:
-		return b64encode(pdfkit.from_string(sContent), False)
+		return pdfkit.from_string(sContent, False)
 
 	# Return the content
 	return sContent
