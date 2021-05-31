@@ -208,6 +208,27 @@ def _cursor(host, dictCur = False):
 	# Return the cursor
 	return oCursor
 
+def _print_sql(type, host, sql):
+	"""Print SQL
+
+	Print out a message with host and SQL information. Useful for debugging
+	problems
+
+	Arguments:
+		type (str): The type of statment
+		host (str): The host the statement will be run on
+		sql (str): The SQL to print
+
+	Returns
+		None
+	"""
+	print('----------------------------------------\n%s - %s - %s\n\n%s\n' % (
+		host,
+		type,
+		arrow.get().format('YYYY-MM-DD HH:mm:ss'),
+		sql
+	))
+
 class _wcursor(object):
 	"""_with
 
@@ -298,12 +319,29 @@ def dbDrop(name, host = 'primary'):
 	Commands.execute(host, "DROP DATABASE IF EXISTS `%s%s`" % (Record_Base.dbPrepend(), name))
 	return True
 
+def verbose(set_=None):
+	"""Verbose
+
+	Sets/Gets the debug flag
+
+	Arguments:
+		set_ (bool|None): Ignore to get the current value
+
+	Returns
+		bool|None
+	"""
+	if set is None:	return Commands._verbose
+	else:			Commands._verbose = set_
+
 # Commands class
 class Commands(object):
 	"""Commands class
 
 	Used to directly interface with MySQL
 	"""
+
+	# Output SQL for debugging?
+	_verbose = False
 
 	@classmethod
 	def escape(cls, host, value):
@@ -363,6 +401,9 @@ class Commands(object):
 			uint
 		"""
 
+		# Print debug if requested
+		if cls._verbose: _print_sql('EXECUTE', host, sql)
+
 		# Fetch a cursor
 		with _wcursor(host) as oCursor:
 
@@ -393,9 +434,13 @@ class Commands(object):
 			# Else there's an operational problem so close the connection and
 			#	restart
 			except pymysql.err.OperationalError as e:
+				print('----------------------------------------')
+				print('OPERATIONAL ERROR')
+				print(e.args)
+				print('')
 
 				# If the error code is one that won't change
-				if e.args[0] in [1054]:
+				if e.args[0] in [1054, 1136]:
 					raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
 
 				# Clear the connection and try again
@@ -428,6 +473,9 @@ class Commands(object):
 		Returns:
 			mixed
 		"""
+
+		# Print debug if requested
+		if cls._verbose: _print_sql('INSERT', host, sql)
 
 		# Fetch a cursor
 		with _wcursor(host) as oCursor:
@@ -499,6 +547,9 @@ class Commands(object):
 		Returns:
 			mixed
 		"""
+
+		# Print debug if requested
+		if cls._verbose: _print_sql('SELECT', host, sql)
 
 		# Get a cursor
 		bDictCursor = seltype in (ESelect.ALL, ESelect.HASH_ROWS, ESelect.ROW)
@@ -1466,6 +1517,10 @@ class Record(Record_Base.Record):
 				sLimit = 'LIMIT %d, %d' % (limit[0], limit[1])
 				if limit[1] == 1:
 					bMulti = False
+
+			# Else, invalid limit format
+			else:
+				raise Exception('Invalid limit passed to filter')
 
 		# Build the statement
 		sSQL = 'SELECT %s%s FROM `%s`.`%s` ' \
