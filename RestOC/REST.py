@@ -41,7 +41,7 @@ class _Route(object):
 	A callable class used to store rest routes in the server
 	"""
 
-	def __init__(self, service, path, sesh, environ, cors=None):
+	def __init__(self, service, path, sesh, environ, cors=None, error_callback=None):
 		"""Constructor (__init__)
 
 		Initialises an instance of the route
@@ -52,6 +52,7 @@ class _Route(object):
 			sesh (bool): True if the route requires a session
 			environ (bool): True if the route requires request environ
 			cors (dict): Optionsl CORS values
+			error_callback (function): Optional callback for errors
 
 		Returns:
 			None
@@ -61,6 +62,7 @@ class _Route(object):
 		self.sesh = sesh
 		self.environ = environ
 		self.cors = cors
+		self.error_callback = error_callback
 
 	def __call__(self):
 		"""Call (__call__)
@@ -169,7 +171,17 @@ class _Route(object):
 				oResponse = Services.update(self.service, self.path, mData, oSession, dEnviron)
 
 		except Exception as e:
-			print(traceback.format_exc(), file=sys.stderr)
+			sError = traceback.format_exc()
+			print(sError, file=sys.stderr)
+			if self.error_callback:
+				self.error_callback({
+					"service": self.service,
+					"path": self.path,
+					"data": mData,
+					"session": oSession,
+					"environment": dEnviron,
+					"traceback": sError
+				})
 			return str(Services.Response(error=(
 				Errors.SERVICE_CRASHED,
 				'%s:%s' % (self.service, self.path)
@@ -379,7 +391,7 @@ class Server(bottle.Bottle):
 	Creates an HTTP server for use with REST requests
 	"""
 
-	def __init__(self, routes, service = '', cors=None):
+	def __init__(self, routes, service = '', cors=None, error_callback=None):
 		"""Constructor (__init__)
 
 		Instantiates the server instance
@@ -388,6 +400,7 @@ class Server(bottle.Bottle):
 			routes (dict|list): Routes to the server
 			service (str): The service to use if none exists in a route
 			cors (str): The regex to identify allowed domains
+			error_callback (function): A function to call if any exception occurs
 
 		Returns:
 			None
@@ -449,7 +462,14 @@ class Server(bottle.Bottle):
 			self.route(
 				d['uri'],
 				lMethods,
-				_Route(d['service'], d['path'], d['session'], d['environ'], cors)
+				_Route(
+					d['service'],	# The service to use
+					d['path'],		# The path in the service
+					d['session'],	# The session requirement flag
+					d['environ'],	# The environment requirement flag
+					cors,			# Optional CORS regex
+					error_callback	# Optional callback for error
+				)
 			)
 
 	# run method
