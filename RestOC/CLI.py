@@ -5,7 +5,7 @@ Holds methods for doing CLI things
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "FUEL for the FIRE"
+__copyright__ = "OuroborosCoding"
 __version__ = "1.0.0"
 __created__ = "2018-11-11"
 
