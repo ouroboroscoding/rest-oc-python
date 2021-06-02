@@ -177,6 +177,7 @@ class _Route(object):
 			if self.error_callback:
 				self.error_callback({
 					"service": self.service,
+					"method": bottle.request.method,
 					"path": self.path,
 					"data": mData,
 					"session": oSession,
