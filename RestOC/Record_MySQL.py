@@ -172,7 +172,7 @@ def _converterTimestamp(ts):
 		return 0
 
 	# Conver the string to a timestamp and return it
-	return arrow.get('%s+00:00' % ts).timestamp
+	return arrow.get('%s+00:00' % ts).int_timestamp
 
 def _cursor(host, dictCur = False):
 	"""Cursor
