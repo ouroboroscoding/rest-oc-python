@@ -152,6 +152,9 @@ class Record(abc.ABC):
 		Arguments:
 			field (str): The field to delete
 
+		Raises:
+			KeyError
+
 		Returns:
 			None
 		"""
@@ -181,6 +184,10 @@ class Record(abc.ABC):
 		Arguments:
 			field (str): The field to set
 			val (mixed): The value of the field
+
+		Raises:
+			KeyError
+			ValueError
 
 		Returns:
 			None
@@ -468,9 +475,13 @@ class Record(abc.ABC):
 			self
 		"""
 
-		# Raise a key error if the field doesn't exist in the record
-		if field not in self._dRecord:
+		# If the field is not valid for the record
+		if field not in dStruct['tree']:
 			raise KeyError(field)
+
+		# If the field doesn't exist in the data there's nothing to do
+		if field not in self._dRecord:
+			return self
 
 		# Remove the field from the document
 		del self._dRecord[field]
@@ -510,12 +521,12 @@ class Record(abc.ABC):
 			field (str): The name of the field to set
 			val (mixed): The value to set the field to
 
-		Returns:
-			self for chaining
-
 		Raises:
 			KeyError: field doesn't exist in the structure of the record
 			ValueError: value is not valid for the field
+
+		Returns:
+			self for chaining
 		"""
 
 		# Get the structure associated with the record
