@@ -476,7 +476,7 @@ class Record(abc.ABC):
 		"""
 
 		# If the field is not valid for the record
-		if field not in dStruct['tree']:
+		if field not in self._dStruct['tree']:
 			raise KeyError(field)
 
 		# If the field doesn't exist in the data there's nothing to do
@@ -529,11 +529,8 @@ class Record(abc.ABC):
 			self for chaining
 		"""
 
-		# Get the structure associated with the record
-		dStruct = self.struct()
-
 		# If the field is not valid for the record
-		if field not in dStruct['tree']:
+		if field not in self._dStruct['tree']:
 			raise KeyError(field)
 
 		# If the field hasn't changed
@@ -541,8 +538,8 @@ class Record(abc.ABC):
 			return self
 
 		# If the value isn't valid for the field
-		if not dStruct['tree'][field].valid(val, [field]):
-			raise ValueError(dStruct['tree'][field].validation_failures)
+		if not self._dStruct['tree'][field].valid(val, [field]):
+			raise ValueError(self._dStruct['tree'][field].validation_failures)
 
 		# If we need to keep changes
 		if self._dStruct['changes']:
@@ -551,7 +548,7 @@ class Record(abc.ABC):
 
 		# If the value is not None, store it after cleaning it
 		if val is not None:
-			self._dRecord[field] = dStruct['tree'][field].clean(val)
+			self._dRecord[field] = self._dStruct['tree'][field].clean(val)
 		else:
 			self._dRecord[field] = None
 
