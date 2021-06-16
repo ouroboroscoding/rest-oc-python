@@ -258,7 +258,7 @@ def Send(to, subject, opts):
 			oSMTP.login(__mdSMTP['user'], __mdSMTP['passwd'])
 
 		# Try to send the message, then close the SMTP
-		oSMTP.sendmail(opts['from'], _addresses(to), sBody)
+		oSMTP.sendmail(opts['from'], to, sBody)
 		oSMTP.close()
 
 		# Return ok
