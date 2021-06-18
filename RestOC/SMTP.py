@@ -58,6 +58,36 @@ def _addresses(l):
 	else:
 		return l
 
+def _to(l):
+	"""To
+
+	Converts all addresses passed, whether strings or lists, into one singular
+	list
+
+	Arguments:
+		l (list(str|str[])): The list of addresses or lists of addresses
+
+	Returns:
+		list
+	"""
+
+	# Init the return list
+	lRet = []
+
+	# Go through each item in the list
+	for m in l:
+
+		# If we got a list
+		if isinstance(m, (list,tuple)):
+			lRet.extend(m)
+
+		# Else, we got one address
+		else:
+			lRet.append(m)
+
+	# Return the full list
+	return lRet
+
 def init(host="localhost", port=25, tls=False, user=None, passwd=None):
 	"""init
 
@@ -148,7 +178,6 @@ def Send(to, subject, opts):
 		to (str|str[]): The email or emails to send the email to
 		subject (str): The subject of the email
 		opts (dict): The options used to generate the email and any headers
-						'subject': str,
 						'html': str
 						'text': str
 						'from': str,
@@ -168,16 +197,22 @@ def Send(to, subject, opts):
 	# Import the module vars
 	global __msError, __mdSMTP
 
+	# Init the list of total "to"s
+	lTO = []
+
 	# If from is missing
 	if 'from' not in opts:
 		opts['from'] = 'noreply@%s' % socket.gethostname()
 
 	# Create a new Mime MultiPart message
-	oMMP = MIMEMultipart('alternative')
-	oMMP['from'] = opts['from']
-	oMMP['to'] = _addresses(to)
-	oMMP['date'] = formatdate()
-	oMMP['subject'] = subject
+	oMMP = MIMEMultipart('mixed')
+	oMMP['From'] = opts['from']
+	oMMP['To'] = _addresses(to)
+	oMMP['Date'] = formatdate()
+	oMMP['Subject'] = subject
+
+	# Add the to
+	lTO.append(to)
 
 	# If we have a reply-to
 	if 'reply-to' in opts:
@@ -185,11 +220,15 @@ def Send(to, subject, opts):
 
 	# If we have cc
 	if 'cc' in opts:
-		oMMP['cc'] = _addresses(opts['cc'])
+		oMMP['Cc'] = _addresses(opts['cc'])
+		lTO.append(opts['cc'])
 
 	# If we have bcc
 	if 'bcc' in opts:
-		oMMP['bcc'] = _addresses(opts['bcc'])
+		lTO.append(opts['bcc'])
+
+	# Create the alternative part for the content
+	oAlternative = MIMEMultipart('alternative')
 
 	# Check that text or html body is set
 	if 'text' not in opts and 'html' not in opts:
@@ -197,9 +236,12 @@ def Send(to, subject, opts):
 
 	# Attach the main message
 	if 'text' in opts and opts['text']:
-		oMMP.attach(MIMEText(opts['text'], 'plain'))
+		oAlternative.attach(MIMEText(opts['text'], 'plain'))
 	if 'html' in opts and opts['html']:
-		oMMP.attach(MIMEText(opts['html'], 'html'))
+		oAlternative.attach(MIMEText(opts['html'], 'html'))
+
+	# Add the alternative section to the email
+	oMMP.attach(oAlternative)
 
 	# If there's any attachments
 	if 'attachments' in opts:
@@ -258,7 +300,7 @@ def Send(to, subject, opts):
 			oSMTP.login(__mdSMTP['user'], __mdSMTP['passwd'])
 
 		# Try to send the message, then close the SMTP
-		oSMTP.sendmail(opts['from'], to, sBody)
+		oSMTP.sendmail(opts['from'], _to(lTO), sBody)
 		oSMTP.close()
 
 		# Return ok
