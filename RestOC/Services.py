@@ -579,8 +579,13 @@ class ResponseException(Exception):
 			ResponseException
 		"""
 
-		# Construct the Response and pass it to the parent
-		super().__init__(Response(data, error, warning))
+		# If we got a Response object
+		if isinstance(data, Response):
+			super().__init__(data)
+
+		# Else, construct the Response and pass it to the parent
+		else:
+			super().__init__(Response(data, error, warning))
 
 # Backwards compatibilty
 EffectException = ResponseException

@@ -452,6 +452,28 @@ def random(length = 8, sets='_aZ', duplicates=True):
 	# Return the generated string
 	return sText
 
+def bytes_human(num, suffix='B'):
+	"""Bytes Human
+
+	Returns the size of bytes in the closest binary prefix so that they are
+	clearly understood by humans
+
+	Arguments:
+		num (uint): The bytes to convert to human readable
+
+	Returns:
+		str
+	"""
+
+	for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+
+		if abs(num) < 1024.0:
+			return "%3.1f%sB" % (num, unit)
+
+		num /= 1024.0
+
+	return "%.1fYiB" % num
+
 def strtr(text, table):
 	"""String Translate
 

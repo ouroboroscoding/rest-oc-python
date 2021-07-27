@@ -184,21 +184,27 @@ class _Route(object):
 					"environment": dEnviron,
 					"traceback": sError
 				})
-			return str(Services.Response(error=(
+			oResponse = Services.Error(
 				Errors.SERVICE_CRASHED,
 				'%s:%s' % (self.service, self.path)
-			)))
+			)
 
-		# If the response has an Authorization error
-		if oResponse.errorExists() and \
-			oResponse.error['code'] == Errors.REST_AUTHORIZATION:
+		# If there's an error
+		if oResponse.errorExists():
 
-			# Set the http status to 401 Unauthorized
-			bottle.response.status = 401
+			# If it's an authorization error
+			if oResponse.error['code'] == Errors.REST_AUTHORIZATION:
 
-			# If the message is missing
-			if oResponse.error['msg'] == '':
-				oResponse.error['msg'] = 'Unauthorized'
+				# Set the http status to 401 Unauthorized
+				bottle.response.status = 401
+
+				# If the message is missing
+				if oResponse.error['msg'] == '':
+					oResponse.error['msg'] = 'Unauthorized'
+
+			# Add the service and path to the call
+			try: oResponse.error['service'].append([self.service, self.path])
+			except KeyError: oResponse.error['service'] = [[self.service, self.path]]
 
 		# Return the Response as a string
 		return str(oResponse)
