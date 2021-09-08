@@ -18,7 +18,7 @@ setup(
 		'hiredis==1.1.0',
 		'Jinja2==2.11.3',
 		'pdfkit==0.6.1',
-		'Pillow==8.2.0',
+		'Pillow==8.3.2',
 		'PyMySQL==0.10.1',
 		'redis==3.5.3',
 		'requests==2.25.1',
