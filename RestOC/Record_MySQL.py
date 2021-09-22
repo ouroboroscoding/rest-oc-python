@@ -388,7 +388,7 @@ class Commands(object):
 		return sRet
 
 	@classmethod
-	def execute(cls, host, sql):
+	def execute(cls, host, sql, errcnt=0):
 		"""Execute
 
 		Used to run SQL that doesn't return any rows
@@ -396,6 +396,7 @@ class Commands(object):
 		Args:
 			host (str): The name of the connection to execute on
 			sql (str|tuple): The SQL (or SQL plus a list) statement to run
+			errcnt (uint): DO NOT SET, used internally
 
 		Returns:
 			uint
@@ -440,12 +441,19 @@ class Commands(object):
 				print('')
 
 				# If the error code is one that won't change
-				if e.args[0] in [1054, 1136]:
+				if e.args[0] in [1051, 1054, 1136]:
 					raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
+
+				# Increment the error count
+				errcnt += 1
+
+				# If we've hit our max errors, raise an exception
+				if errcnt == MAX_RETRIES:
+					raise ConnectionError(*e.args)
 
 				# Clear the connection and try again
 				_clearConnection(host)
-				return cls.execute(host, sql)
+				return cls.execute(host, sql, errcnt)
 
 			# Else, catch any Exception
 			except Exception as e:
@@ -460,7 +468,7 @@ class Commands(object):
 				raise e
 
 	@classmethod
-	def insert(cls, host, sql):
+	def insert(cls, host, sql, errcnt=0):
 		"""Insert
 
 		Handles INSERT statements and returns the new ID. To insert records
@@ -469,6 +477,7 @@ class Commands(object):
 		Args:
 			host (str): The name of the connection to into on
 			sql (str): The SQL statement to run
+			errcnt (uint): DO NOT SET, used internally
 
 		Returns:
 			mixed
@@ -515,9 +524,16 @@ class Commands(object):
 				if e.args[0] in [1054]:
 					raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
 
+				# Increment the error count
+				errcnt += 1
+
+				# If we've hit our max errors, raise an exception
+				if errcnt == MAX_RETRIES:
+					raise ConnectionError(*e.args)
+
 				# Clear the connection and try again
 				_clearConnection(host)
-				return cls.insert(host, sql)
+				return cls.insert(host, sql, errcnt)
 
 			# Else, catch any Exception
 			except Exception as e:
@@ -532,7 +548,7 @@ class Commands(object):
 				raise e
 
 	@classmethod
-	def select(cls, host, sql, seltype=ESelect.ALL, field=None):
+	def select(cls, host, sql, seltype=ESelect.ALL, field=None, errcnt=0):
 		"""Select
 
 		Handles SELECT queries and returns the data
@@ -543,6 +559,7 @@ class Commands(object):
 			seltype (ESelect): The format to return the data in
 			field (str): Only used by HASH_ROWS since MySQLdb has no ordereddict
 				for associative rows
+			errcnt (uint): DO NOT SET, used internally
 
 		Returns:
 			mixed
@@ -630,9 +647,16 @@ class Commands(object):
 				if e.args[0] in [1054]:
 					raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
 
+				# Increment the error count
+				errcnt += 1
+
+				# If we've hit our max errors, raise an exception
+				if errcnt == MAX_RETRIES:
+					raise ConnectionError(*e.args)
+
 				# Clear the connection and try again
 				_clearConnection(host)
-				return cls.select(host, sql, seltype)
+				return cls.select(host, sql, seltype, field, errcnt)
 
 			# Else, catch any Exception
 			except Exception as e:
@@ -2265,7 +2289,7 @@ class Record(Record_Base.Record):
 		# Fetch the record structure
 		dStruct = cls.struct(custom)
 
-		# Generate the DROP statment
+		# Generate the DROP statement
 		sSQL = 'drop table `%s`.`%s`' % (
 					dStruct['db'],
 					dStruct['table'],
@@ -2277,7 +2301,7 @@ class Record(Record_Base.Record):
 		# If changes are required
 		if dStruct['changes']:
 
-			# Generate the DROP statment
+			# Generate the DROP statement
 			sSQL = 'drop table `%s`.`%s_changes`' % (
 						dStruct['db'],
 						dStruct['table'],
