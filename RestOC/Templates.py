@@ -11,7 +11,7 @@ __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-17"
 
 # Pip imports
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader
 import pdfkit
 
 # jinja2 environment
