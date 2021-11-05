@@ -743,7 +743,57 @@ class Record(Record_Base.Record):
 
 			# If an index was passed, use get all
 			elif index:
-				oCur = oCur.get_all(_id, index=index)
+
+				# If we recieved a dict for the primary key
+				if isinstance(_id, dict):
+
+					# Between two points
+					if 'between' in _id:
+						oCur = oCur.between(_id['between'][0], _id['between'][1], index=index, right_bound='closed')
+
+					# Greater than
+					elif 'gt' in _id:
+						oCur = oCur.between(_id['gt'], r.maxval, index=index, left_bound='open')
+
+					# Greater than or equal
+					elif 'gte' in _id:
+						oCur = oCur.between(_id['gte'], r.maxval, index=index)
+
+					# Less than
+					elif 'lt' in _id:
+						oCur = oCur.between(r.minval, _id['lt'], index=index)
+
+					# Less than or equal
+					elif 'lte' in _id:
+						oCur = oCur.between(r.minval, _id['lte'], index=index, right_bound='closed')
+
+					# Invalid request
+					else:
+						raise ValueError('_id', _id)
+
+				# If we received a tuple
+				elif isinstance(_id, tuple):
+
+					# Look for None values
+					iNone = -1
+					for i in range(len(_id)):
+						if _id[i] is None:
+							if iNone != -1:
+								raise ValueError('_id', 'only one None per tuple')
+							iNone = i
+
+					# If there us a None in the tuple, assume between and
+					#	replace them with the min and max
+					if iNone > -1:
+						idMax = list(_id)
+						idMin = list(_id)
+						idMax[iNone] = r.maxval
+						idMin[iNone] = r.minval
+						oCur = oCur.between(idMin, idMax, index=index)
+
+					# No None, pass as is
+					else:
+						oCur = oCur.get_all(_id, index=index)
 
 			# If we are using the primary key
 			else:
