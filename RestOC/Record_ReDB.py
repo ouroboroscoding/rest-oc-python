@@ -1820,7 +1820,7 @@ class Record(Record_Base.Record):
 
 			# Add the update and run the request
 			try:
-				dRes = oCur.update({field, value}).run(oCon)
+				dRes = oCur.update({field: value}).run(oCon)
 
 			# Catch operational errors
 			except rerrors.ReqlOpFailedError as e:
