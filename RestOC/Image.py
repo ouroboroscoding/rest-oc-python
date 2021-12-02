@@ -53,7 +53,7 @@ def apply_rotation(image):
 
 	# Load the image into a new BytesIO
 	sImg = BytesIO(image)
-	sNewImg = BytesIO('')
+	sNewImg = BytesIO(b'')
 
 	# Create a new Pillow instance from the raw data
 	oImg = Pillow.open(sImg)
@@ -103,7 +103,7 @@ def convertToJPEG(image):
 	sImg = BytesIO(image)
 
 	# Create an empty BytesIO for the new image
-	sNewImg = BytesIO('')
+	sNewImg = BytesIO(b'')
 
 	# Create a new Pillow instance from the raw data
 	oImg = Pillow.open(sImg)
@@ -187,7 +187,7 @@ def resize(image, dims, crop=False):
 
 	# Load the image into a new BytesIO
 	sImg = BytesIO(image)
-	sNewImg = BytesIO('')
+	sNewImg = BytesIO(b'')
 
 	# Create a new Pillow instance from the raw data
 	oImg = Pillow.open(sImg)
