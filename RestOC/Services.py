@@ -27,6 +27,12 @@ __mbVerbose = False
 __mdRegistered = {}
 """Registered Services"""
 
+__miInternal = 0
+"""Internal Key timeout in seconds"""
+
+__msSalt = None
+"""Internal Key Salt"""
+
 __funcToRequest = {
 	'create': [requests.post, 'POST'],
 	'delete': [requests.delete, 'DELETE'],
@@ -34,9 +40,6 @@ __funcToRequest = {
 	'update': [requests.put, 'PUT']
 }
 """Map functions to REST types"""
-
-__msSalt = None
-"""Internal Key Salt"""
 
 def __request(service, action, path, data, sesh=None, environ=None):
 	"""Request
@@ -221,7 +224,7 @@ def internalKey(key = None):
 			sSHA1_, sTime = key.split(':')
 
 			# If the time is not close enough
-			if iTime - int(sTime) > 5:
+			if iTime - int(sTime) > __miInternal:
 				return False
 
 			# Generate a sha1 from the salt and parts of the time
@@ -251,7 +254,7 @@ def read(service, path, data, sesh=None, environ=None):
 	"""
 	return __request(service, 'read', path, data, sesh, environ)
 
-def register(services, restconf, salt):
+def register(services, restconf, salt, internal=5):
 	"""Register
 
 	Takes a dictionary of services to their instances, or None for remote
@@ -261,6 +264,7 @@ def register(services, restconf, salt):
 		services (dict): Services being registered
 		restconf (dict): Configuration variables for remote services
 		salt (str): The salt used for internal key generation
+		internal (uint): The time in seconds an internal key is valid
 
 	Raises:
 		ValueError
@@ -269,9 +273,10 @@ def register(services, restconf, salt):
 		None
 	"""
 
-	# Pull in the global salt variable and set it
-	global __msSalt
+	# Pull in the global salt and internal variables and set them
+	global __msSalt, __miInternal
 	__msSalt = salt
+	__miInternal = internal
 
 	# If we didn't get a dictionary
 	if not isinstance(services, dict):
@@ -518,6 +523,33 @@ class Response(object):
 
 		# Return the fromDict result
 		return cls.fromDict(d)
+
+	def toDict(self):
+		"""To Dict
+
+		Converts the Response into a dict
+
+		Returns:
+			dict
+		"""
+
+		# Init the return
+		dRet = {}
+
+		# Look for a data attribute
+		try: dRet['data'] = self.data
+		except AttributeError: pass
+
+		# Look for an error attribute
+		try: dRet['error'] = self.error
+		except AttributeError: pass
+
+		# Look for a warning attribute
+		try: dRet['warning'] = self.warning
+		except AttributeError: pass
+
+		# Return the dict
+		return dRet
 
 	def warningExists(self):
 		"""Warning Exists

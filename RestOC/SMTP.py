@@ -189,6 +189,7 @@ def Send(to, subject, opts):
 							assumed, else if we receive a dictionary, it should
 							contain the filename of the file, and the raw body
 							of the file
+						'unsubscribe': str
 
 	Returns:
 		bool
@@ -226,6 +227,10 @@ def Send(to, subject, opts):
 	# If we have bcc
 	if 'bcc' in opts:
 		lTO.append(opts['bcc'])
+
+	# If we have an unsubscribe string
+	if 'unsubscribe' in opts:
+		oMMP.add_header('List-Unsubscribe', opts['unsubscribe'])
 
 	# Create the alternative part for the content
 	oAlternative = MIMEMultipart('alternative')
