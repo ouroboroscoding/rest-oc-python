@@ -140,13 +140,19 @@ def datetime(d):
 	# Return the date/time string
 	return oD.format('YYYY-MM-DD HH:mm:ss')
 
-def timeElapsed(seconds):
+def timeElapsed(seconds, opts=None):
 	"""Time Elapsed
 
-	Returns seconds in a human readable format
+	Returns seconds in a human readable format with several options to show/hide
+	hours/minutes/seconds
 
 	Arguments:
 		seconds (uint): The seconds to convert to ((HH:)mm:)ss
+		opts (dict): Optional flags:
+						show_minutes: default True
+						show_seconds: default True
+						show_zero_hours: default False
+						show_zero_minutes: default False
 
 	Returns:
 		str
@@ -158,29 +164,68 @@ def timeElapsed(seconds):
 	# Get the minutes and seconds
 	m, s = divmod(r, 60)
 
+	# Generate the flags
+	bShowMinutes = not opts or 'show_minutes' not in opts or opts['show_minutes']
+	bShowSeconds = not opts or 'show_seconds' not in opts or opts['show_seconds']
+	bShowZeroHours = opts and 'show_zero_hours' in opts and opts['show_zero_hours']
+	bShowZeroMinutes = opts and 'show_zero_minutes' in opts and opts['show_zero_minutes']
+
 	# Init the list we'll turn into time
 	lTime = None
 
 	# If we have hours
 	if h:
-		lTime = [
-			str(h),
-			m < 10 and '0%d' %m or str(m),
-			s < 10 and '0%d' %s or str(s)
-		]
+
+		# Start by adding hours
+		lTime = [str(h)]
+
+		# If we want to show minutes
+		if bShowMinutes:
+			lTime.append(m < 10 and ('0%d' % m) or str(m))
+
+			# If we want to show seconds (can't show seconds if no minutes)
+			if not opts or 'show_seconds' not in opts or opts['show_seconds']:
+				lTime.append(s < 10 and ('0%d' % s) or str(s))
 
 	# Else, if we have minutes
 	elif m:
-		lTime = [
-			str(m),
-			s < 10 and '0%d' % s or str(s)
-		]
+
+		# Init the time
+		lTime = []
+
+		# If we want to show zero hours
+		if bShowZeroHours:
+			lTime.append('0')
+
+		# If we want to show minutes
+		if bShowMinutes:
+			lTime.append((bShowZeroHours and m < 10) and ('0%d' % m) or str(m))
+
+			# If we want to show seconds (can't show seconds if no minutes)
+			if bShowSeconds:
+				lTime.append(s < 10 and ('0%d' % s) or str(s))
 
 	# Else, we only have seconds
 	else:
-		lTime = [
-			str(s)
-		]
+
+		# Init the time
+		lTime = []
+
+		# If we want to show zero hours
+		if bShowZeroHours:
+			lTime.extend(['0', '00'])
+
+		# Else, if we want to show zero minutes
+		elif bShowZeroMinutes:
+			lTime.append('0')
+
+		# If we want to show seconds
+		if bShowMinutes and bShowSeconds:
+			lTime.append(
+				((bShowZeroMinutes or bShowZeroHours) and s < 10) and \
+				('0%d' % s) or \
+				str(s)
+			)
 
 	# Put them all together and return
 	return ':'.join(lTime)
