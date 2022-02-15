@@ -184,7 +184,7 @@ def timeElapsed(seconds, opts=None):
 			lTime.append(m < 10 and ('0%d' % m) or str(m))
 
 			# If we want to show seconds (can't show seconds if no minutes)
-			if not opts or 'show_seconds' not in opts or opts['show_seconds']:
+			if bShowSeconds:
 				lTime.append(s < 10 and ('0%d' % s) or str(s))
 
 	# Else, if we have minutes
