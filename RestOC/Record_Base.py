@@ -483,6 +483,10 @@ class Record(abc.ABC):
 		if field not in self._dRecord:
 			return self
 
+		# If the field isn't optional
+		if not self._dStruct['tree'][field].optional():
+			raise ValueError([[field, 'missing']])
+
 		# Remove the field from the document
 		del self._dRecord[field]
 
