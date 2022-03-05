@@ -28,7 +28,7 @@ def decode(s):
 	Returns:
 		mixed
 	"""
-	return json.loads(s, parse_float=Decimal, encoding='utf8')
+	return json.loads(s, parse_float=Decimal)
 
 # decodef function
 def decodef(f):
@@ -43,7 +43,7 @@ def decodef(f):
 	Returns:
 		mixed
 	"""
-	return json.load(f, parse_float=Decimal, encoding='utf8')
+	return json.load(f, parse_float=Decimal)
 
 # encode function
 def encode(o, indent=None):
