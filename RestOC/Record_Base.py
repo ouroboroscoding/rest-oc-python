@@ -85,6 +85,14 @@ def registerType(type_, module_):
 	global __mlTypes
 	__mlTypes[type_] = module_
 
+# Duplicate key exception
+class DuplicateException(Exception):
+	"""DuplicateException class
+
+	Used for raising issues with duplicate records
+	"""
+	pass
+
 class RevisionException(Exception):
 	"""Revision Exception
 

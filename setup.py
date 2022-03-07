@@ -1,12 +1,22 @@
 from setuptools import setup
 
+with open('README.md', 'r') as oF
+	long_description=oF.read()
+
 setup(
-	name='rest-oc',
-	version='0.9.19',
-	url='https://github.com/ouroboroscoding/rest-oc-python',
+	name='Rest-OC',
+	version='0.9.20',
 	description='RestOC is a library of python 3 modules for rapidly setting up REST microservices.',
+	long_description=long_description,
+	long_description_content_type='text/markdown',
+	url='https://ouroboroscoding.com/rest-oc/',
+	project_urls={
+		'Documentation': 'https://ouroboroscoding.com/rest-oc/',
+		'Source': 'https://github.com/ouroboroscoding/rest-oc-python',
+		'Tracker': 'https://github.com/ouroboroscoding/rest-oc-python/issues'
+	},
 	keywords=['rest','microservices'],
-	author='Chris Nasr - OuroborosCoding',
+	author='Chris Nasr - Ouroboros Coding',
 	author_email='chris@ouroboroscoding.com',
 	license='Apache-2.0',
 	packages=['RestOC'],
