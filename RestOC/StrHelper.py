@@ -30,6 +30,28 @@ _mdRandomSets = {
 	"!*":	"!@$^*-_."
 }
 
+def bytes_human(num, suffix='B'):
+	"""Bytes Human
+
+	Returns the size of bytes in the closest binary prefix so that they are
+	clearly understood by humans
+
+	Arguments:
+		num (uint): The bytes to convert to human readable
+
+	Returns:
+		str
+	"""
+
+	for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+
+		if abs(num) < 1024.0:
+			return "%3.1f%sB" % (num, unit)
+
+		num /= 1024.0
+
+	return "%.1fYiB" % num
+
 def decrypt(key, val):
 	"""Decrypt
 
@@ -452,28 +474,6 @@ def random(length = 8, sets='_aZ', duplicates=True):
 	# Return the generated string
 	return sText
 
-def bytes_human(num, suffix='B'):
-	"""Bytes Human
-
-	Returns the size of bytes in the closest binary prefix so that they are
-	clearly understood by humans
-
-	Arguments:
-		num (uint): The bytes to convert to human readable
-
-	Returns:
-		str
-	"""
-
-	for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
-
-		if abs(num) < 1024.0:
-			return "%3.1f%sB" % (num, unit)
-
-		num /= 1024.0
-
-	return "%.1fYiB" % num
-
 def strtr(text, table):
 	"""String Translate
 
@@ -501,3 +501,36 @@ def strtr(text, table):
 			i += 1
 
 	return ''.join(buff)
+
+def to_bool(t):
+	"""To Bool
+
+	Converts a string to a boolean value
+
+	Arguments:
+		t (str): The text to attempt to convert
+
+	Raises
+		ValueError
+
+	Returns:
+		bool
+	"""
+
+	# If we didn't get a string
+	if not isinstance(t, str):
+		return ValueError('t is not a string: %s', str(type(t)))
+
+	# First, convert the string to lowercase
+	t = t.lower()
+
+	# If it's any true type value
+	if t in ['1', 'on', 't', 'true', 'y', 'yes']:
+		return True
+
+	# Else, if it's any false type value
+	elif t in ['0', 'f', 'false', 'n', 'no', 'off']:
+		return False
+
+	# Raise an exception
+	raise ValueError('t is not a boolean representation: "%s"' % t)

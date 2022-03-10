@@ -33,6 +33,9 @@ __mdConnections = {}
 # defines
 MAX_RETRIES = 3
 
+# Backwards compatibility
+DuplicateException = Record_Base.DuplicateException
+
 ## ESelect
 class ESelect(IntEnum):
 	ALL			= 1
@@ -41,14 +44,6 @@ class ESelect(IntEnum):
 	HASH		= 4
 	HASH_ROWS	= 5
 	ROW			= 6
-
-# Duplicate key exception
-class DuplicateException(Exception):
-	"""DuplicateException class
-
-	Used for raising issues with duplicate records
-	"""
-	pass
 
 class Literal(object):
 	"""Literal
@@ -430,7 +425,7 @@ class Commands(object):
 			except pymysql.err.IntegrityError as e:
 
 				# Raise an SQL Duplicate Exception
-				raise DuplicateException(e.args[0], e.args[1])
+				raise Record_Base.DuplicateException(e.args[0], e.args[1])
 
 			# Else there's an operational problem so close the connection and
 			#	restart
@@ -514,7 +509,7 @@ class Commands(object):
 			except pymysql.err.IntegrityError as e:
 
 				# Raise an SQL Duplicate Exception
-				raise DuplicateException(e.args[0], e.args[1])
+				raise Record_Base.DuplicateException(e.args[0], e.args[1])
 
 			# Else there's an operational problem so close the connection and
 			#	restart
@@ -632,12 +627,6 @@ class Commands(object):
 
 				# Raise an SQL Exception
 				raise ValueError(e.args[0], 'SQL error (' + str(e.args[0]) + '): ' + str(e.args[1]) + '\n' + str(sql))
-
-			# Else, a duplicate key error
-			except pymysql.err.IntegrityError as e:
-
-				# Raise an SQL Duplicate Exception
-				raise SqlDuplicateException(e.args[0], e.args[1])
 
 			# Else there's an operational problem so close the connection and
 			#	restart

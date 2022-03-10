@@ -28,6 +28,9 @@ __mdHosts = {}
 # defines
 MAX_RETRIES = 3
 
+# Backwards compatibility (and ease of use)
+DuplicateException = Record_Base.DuplicateException
+
 def _connect(host, error_count=0):
 	"""Connect
 
@@ -505,12 +508,23 @@ class Record(Record_Base.Record):
 				.insert(self._dRecord, conflict=conflict) \
 				.run(oCon)
 
+			# If we got an error
+			if dRes['errors']:
+
+				# If it's a duplicate key
+				if dRes['first_error'][0:21] == 'Duplicate primary key':
+					raise Record_Base.DuplicateException(self._dStruct['primary'], self._dRecord[self._dStruct['primary']])
+
+				# Else, it's an unknown error
+				else:
+					raise Exception(dRes['first_error'])
+
 			# If the record was not inserted for some reason
 			if dRes['inserted'] != 1 and dRes['replaced'] != 1:
 				return None
 
 			# Store the primary key if we didn't set it ourselves
-			if self._dStruct['auto_primary']:
+			if self._dStruct['auto_primary'] and self._dStruct['primary'] not in self._dRecord:
 				self._dRecord[self._dStruct['primary']] = dRes['generated_keys'][0]
 
 			# If changes are required
@@ -604,6 +618,17 @@ class Record(Record_Base.Record):
 				.table(dStruct['table']) \
 				.insert(lRecords, conflict=conflict) \
 				.run(oCon)
+
+			# If we got an error
+			if dRes['errors']:
+
+				# If it's a duplicate key
+				if dRes['first_error'][0:21] == 'Duplicate primary key':
+					raise Record_Base.DuplicateException(self._dStruct['primary'], self._dRecord[self._dStruct['primary']])
+
+				# Else, it's an unknown error
+				else:
+					raise Exception(dRes['first_error'])
 
 			# If the record was not inserted for some reason
 			if dRes['inserted'] == 0 and dRes['replaced'] == 0:
@@ -1490,9 +1515,19 @@ class Record(Record_Base.Record):
 			# Update the record
 			dRes = oCur.run(oCon)
 
+			# If we got an error
+			if dRes['errors']:
+
+				# If it's a duplicate key
+				if dRes['first_error'][0:21] == 'Duplicate primary key':
+					raise Record_Base.DuplicateException(self._dStruct['primary'], self._dRecord[self._dStruct['primary']])
+
+				# Else, it's an unknown error
+				else:
+					raise Exception(dRes['first_error'])
+
 			# If the record wasn't updated for some reason
 			if dRes['replaced'] != 1:
-				print(dRes)
 				return False
 
 			# If changes are required
