@@ -746,11 +746,11 @@ class Record(Record_Base.Record):
 				else:
 
 					# long text
-					if dMinMax['maximum'] == 4294967296:
+					if dMinMax['maximum'] == 4294967295:
 						return 'longtext'
-					elif dMinMax['maximum'] == 16777216:
+					elif dMinMax['maximum'] == 16777215:
 						return 'mediumtext'
-					elif dMinMax['maximum'] == 65536:
+					elif dMinMax['maximum'] == 65535:
 						return 'text'
 					else:
 						return 'varchar(%d)' % dMinMax['maximum']
@@ -958,8 +958,11 @@ class Record(Record_Base.Record):
 		lTemp = [[], []]
 		for f in self._dStruct['tree'].keys():
 
-			# If it's the primary key with auto_primary on
-			if f == self._dStruct['primary'] and self._dStruct['auto_primary']:
+			# If it's the primary key with auto_primary on and the value isn't
+			#	passed
+			if f == self._dStruct['primary'] and \
+				self._dStruct['auto_primary'] and \
+				f not in self._dRecord:
 
 				# If it's a string, add the field and set the value to the
 				#	SQL variable
