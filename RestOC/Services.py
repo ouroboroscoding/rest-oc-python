@@ -41,10 +41,10 @@ __funcToRequest = {
 }
 """Map functions to REST types"""
 
-def __request(service, action, path, data, sesh=None, environ=None):
+def request(service, action, path, data, sesh=None, environ=None):
 	"""Request
 
-	Internal method to convert REST requests into HTTP requests
+	Method to convert REST requests into HTTP requests
 
 	Arguments:
 		service (str): The service we are requesting data from
@@ -167,7 +167,7 @@ def create(service, path, data, sesh=None, environ=None):
 	Returns:
 		Response
 	"""
-	return __request(service, 'create', path, data, sesh, environ)
+	return request(service, 'create', path, data, sesh, environ)
 
 def delete(service, path, data, sesh=None, environ=None):
 	"""Delete
@@ -184,7 +184,7 @@ def delete(service, path, data, sesh=None, environ=None):
 	Returns:
 		Response
 	"""
-	return __request(service, 'delete', path, data, sesh, environ)
+	return request(service, 'delete', path, data, sesh, environ)
 
 def internalKey(key = None):
 	"""Internal Key
@@ -252,7 +252,7 @@ def read(service, path, data, sesh=None, environ=None):
 	Returns:
 		Response
 	"""
-	return __request(service, 'read', path, data, sesh, environ)
+	return request(service, 'read', path, data, sesh, environ)
 
 def register(services, restconf, salt, internal=5):
 	"""Register
@@ -332,7 +332,7 @@ def update(service, path, data, sesh=None, environ=None):
 	Returns:
 		Response
 	"""
-	return __request(service, 'update', path, data, sesh, environ)
+	return request(service, 'update', path, data, sesh, environ)
 
 def verbose(flag=True):
 	"""Verbose
@@ -628,6 +628,9 @@ class Service(object):
 	The object to build all Services from
 	"""
 
+	__pathToDef = {}
+	"""Map of paths to function name"""
+
 	def create(self, path, data, sesh=None, environ=None):
 		"""Create
 
@@ -732,6 +735,11 @@ class Service(object):
 		Returns:
 			Service
 		"""
+
+		# Init the paths to function names
+		self._pathToDef
+
+		# Return self for chaining
 		return self
 
 	@classmethod
@@ -845,8 +853,8 @@ class Service(object):
 		except ResponseException as e:
 			return e.args[0]
 
-	@staticmethod
-	def pathToMethod(path, append=''):
+	@classmethod
+	def pathToMethod(cls, path, append=''):
 		"""Path to Method
 
 		Takes a path and converts it to the standard naming for Service methods
@@ -858,14 +866,28 @@ class Service(object):
 		Returns:
 			str
 		"""
-		sRet = ''
-		iLen = len(path)
-		i = 0
-		while i < iLen:
-			if(path[i] in ['/', '_', '-']):
+
+		# If we already have the function name associated
+		try:
+			sRet = cls.__pathToDef[path]
+
+		# Else, if we haven't generated it yet
+		except KeyError:
+
+			# Generate the name from the path
+			sRet = ''
+			iLen = len(path)
+			i = 0
+			while i < iLen:
+				if(path[i] in ['/', '_', '-']):
+					i += 1
+					sRet += path[i].upper()
+				else:
+					sRet += path[i]
 				i += 1
-				sRet += path[i].upper()
-			else:
-				sRet += path[i]
-			i += 1
+
+			# Store it for next time
+			cls.__pathToDef[path] = sRet
+
+		# Return the generated function name plus the append
 		return sRet + append

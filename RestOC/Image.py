@@ -15,6 +15,7 @@ import re
 from io import BytesIO
 
 # Pip Imports
+import piexif
 from PIL import Image as Pillow, ImageFile as PillowFile
 PillowFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -28,7 +29,7 @@ ORIENTATION_TAG = 0x0112
 DIMENSIONS_REGEX = re.compile(r'^(?:[1-9]\d+)?x(?:[1-9]\d+)?$')
 
 # Rotation sequences based on exif orientation flag
-__mlSequences = [
+SEQUENCES = [
 	[],
 	[Pillow.FLIP_LEFT_RIGHT],
 	[Pillow.ROTATE_180],
@@ -42,7 +43,8 @@ __mlSequences = [
 def apply_rotation(image):
 	"""Apply Rotation
 
-	Uses exif data to rotate the image to the proper position
+	Uses exif data to rotate the image to the proper position, will lose exif
+	data and might lose quality
 
 	Arguments:
 		image (str): A raw image as a string
@@ -63,7 +65,7 @@ def apply_rotation(image):
 
 	# Get the proper sequence
 	try:
-		lSeq = __mlSequences[oImg._getexif()[ORIENTATION_TAG] - 1]
+		lSeq = SEQUENCES[oImg._getexif()[ORIENTATION_TAG] - 1]
 
 		# Transpose the image
 		for i in lSeq:
@@ -87,13 +89,14 @@ def apply_rotation(image):
 	# Return
 	return sRet
 
-def convertToJPEG(image):
+def convertToJPEG(image, quality=90):
 	"""Convert To JPEG
 
-	Changes any valid image into a JPEG
+	Changes any valid image into a JPEG, loses exif data
 
 	Arguments:
 		image (str): A raw image as a string
+		quality (uint): The quality, from 0 to 100, to save the image in
 
 	Returns:
 		str
@@ -113,7 +116,7 @@ def convertToJPEG(image):
 		oImg = oImg.convert('RGB');
 
 	# Save the new image as a JPEG
-	oImg.save(sNewImg, 'JPEG')
+	oImg.save(sNewImg, 'JPEG', quality=quality, subsampling=0)
 
 	# Pull out the raw string
 	sRet = sNewImg.getvalue()
@@ -156,6 +159,12 @@ def info(image):
 	except Exception:
 		dInfo['orientation'] = False
 
+	# Check for exif data
+	try:
+		dInfo['exif'] = piexif.load(oImg.info['exif'])
+	except Exception:
+		dInfo['exif'] = None
+
 	# Cleanup
 	sImg.close()
 	oImg.close()
@@ -163,7 +172,7 @@ def info(image):
 	# Return the info
 	return dInfo
 
-def resize(image, dims, crop=False):
+def resize(image, dims, crop=False, quality=90):
 	"""Resize
 
 	Given raw data and a size, a new image is created and returned as raw data
@@ -172,6 +181,7 @@ def resize(image, dims, crop=False):
 		image (str): Raw image data to be loaded and resized
 		dims (str|dict): New dimensions of the image, "WWWxHHH" or {"w":, "h":}
 		crop (bool): Set to true to crop the photo rather than add whitespace
+		quality (uint): The quality, from 0 to 100, to save the thumbnail in
 
 	Returns:
 		str
@@ -207,6 +217,16 @@ def resize(image, dims, crop=False):
 	else:
 		dResize = Resize.fit(oImg.width, oImg.height, dims['w'], dims['h'])
 
+	# If the image has an orientation
+	try:
+		lSeq = SEQUENCES[oImg._getexif()[ORIENTATION_TAG] - 1]
+
+		# Transpose the image
+		for i in lSeq:
+			oImg = oImg.transpose(i)
+	except Exception:
+		pass
+
 	# Resize the image
 	oImg.thumbnail([dResize['w'], dResize['h']], Pillow.ANTIALIAS)
 
@@ -217,7 +237,7 @@ def resize(image, dims, crop=False):
 	oNewImg.paste(oImg, lOffset)
 
 	# Save the new image to a BytesIO
-	oNewImg.save(sNewImg, oImg.format)
+	oNewImg.save(sNewImg, oImg.format, quality=90, subsampling=0)
 
 	# Pull out the raw string
 	sReturn = sNewImg.getvalue()

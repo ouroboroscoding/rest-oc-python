@@ -852,7 +852,8 @@ class Record(Record_Base.Record):
 	def exists(cls, _id, index=None, custom={}):
 		"""Exists
 
-		Returns true if the specified primary key or unique index value exists
+		Returns the ID (primary key) of the record for the specified ID or
+		unique index value found, else False if no record is found
 
 		Arguments:
 			_id (mixed): The primary key to check
@@ -870,11 +871,12 @@ class Record(Record_Base.Record):
 
 		# Use the get method to avoid duplicate code and check if anything was
 		#	returned
-		if not cls.get(_id, index=index, raw=[dStruct['primary']], custom=custom):
+		dRecord = cls.get(_id, index=index, raw=[dStruct['primary']], custom=custom)
+		if not dRecord:
 			return False
 
-		# If anything was returned, the key exists
-		return True
+		# If anything was returned, return the primary key
+		return dRecord[dStruct['primary']]
 
 	# filter static method
 	@classmethod
