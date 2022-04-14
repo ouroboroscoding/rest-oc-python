@@ -149,7 +149,10 @@ def info(image):
 	dInfo = {
 		"length": len(image),
 		"mime": oImg.format in Pillow.MIME and Pillow.MIME[oImg.format] or None,
-		"resolution": oImg.size,
+		"resolution": {
+			"width": oImage.size[0],
+			"height": oImage.size[1]
+		},
 		"type": oImg.format
 	}
 
