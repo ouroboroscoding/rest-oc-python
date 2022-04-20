@@ -412,7 +412,7 @@ class Record(abc.ABC):
 				'append' optional postfix for dynamic DBs
 
 		Returns:
-			mixed|None
+			uint
 		"""
 		raise NotImplementedError('Must implement the "createMany" method')
 

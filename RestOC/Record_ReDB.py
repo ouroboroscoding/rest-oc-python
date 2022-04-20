@@ -582,7 +582,7 @@ class Record(Record_Base.Record):
 				'append' optional postfix for dynamic DBs
 
 		Returns:
-			mixed[]
+			uint
 		"""
 
 		# Make sure conflict arg is valid

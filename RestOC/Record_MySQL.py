@@ -1203,8 +1203,8 @@ class Record(Record_Base.Record):
 		# Run the statment
 		iRes = Commands.execute(dStruct['host'], sSQL)
 
-		# Return based on the result
-		return iRes and True or False
+		# Returns rows inserted/changed
+		return iRes
 
 	def delete(self, changes=None):
 		"""Delete

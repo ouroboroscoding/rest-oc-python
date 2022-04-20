@@ -150,8 +150,8 @@ def info(image):
 		"length": len(image),
 		"mime": oImg.format in Pillow.MIME and Pillow.MIME[oImg.format] or None,
 		"resolution": {
-			"width": oImage.size[0],
-			"height": oImage.size[1]
+			"width": oImg.size[0],
+			"height": oImg.size[1]
 		},
 		"type": oImg.format
 	}
@@ -193,7 +193,7 @@ def resize(image, dims, crop=False, quality=90):
 	# Check the dimensions
 	if not isinstance(dims, dict):
 		if isinstance(dims, str):
-			l = [i for i in size.split('x')]
+			l = [i for i in dims.split('x')]
 			dims = {"w": l[0], "h": l[1]}
 		else:
 			raise ValueError('dims')
@@ -205,20 +205,15 @@ def resize(image, dims, crop=False, quality=90):
 	# Create a new Pillow instance from the raw data
 	oImg = Pillow.open(sImg)
 
+	# Store the format
+	sFormat = oImg.format
+
 	# Make sure the values are ints
 	dims['w'] = int(dims['w'])
 	dims['h'] = int(dims['h'])
 
 	# Create a new blank image
 	oNewImg = Pillow.new(oImg.mode, [dims['w'],dims['h']], (255,255,255,255))
-
-	# If we are cropping
-	if crop:
-		dResize = Resize.crop(oImg.width, oImg.height, dims['w'], dims['h'])
-
-	# Else, we are fitting
-	else:
-		dResize = Resize.fit(oImg.width, oImg.height, dims['w'], dims['h'])
 
 	# If the image has an orientation
 	try:
@@ -230,17 +225,25 @@ def resize(image, dims, crop=False, quality=90):
 	except Exception:
 		pass
 
+	# If we are cropping
+	if crop:
+		dResize = Resize.crop(oImg.width, oImg.height, dims['w'], dims['h'])
+
+	# Else, we are fitting
+	else:
+		dResize = Resize.fit(oImg.width, oImg.height, dims['w'], dims['h'])
+
 	# Resize the image
 	oImg.thumbnail([dResize['w'], dResize['h']], Pillow.ANTIALIAS)
 
 	# Get the offsets
-	lOffset = ((dims['w'] - dResize['w']) / 2, (dims['h'] - dResize['h']) / 2)
+	lOffset = ((dims['w'] - dResize['w']) // 2, (dims['h'] - dResize['h']) // 2)
 
 	# Paste the resized image onto the new canvas
 	oNewImg.paste(oImg, lOffset)
 
 	# Save the new image to a BytesIO
-	oNewImg.save(sNewImg, oImg.format, quality=90, subsampling=0)
+	oNewImg.save(sNewImg, sFormat, quality=90, subsampling=0)
 
 	# Pull out the raw string
 	sReturn = sNewImg.getvalue()
