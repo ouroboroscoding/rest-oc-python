@@ -412,7 +412,7 @@ class Record(abc.ABC):
 				'append' optional postfix for dynamic DBs
 
 		Returns:
-			mixed|None
+			uint
 		"""
 		raise NotImplementedError('Must implement the "createMany" method')
 
@@ -454,7 +454,8 @@ class Record(abc.ABC):
 	def exists(cls, _id, index=None, custom={}):
 		"""Exists
 
-		Returns true if the specified ID or unique index value exists
+		Returns the ID (primary key) of the record for the specified ID or
+		unique index value found, else False if no record is found
 
 		Arguments:
 			_id (mixed): The ID to check
@@ -464,7 +465,7 @@ class Record(abc.ABC):
 				'append' optional postfix for dynamic DBs
 
 		Returns:
-			bool
+			mixed|False
 		"""
 		raise NotImplementedError('Must implement the "exists" method')
 
