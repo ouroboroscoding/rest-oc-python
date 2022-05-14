@@ -1203,8 +1203,8 @@ class Record(Record_Base.Record):
 		# Run the statment
 		iRes = Commands.execute(dStruct['host'], sSQL)
 
-		# Return based on the result
-		return iRes and True or False
+		# Returns rows inserted/changed
+		return iRes
 
 	def delete(self, changes=None):
 		"""Delete
@@ -1389,7 +1389,8 @@ class Record(Record_Base.Record):
 	def exists(cls, _id, index=None, custom={}):
 		"""Exists
 
-		Returns true if the specified primary key or unique index value exists
+		Returns the ID (primary key) of the record for the specified ID or
+		unique index value found, else False if no record is found
 
 		Arguments:
 			_id (mixed): The primary key to check
@@ -1408,19 +1409,21 @@ class Record(Record_Base.Record):
 		# If an index was passed
 		if index is not None:
 
-			# Use filter to check for the record
-			if not cls.filter({index: _id}, raw=[dStruct['primary']], limit=1, custom=custom):
+			# Use filter to find the record
+			dRecord = cls.filter({index: _id}, raw=[dStruct['primary']], limit=1, custom=custom)
+			if not dRecord:
 				return False
 
 		# Else, assume an ID
 		else:
 
-			# Use the get method to check for the record
-			if not cls.get(_id, raw=[dStruct['primary']], custom=custom):
+			# Use the get method to find the record
+			dRecord = cls.get(_id, raw=[dStruct['primary']], custom=custom)
+			if not dRecord:
 				return False
 
-		# If anything was returned, the key exists
-		return True
+		# If anything was returned, return the primary key
+		return dRecord[dStruct['primary']]
 
 	def fieldSet(self, field, val):
 		"""Field Set
