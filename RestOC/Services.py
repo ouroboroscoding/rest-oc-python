@@ -11,9 +11,9 @@ __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
 
 # Python imports
+from datetime import datetime
 from hashlib import sha1
 from time import sleep, time
-from datetime import datetime
 
 # Pip imports
 import requests
@@ -68,12 +68,15 @@ def request(service, action, path, data, sesh=None, environ=None):
 		if 'instance' in __mdRegistered[service]:
 
 			# If verbose requested
-			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, str(data)))
+			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, JSON.encode(data, 2)))
 
 			# Directly call the action
 			oResponse = getattr(__mdRegistered[service]['instance'], action)(
 				path, data, sesh, environ
 			)
+
+			# If verbose requested
+			if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), JSON.encode(oResponse.toDict(), 2)))
 
 		# Else if the service is running elsewhere
 		else:
@@ -83,10 +86,6 @@ def request(service, action, path, data, sesh=None, environ=None):
 
 			# Generate the URL to reach the service
 			sURL = __mdRegistered[service]['url'] + path
-
-			# If verbose requested
-			if __mbVerbose:
-				print('%s: Calling %s %s %s)' % (str(datetime.now()), __funcToRequest[action][1], sURL, str(data)))
 
 			# Convert the data to JSON
 			sData = JSON.encode(data)
@@ -141,9 +140,6 @@ def request(service, action, path, data, sesh=None, environ=None):
 
 			# Else turn the content into an Response and return it
 			oResponse = Response.fromJSON(oRes.text)
-
-		# If verbose requested
-		if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), str(oResponse)))
 
 		# Return the Response of the request
 		return oResponse

@@ -707,61 +707,84 @@ class Record(Record_Base.Record):
 			str
 		"""
 
-		# Get the node's type
-		sType = node.type()
+		# Get the node's class
+		sClass = node.className()
 
-		# Can't use any in MySQL
-		if sType == 'any':
-			raise ValueError('"any" nodes can not be used in Record_MySQL')
+		# If it's a regular node
+		if sClass == 'Node':
 
-		# If the type is a string
-		elif sType in ['base64', 'string']:
+			# Get the node's type
+			sType = node.type()
 
-			# If we have options
-			lOptions = node.options()
-			if not lOptions is None:
+			# Can't use any in MySQL
+			if sType == 'any':
+				raise ValueError('"any" nodes can not be used in Record_MySQL')
 
-				# Create an enum
-				return 'enum(%s)' % (','.join([
-					cls.escape(host, sType, s)
-					for s in lOptions
-				]))
+			# If the type is a string
+			elif sType in ['base64', 'string']:
 
-			# Else, need maximum
-			else:
+				# If we have options
+				lOptions = node.options()
+				if not lOptions is None:
 
-				# Get min/max values
-				dMinMax = node.minmax()
+					# Create an enum
+					return 'enum(%s)' % (','.join([
+						cls.escape(host, node, s)
+						for s in lOptions
+					]))
 
-				# If we have don't have a maximum
-				if dMinMax['maximum'] is None:
-					raise ValueError('"string" nodes must have a __maximum__ value if __sql__.type is not set in Record_MySQL')
-
-				# If the minimum matches the maximum
-				if dMinMax['minimum'] == dMinMax['maximum']:
-
-					# It's a char as all characters must be filled
-					return 'char(%d)' % dMinMax['maximum']
-
+				# Else, need maximum
 				else:
 
-					# long text
-					if dMinMax['maximum'] == 4294967295:
-						return 'longtext'
-					elif dMinMax['maximum'] == 16777215:
-						return 'mediumtext'
-					elif dMinMax['maximum'] == 65535:
-						return 'text'
+					# Get min/max values
+					dMinMax = node.minmax()
+
+					# If we have don't have a maximum
+					if dMinMax['maximum'] is None:
+						raise ValueError('"string" nodes must have a __maximum__ value if __sql__.type is not set in Record_MySQL')
+
+					# If the minimum matches the maximum
+					if dMinMax['minimum'] == dMinMax['maximum']:
+
+						# It's a char as all characters must be filled
+						return 'char(%d)' % dMinMax['maximum']
+
 					else:
-						return 'varchar(%d)' % dMinMax['maximum']
 
-		# Else, get the default
-		elif sType in cls.__nodeToSQL:
-			return cls.__nodeToSQL[sType]
+						# long text
+						if dMinMax['maximum'] == 4294967295:
+							return 'longtext'
+						elif dMinMax['maximum'] == 16777215:
+							return 'mediumtext'
+						elif dMinMax['maximum'] == 65535:
+							return 'text'
+						else:
+							return 'varchar(%d)' % dMinMax['maximum']
 
-		# Else
+			# Else, get the default
+			elif sType in cls.__nodeToSQL:
+				return cls.__nodeToSQL[sType]
+
+			# Else
+			else:
+				raise ValueError('"%s" is not a known type to Record_MySQL')
+
+		# Else, if it's a Parent
+		elif sClass in ['ArrayNode', 'HashNode', 'Parent']:
+
+			# Get the sql section
+			dSQL = node.special('sql')
+
+			# If it doesn't exist, or there's no json flag
+			if not dSQL or 'json' not in dSQL or not dSQL['json']:
+				raise TypeError('Record_MySQL can not process FormatOC %s nodes without the json flag set' % sClass)
+
+			# Return the type as text so we can store the JSON
+			return 'text'
+
+		# Else, any other type isn't implemented
 		else:
-			raise ValueError('"%s" is not a known type to Record_MySQL')
+			raise TypeError('Record_MySQL can not process FormatOC %s nodes' % sClass)
 
 	@classmethod
 	def addChanges(cls, _id, changes, custom={}):
@@ -809,7 +832,7 @@ class Record(Record_Base.Record):
 					dStruct['primary'],
 					cls.escape(
 						dStruct['host'],
-						dStruct['tree'][dStruct['primary']].type(),
+						dStruct['tree'][dStruct['primary']],
 						_id
 					),
 					JSON.encode(changes)
@@ -977,7 +1000,7 @@ class Record(Record_Base.Record):
 				if self._dRecord[f] != None:
 					lTemp[1].append(self.escape(
 						self._dStruct['host'],
-						self._dStruct['tree'][f].type(),
+						self._dStruct['tree'][f],
 						self._dRecord[f]
 					))
 				else:
@@ -1086,7 +1109,7 @@ class Record(Record_Base.Record):
 						self._dStruct['primary'],
 						self.escape(
 							self._dStruct['host'],
-							self._dStruct['tree'][self._dStruct['primary']].type(),
+							self._dStruct['tree'][self._dStruct['primary']],
 							self._dRecord[self._dStruct['primary']]
 						),
 						JSON.encode(dChanges)
@@ -1168,7 +1191,7 @@ class Record(Record_Base.Record):
 					if f in o and o[f] != None:
 						lValues.append(cls.escape(
 							dStruct['host'],
-							dStruct['tree'][f].type(),
+							dStruct['tree'][f],
 							o[f]
 						))
 					else:
@@ -1270,7 +1293,7 @@ class Record(Record_Base.Record):
 						self._dStruct['primary'],
 						self.escape(
 							self._dStruct['host'],
-							self._dStruct['tree'][self._dStruct['primary']].type(),
+							self._dStruct['tree'][self._dStruct['primary']],
 							self._dRecord[self._dStruct['primary']]
 						),
 						JSON.encode(dChanges)
@@ -1329,14 +1352,14 @@ class Record(Record_Base.Record):
 
 	# escape method
 	@classmethod
-	def escape(cls, host, type_, value):
+	def escape(cls, host, node, value):
 		"""Escape
 
 		Takes a value and turns it into an acceptable string for SQL
 
 		Args:
 			host (str): The name of the host if we need to call the server
-			type_ (str): The type of data to escape
+			node (FormatOC._BaseNode): The node associated with the data to escape
 			value (mixed): The value to escape
 
 		Returns:
@@ -1352,38 +1375,64 @@ class Record(Record_Base.Record):
 
 		else:
 
-			# If we're escaping a bool
-			if type_ == 'bool':
+			# Get the Node's class
+			sClass = node.className()
 
-				# If it's already a bool or a valid int representation
-				if isinstance(value, bool) or (isinstance(value, (int,long)) and value in [0,1]):
-					return (value and '1' or '0')
+			# If it's a standard Node
+			if sClass == 'Node':
 
-				# Else if it's a string
-				elif isinstance(value, str):
+				# Get the type
+				type_ = node.type()
 
-					# If it's t, T, 1, f, F, or 0
-					return (value in ('true', 'True', 'TRUE', 't', 'T', '1') and '1' or '0')
+				# If we're escaping a bool
+				if type_ == 'bool':
 
-			# Else if it's a date, md5, or UUID, return as is
-			elif type_ in ('base64', 'date', 'datetime', 'md5', 'time', 'uuid', 'uuid4'):
-				return "'%s'" % value
+					# If it's already a bool or a valid int representation
+					if isinstance(value, bool) or (isinstance(value, (int,long)) and value in [0,1]):
+						return (value and '1' or '0')
 
-			# Else if the value is a decimal value
-			elif type_ in ('decimal', 'float', 'price'):
-				return str(float(value))
+					# Else if it's a string
+					elif isinstance(value, str):
 
-			# Else if the value is an integer value
-			elif type_ in ('int', 'uint'):
-				return str(int(value))
+						# If it's t, T, 1, f, F, or 0
+						return (value in ('true', 'True', 'TRUE', 't', 'T', '1') and '1' or '0')
 
-			# Else if it's a timestamp
-			elif type_ == 'timestamp' and (isinstance(value, int) or re.match('^\d+$', value)):
-				return 'FROM_UNIXTIME(%s)' % str(value)
+				# Else if it's a date, md5, or UUID, return as is
+				elif type_ in ('base64', 'date', 'datetime', 'md5', 'time', 'uuid', 'uuid4'):
+					return "'%s'" % value
 
-			# Else it's a standard escape
+				# Else if the value is a decimal value
+				elif type_ in ('decimal', 'float', 'price'):
+					return str(float(value))
+
+				# Else if the value is an integer value
+				elif type_ in ('int', 'uint'):
+					return str(int(value))
+
+				# Else if it's a timestamp
+				elif type_ == 'timestamp' and (isinstance(value, int) or re.match('^\d+$', value)):
+					return 'FROM_UNIXTIME(%s)' % str(value)
+
+				# Else it's a standard escape
+				else:
+					return "'%s'" % Commands.escape(host, value)
+
+			# Else, if it's a Parent node
+			elif sClass in ['ArrayNode', 'HashNode', 'Parent']:
+
+				# Get the sql section
+				dSQL = node.special('sql')
+
+				# If it doesn't exist, or there's no json flag
+				if not dSQL or 'json' not in dSQL or not dSQL['json']:
+					raise TypeError('Record_MySQL can not process FormatOC %s nodes without the json flag set' % sClass)
+
+				# JSON encode the data and then escape it
+				return "'%s'" % Commands.escape(host, JSON.encode(value))
+
+			# Else, any other type isn't implemented
 			else:
-				return "'%s'" % Commands.escape(host, value)
+				raise TypeError('Record_MySQL can not process FormatOC %s nodes' % sClass)
 
 	@classmethod
 	def exists(cls, _id, index=None, custom={}):
@@ -1564,6 +1613,11 @@ class Record(Record_Base.Record):
 			if not lRecords:
 				return []
 
+			# If we have any JSON fields in the records
+			if dStruct['json']:
+				for d in lRecords:
+					cls.processRecord(dStruct['json'], d)
+
 			# If Raw requested, return as is
 			if raw:
 				return lRecords
@@ -1581,6 +1635,10 @@ class Record(Record_Base.Record):
 			# If there's no data, return None
 			if not dRecord:
 				return None
+
+			# If we have any JSON fields in the records
+			if dStruct['json']:
+				cls.processRecord(dStruct['json'], dRecord)
 
 			# If Raw requested, return as is
 			if raw:
@@ -1604,8 +1662,30 @@ class Record(Record_Base.Record):
 			dict
 		"""
 
-		# Call the parent
-		return super().generateConfig(tree, special, db);
+		# Get the based config from the parent
+		dConfig = super().generateConfig(tree, special, db);
+
+		# Add an empty json section
+		dConfig['json'] = []
+
+		# Go through each node in the tree
+		for k in tree:
+
+			# If it's an object/dict type
+			if tree[k].className() in ['ArrayNode', 'HashNode', 'Parent']:
+
+				# If it has an SQL section
+				dSQL = tree[k].special('sql')
+				if dSQL:
+
+					# If it has the json flag
+					if 'json' in dSQL and dSQL['json']:
+
+						# Add it to the list
+						dConfig['json'].append(k)
+
+		# Return the final config
+		return dConfig
 
 	@classmethod
 	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, distinct=False, orderby=None, limit=None, custom={}):
@@ -1742,6 +1822,11 @@ class Record(Record_Base.Record):
 			if not lRecords:
 				return []
 
+			# If we have any JSON fields in the records
+			if dStruct['json']:
+				for d in lRecords:
+					cls.processRecord(dStruct['json'], d)
+
 			# If Raw requested, return as is
 			if raw:
 				return lRecords
@@ -1759,6 +1844,10 @@ class Record(Record_Base.Record):
 			# If there's no data, return None
 			if not dRecord:
 				return None
+
+			# If we have any JSON fields in the records
+			if dStruct['json']:
+				cls.processRecord(dStruct['json'], dRecord)
 
 			# If Raw requested, return as is
 			if raw:
@@ -1838,6 +1927,30 @@ class Record(Record_Base.Record):
 		# Return the records
 		return lRecords
 
+	@classmethod
+	def processRecord(cls, json_fields, record):
+		"""Process Record
+
+		Goes through a record and decodes any JSON fields in place, does not
+		return a new dict
+
+		Arguments:
+			json_fields (list): The list of fields that require decoding
+			record (dict): The record to process
+
+		Returns:
+			None
+		"""
+
+		# Go through each field
+		for f in json_fields:
+
+			# If it's in the record
+			if f in record:
+
+				# Decode it
+				record[f] = JSON.decode(record[f])
+
 	# processValue static method
 	@classmethod
 	def processValue(cls, struct, field, value):
@@ -1855,8 +1968,8 @@ class Record(Record_Base.Record):
 			str
 		"""
 
-		# Get the field type
-		sType = struct['tree'][field].type()
+		# Get the field node
+		oNode = struct['tree'][field]
 
 		# If the value is a list
 		if isinstance(value, (list,tuple)):
@@ -1866,7 +1979,7 @@ class Record(Record_Base.Record):
 			for i in value:
 				# If it's None
 				if i is None: lValues.append('NULL')
-				else: lValues.append(cls.escape(struct['host'], sType, i))
+				else: lValues.append(cls.escape(struct['host'], oNode, i))
 			sRet = 'IN (%s)' % ','.join(lValues)
 
 		# Else if the value is a dictionary
@@ -1875,25 +1988,25 @@ class Record(Record_Base.Record):
 			# If it has a start and end
 			if 'between' in value:
 				sRet = 'BETWEEN %s AND %s' % (
-							cls.escape(struct['host'], sType, value['between'][0]),
-							cls.escape(struct['host'], sType, value['between'][1])
+							cls.escape(struct['host'], oNode, value['between'][0]),
+							cls.escape(struct['host'], oNode, value['between'][1])
 						)
 
 			# Else if we have a less than
 			elif 'lt' in value:
-				sRet = '< ' + cls.escape(struct['host'], sType, value['lt'])
+				sRet = '< ' + cls.escape(struct['host'], oNode, value['lt'])
 
 			# Else if we have a greater than
 			elif 'gt' in value:
-				sRet = '> ' + cls.escape(struct['host'], sType, value['gt'])
+				sRet = '> ' + cls.escape(struct['host'], oNode, value['gt'])
 
 			# Else if we have a less than equal
 			elif 'lte' in value:
-				sRet = '<= ' + cls.escape(struct['host'], sType, value['lte'])
+				sRet = '<= ' + cls.escape(struct['host'], oNode, value['lte'])
 
 			# Else if we have a greater than equal
 			elif 'gte' in value:
-				sRet = '>= ' + cls.escape(struct['host'], sType, value['gte'])
+				sRet = '>= ' + cls.escape(struct['host'], oNode, value['gte'])
 
 			# Else if we have a not equal
 			elif 'neq' in value:
@@ -1906,16 +2019,16 @@ class Record(Record_Base.Record):
 					for i in value['neq']:
 						# If it's None
 						if i is None: lValues.append('NULL')
-						else: lValues.append(cls.escape(struct['host'], sType, i))
+						else: lValues.append(cls.escape(struct['host'], oNode, i))
 					sRet = 'NOT IN (%s)' % ','.join(lValues)
 
 				# Else, it must be a single value
 				else:
 					if value['neq'] is None: sRet = 'IS NOT NULL'
-					else: sRet = '!= ' + cls.escape(struct['host'], sType, value['neq'])
+					else: sRet = '!= ' + cls.escape(struct['host'], oNode, value['neq'])
 
 			elif 'like' in value:
-				sRet = 'LIKE ' + cls.escape(struct['host'], sType, value['like'])
+				sRet = 'LIKE ' + cls.escape(struct['host'], oNode, value['like'])
 
 			# No valid key in dictionary
 			else:
@@ -1926,7 +2039,7 @@ class Record(Record_Base.Record):
 
 			# If it's None
 			if value is None: sRet = 'IS NULL'
-			else: sRet = '= ' + cls.escape(struct['host'], sType, value)
+			else: sRet = '= ' + cls.escape(struct['host'], oNode, value)
 
 		# Return the processed value
 		return sRet
@@ -1991,7 +2104,7 @@ class Record(Record_Base.Record):
 				self._dStruct['primary'],
 				self.escape(
 					self._dStruct['host'],
-					self._dStruct['tree'][self._dStruct['primary']].type(),
+					self._dStruct['tree'][self._dStruct['primary']],
 					self._dRecord[self._dStruct['primary']]
 				)
 			)
@@ -2030,7 +2143,7 @@ class Record(Record_Base.Record):
 					lValues.append('`%s` = %s' % (
 						f, self.escape(
 							self._dStruct['host'],
-							self._dStruct['tree'][f].type(),
+							self._dStruct['tree'][f],
 							dValues[f]
 						)
 					))
@@ -2046,7 +2159,7 @@ class Record(Record_Base.Record):
 					self._dStruct['primary'],
 					self.escape(
 						self._dStruct['host'],
-						self._dStruct['tree'][self._dStruct['primary']].type(),
+						self._dStruct['tree'][self._dStruct['primary']],
 						self._dRecord[self._dStruct['primary']]
 					)
 				)
@@ -2086,7 +2199,7 @@ class Record(Record_Base.Record):
 						self._dStruct['primary'],
 						self.escape(
 							self._dStruct['host'],
-							self._dStruct['tree'][self._dStruct['primary']].type(),
+							self._dStruct['tree'][self._dStruct['primary']],
 							self._dRecord[self._dStruct['primary']]
 						),
 						JSON.encode(dChanges)
@@ -2363,10 +2476,10 @@ class Record(Record_Base.Record):
 
 		# Generate the SQL to update the field
 		sSQL = 'UPDATE `%s`.`%s` ' \
-				'SET `%s` %s ' \
+				'SET `%s` = %s ' \
 				'%s' % (
 			dStruct['db'], dStruct['table'],
-			field, cls.processValue(dStruct, field, value),
+			field, cls.escape(dStruct['host'], dStruct['tree'][field], value),
 			lWhere and ('WHERE %s' % ' AND '.join(lWhere)) or ''
 		)
 
