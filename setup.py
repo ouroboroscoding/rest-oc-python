@@ -22,7 +22,7 @@ setup(
 	packages=['RestOC'],
 	install_requires=[
 		'arrow==1.1.0',
-		'bottle==0.12.19',
+		'bottle==0.12.20',
 		'format-oc==1.5.17',
 		'gunicorn==20.0.4',
 		'hiredis==1.1.0',
