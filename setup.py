@@ -5,7 +5,7 @@ with open('README.md', 'r') as oF:
 
 setup(
 	name='Rest-OC',
-	version='0.10.1',
+	version='0.10.2',
 	description='RestOC is a library of python 3 modules for rapidly setting up REST microservices.',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
@@ -23,7 +23,7 @@ setup(
 	install_requires=[
 		'arrow==1.1.0',
 		'bottle==0.12.19',
-		'format-oc==1.5.17',
+		'format-oc==1.5.18',
 		'gunicorn==20.0.4',
 		'hiredis==1.1.0',
 		'Jinja2==2.11.3',
