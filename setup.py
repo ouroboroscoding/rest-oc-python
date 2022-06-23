@@ -21,10 +21,10 @@ setup(
 	license='Apache-2.0',
 	packages=['RestOC'],
 	install_requires=[
-		'arrow==1.1.0',
-		'bottle==0.12.19',
+		'arrow==1.2.2',
+		'bottle==0.12.21',
 		'format-oc==1.5.18',
-		'gunicorn==20.0.4',
+		'gunicorn==20.1.0',
 		'hiredis==1.1.0',
 		'Jinja2==2.11.3',
 		'pdfkit==0.6.1',
@@ -32,7 +32,7 @@ setup(
 		'Pillow==8.4.0',
 		'PyMySQL==0.10.1',
 		'redis==3.5.3',
-		'requests==2.25.1',
+		'requests==2.28.0',
 		'rethinkdb==2.4.7'
 	],
 	zip_safe=True
