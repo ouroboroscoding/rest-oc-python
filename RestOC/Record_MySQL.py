@@ -1081,8 +1081,8 @@ class Record(Record_Base.Record):
 		# Clear changed fields
 		self._dChanged = {}
 
-		# If changes are required
-		if self._dStruct['changes']:
+		# If changes are required and the record was saved
+		if mRet is not None and self._dStruct['changes']:
 
 			# Create the changes record
 			dChanges = {
@@ -1671,8 +1671,20 @@ class Record(Record_Base.Record):
 		# Go through each node in the tree
 		for k in tree:
 
-			# If it's an object/dict type
-			if tree[k].className() in ['ArrayNode', 'HashNode', 'Parent']:
+			# Get the classname
+			sClass = tree[k].className()
+
+ 			# If it's a Node
+			if sClass == 'Node':
+
+				# If it's json type
+				if tree[k].type() == 'json':
+
+					# Add it to the list
+					dConfig['json'].append(k)
+
+			# Else, if it's an object/dict type
+			elif sClass in ['ArrayNode', 'HashNode', 'Parent']:
 
 				# If it has an SQL section
 				dSQL = tree[k].special('sql')
