@@ -30,6 +30,7 @@ MAX_RETRIES = 3
 
 # Backwards compatibility (and ease of use)
 DuplicateException = Record_Base.DuplicateException
+RecordException = Record_Base.RecordException
 
 def _connect(host, error_count=0):
 	"""Connect
@@ -624,7 +625,7 @@ class Record(Record_Base.Record):
 
 				# If it's a duplicate key
 				if dRes['first_error'][0:21] == 'Duplicate primary key':
-					raise Record_Base.DuplicateException(self._dStruct['primary'], self._dRecord[self._dStruct['primary']])
+					raise Record_Base.DuplicateException(dStruct['primary'])
 
 				# Else, it's an unknown error
 				else:
@@ -637,7 +638,7 @@ class Record(Record_Base.Record):
 			# Go through each record and store the primary key if we didn't set
 			#	it ourselves
 			if dStruct['auto_primary']:
-				for i in xrange(len(records)):
+				for i in range(len(records)):
 					records[i][dStruct['primary']] = dRes['generated_keys'][i]
 
 				# Return the primary keys
