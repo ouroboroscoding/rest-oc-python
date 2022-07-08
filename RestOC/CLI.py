@@ -35,11 +35,11 @@ class ProgressBar(object):
 		"""
 
 		# If any values are invalid
-		if not isinstance(total, (int,long)) or total < 1:
+		if not isinstance(total, int) or total < 1:
 			raise ValueError('total must be at least 1 (one) or higher')
-		if not isinstance(sections, (int,long)) or sections < 1:
+		if not isinstance(sections, int) or sections < 1:
 			raise ValueError('sections must be at least 1 (one) or higher')
-		if not isinstance(start, (int,long)) or start < 0:
+		if not isinstance(start, int) or start < 0:
 			raise ValueError('start must be an unsigned integer')
 
 		# Store the title and count
@@ -70,7 +70,7 @@ class ProgressBar(object):
 		"""
 
 		# Verify the other
-		if not isinstance(other, (int,long)) or other < 1:
+		if not isinstance(other, int) or other < 1:
 			raise ValueError('other must be 1 (one) or greater')
 
 		# Add it to the count

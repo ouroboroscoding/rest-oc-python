@@ -409,7 +409,7 @@ class Response(object):
 				# Else, try to pull out the code and message
 				else:
 					self.error = {"code": error.args[0], "msg": ''}
-					if len(error.args) > 1: dErr['msg'] = error.args[1]
+					if len(error.args) > 1: self.error['msg'] = error.args[1]
 
 			# Else, we got something invalid
 			else:
