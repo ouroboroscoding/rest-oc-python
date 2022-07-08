@@ -85,11 +85,17 @@ def registerType(type_, module_):
 	global __mlTypes
 	__mlTypes[type_] = module_
 
-# Duplicate key exception
 class DuplicateException(Exception):
 	"""DuplicateException class
 
 	Used for raising issues with duplicate records
+	"""
+	pass
+
+class RecordException(Exception):
+	"""RecordException class
+
+	Used for raising issues with the underlying definition of the record
 	"""
 	pass
 
@@ -255,11 +261,11 @@ class Record(abc.ABC):
 			if sMD5 != sHash:
 
 				# Update the revision
-				self._dRecord[info['rev_field']] = '%d-%s' % (int(sVer)+1, sMD5)
+				self._dRecord[struct['rev_field']] = '%d-%s' % (int(sVer)+1, sMD5)
 
 				# Flag the revision field as changed
 				if self._dChanged != True:
-					self._dChanged[info['rev_field']] = True
+					self._dChanged[struct['rev_field']] = True
 
 				# Return OK
 				return True

@@ -13,6 +13,7 @@ __created__ = "2018-11-11"
 # Python imports
 from base64 import b64encode, b64decode
 from random import randint
+import sys
 
 # The sets available for the random function
 _mdRandomSets = {
@@ -534,3 +535,41 @@ def to_bool(t):
 
 	# Raise an exception
 	raise ValueError('t is not a boolean representation: "%s"' % t)
+
+def uuid_add_dashes(uuid):
+	"""UUID Add Dashes
+
+	Adds dashes back to a UUID that had them removed
+
+	Arguments:
+		uuid (str): The UUID to transform
+
+	Returns:
+		str
+	"""
+	return '%s-%s-%s-%s-%s' % (
+		uuid[0:8],
+		uuid[8:12],
+		uuid[12:16],
+		uuid[16:20],
+		uuid[20:32]
+	)
+
+def uuid_strip_dashes(uuid):
+	"""UUID Strip Dashes
+
+	Removes the dashes from a UUID
+
+	Arguments:
+		uuid (str): The UUID to transform
+
+	Returns:
+		str
+	"""
+	return '%s%s%s%s%s' % (
+		uuid[0:8],
+		uuid[9:13],
+		uuid[14:18],
+		uuid[19:23],
+		uuid[24:36]
+	)

@@ -14,6 +14,7 @@ __created__ = "2020-02-12"
 import datetime
 from enum import IntEnum
 from hashlib import md5
+import re
 import sys
 from time import sleep, time
 
@@ -33,8 +34,9 @@ __mdConnections = {}
 # defines
 MAX_RETRIES = 3
 
-# Backwards compatibility
+# Backwards compatibility and simplicity
 DuplicateException = Record_Base.DuplicateException
+RecordException = Record_Base.RecordException
 
 ## ESelect
 class ESelect(IntEnum):
@@ -1337,7 +1339,7 @@ class Record(Record_Base.Record):
 		# If there's no index and at least one ID passed
 		if not index and _id:
 			if not dStruct['primary']:
-				raise DocumentException('Can not delete by primary key if none exists')
+				raise RecordException('Can not delete by primary key if none exists')
 			index = dStruct['primary']
 
 		# Build the statement
@@ -1388,7 +1390,7 @@ class Record(Record_Base.Record):
 				if type_ == 'bool':
 
 					# If it's already a bool or a valid int representation
-					if isinstance(value, bool) or (isinstance(value, (int,long)) and value in [0,1]):
+					if isinstance(value, bool) or (isinstance(value, int) and value in [0,1]):
 						return (value and '1' or '0')
 
 					# Else if it's a string
