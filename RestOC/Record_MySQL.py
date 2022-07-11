@@ -1959,8 +1959,8 @@ class Record(Record_Base.Record):
 		# Go through each field
 		for f in json_fields:
 
-			# If it's in the record
-			if f in record:
+			# If it's in the record and it's got a value
+			if f in record and record[f]:
 
 				# Decode it
 				record[f] = JSON.decode(record[f])
