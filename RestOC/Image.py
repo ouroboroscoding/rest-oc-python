@@ -175,7 +175,7 @@ def info(image):
 	# Return the info
 	return dInfo
 
-def resize(image, dims, crop=False, quality=90):
+def resize(image, dims, crop=False, quality=90, format=None):
 	"""Resize
 
 	Given raw data and a size, a new image is created and returned as raw data
@@ -185,6 +185,7 @@ def resize(image, dims, crop=False, quality=90):
 		dims (str|dict): New dimensions of the image, "WWWxHHH" or {"w":, "h":}
 		crop (bool): Set to true to crop the photo rather than add whitespace
 		quality (uint): The quality, from 0 to 100, to save the thumbnail in
+		format (str): The optional format to use instead of the original
 
 	Returns:
 		str
@@ -206,7 +207,7 @@ def resize(image, dims, crop=False, quality=90):
 	oImg = Pillow.open(sImg)
 
 	# Store the format
-	sFormat = oImg.format
+	sFormat = format or oImg.format
 
 	# Make sure the values are ints
 	dims['w'] = int(dims['w'])
