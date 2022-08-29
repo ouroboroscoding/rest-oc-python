@@ -5,7 +5,7 @@ The base concept for all records stored in any sort of DB
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
@@ -14,7 +14,7 @@ __created__ = "2018-11-11"
 import abc
 from hashlib import md5
 
-# Framework imports
+# Module imports
 from . import DictHelper, JSON
 
 # The global DB prefix
@@ -23,7 +23,7 @@ __msPrepend = ''
 # The list of registered DB types
 __mlTypes = {}
 
-def dbPrepend(pre = None):
+def db_prepend(pre = None):
 	"""DB Prepend
 
 	Gets or sets the global prefix for all DBs, useful for testing/development
@@ -44,7 +44,7 @@ def dbPrepend(pre = None):
 	else:
 		return __msPrepend
 
-def getType(type_):
+def get_type(type_):
 	"""Get Type
 
 	Returns the module used to work with the specific type
@@ -57,7 +57,7 @@ def getType(type_):
 	"""
 	return __mlTypes[type_]
 
-def registerType(type_, module_):
+def register_type(type_, module_):
 	"""Register Type
 
 	Sets the class instance used for a specific DB type
@@ -172,7 +172,7 @@ class Record(abc.ABC):
 		Returns:
 			None
 		"""
-		self.fieldDelete(field);
+		self.field_delete(field);
 
 	def __getitem__(self, field):
 		"""__getitem__
@@ -206,7 +206,7 @@ class Record(abc.ABC):
 		Returns:
 			None
 		"""
-		self.fieldSet(field, val)
+		self.field_set(field, val)
 
 	def __str__(self):
 		"""__str__
@@ -274,7 +274,7 @@ class Record(abc.ABC):
 			return False
 
 	@abc.abstractclassmethod
-	def addChanges(cls, _id, changes, customer={}):
+	def add_changes(cls, _id, changes, customer={}):
 		"""Add Changes
 
 		Adds a record to the tables associated _changes table. Useful for
@@ -405,7 +405,7 @@ class Record(abc.ABC):
 		raise NotImplementedError('Must implement the "create" method')
 
 	@abc.abstractclassmethod
-	def createMany(cls, records, conflict='error', custom={}):
+	def create_many(cls, records, conflict='error', custom={}):
 		"""Create Many
 
 		Inserts multiple records at once
@@ -420,7 +420,7 @@ class Record(abc.ABC):
 		Returns:
 			uint
 		"""
-		raise NotImplementedError('Must implement the "createMany" method')
+		raise NotImplementedError('Must implement the "create_many" method')
 
 	@abc.abstractmethod
 	def delete(self, changes=None):
@@ -438,7 +438,7 @@ class Record(abc.ABC):
 		raise NotImplementedError('Must implement the "delete" method')
 
 	@abc.abstractclassmethod
-	def deleteGet(cls, _id, index=None, custom={}):
+	def delete_get(cls, _id, index=None, custom={}):
 		"""Delete Get
 
 		Deletes one or many records by ID or index and returns how many were
@@ -454,7 +454,7 @@ class Record(abc.ABC):
 		Return:
 			int
 		"""
-		raise NotImplementedError('Must implement the "deleteGet" method')
+		raise NotImplementedError('Must implement the "delete_get" method')
 
 	@abc.abstractclassmethod
 	def exists(cls, _id, index=None, custom={}):
@@ -475,7 +475,7 @@ class Record(abc.ABC):
 		"""
 		raise NotImplementedError('Must implement the "exists" method')
 
-	def fieldDelete(self, field):
+	def field_delete(self, field):
 		"""Field Delete
 
 		Deletes a specific field from a record (used by __delitem__)
@@ -511,7 +511,7 @@ class Record(abc.ABC):
 		# Return ok
 		return self
 
-	def fieldGet(self, field, default=None):
+	def field_get(self, field, default=None):
 		"""Field Get
 
 		Returns a specific field, if it's not found, returns the default
@@ -531,7 +531,7 @@ class Record(abc.ABC):
 		# Return the field
 		return self._dRecord[field]
 
-	def fieldSet(self, field, val):
+	def field_set(self, field, val):
 		"""Field Set
 
 		Sets a specific field in a record (used by __setitem__)
@@ -602,7 +602,7 @@ class Record(abc.ABC):
 		raise NotImplementedError('Must implement the "filter" method')
 
 	@classmethod
-	def generateChanges(cls, old, new):
+	def generate_changes(cls, old, new):
 		"""Generate Changes
 
 		Generates the list of changes between two records
@@ -642,7 +642,7 @@ class Record(abc.ABC):
 
 				# It exists in both so pass the two along and remove the key
 				#	from the new list
-				dTemp = cls.generateChanges(old[k], new[k])
+				dTemp = cls.generate_changes(old[k], new[k])
 				lNewKeys.remove(k)
 
 				# If there's a value, store it
@@ -685,7 +685,7 @@ class Record(abc.ABC):
 					continue
 
 				# It exists in both so pass the two along
-				dTemp = cls.generateChanges(old[i], new[i])
+				dTemp = cls.generate_changes(old[i], new[i])
 
 				# If there's a value, store it
 				if dTemp: dRet[str(i)] = dTemp
@@ -715,7 +715,7 @@ class Record(abc.ABC):
 		return None
 
 	@classmethod
-	def generateConfig(cls, tree, special='db', db=None):
+	def generate_config(cls, tree, special='db', db=None):
 		"""Generate Config
 
 		Generates record specific config based on the Format-OC tree passed
@@ -774,7 +774,7 @@ class Record(abc.ABC):
 		raise NotImplementedError('Must implement the "get" method')
 
 	@abc.abstractclassmethod
-	def getChanges(cls, _id, orderby=None, custom={}):
+	def get_changes(cls, _id, orderby=None, custom={}):
 		"""Get Changes
 
 		Returns the changes record associated with the primary record and table.
@@ -877,7 +877,7 @@ class Record(abc.ABC):
 			dConfig['host'] = custom['host']
 
 		# Add the global prefix
-		dConfig['db'] = dbPrepend() + dConfig['db']
+		dConfig['db'] = db_prepend() + dConfig['db']
 
 		# If we received an append value
 		if 'append' in custom:
@@ -888,7 +888,7 @@ class Record(abc.ABC):
 
 	@classmethod
 	@abc.abstractmethod
-	def tableCreate(cls, custom={}):
+	def table_create(cls, custom={}):
 		"""Table Create
 
 		Creates the record's table/collection/etc in the DB
@@ -901,12 +901,12 @@ class Record(abc.ABC):
 		Returns:
 			bool
 		"""
-		raise NotImplementedError('Must implement the "tableCreate" method')
+		raise NotImplementedError('Must implement the "table_create" method')
 
 	# tableDelete static method
 	@classmethod
 	@abc.abstractmethod
-	def tableDrop(cls, custom={}):
+	def table_drop(cls, custom={}):
 		"""Table Drop
 
 		Deletes the record's table/collection/etc in the DB
@@ -919,10 +919,10 @@ class Record(abc.ABC):
 		Returns:
 			bool
 		"""
-		raise NotImplementedError('Must implement the "tableDrop" method')
+		raise NotImplementedError('Must implement the "table_drop" method')
 
 	@classmethod
-	def tableName(cls):
+	def table_name(cls):
 		"""Table Name
 
 		Returns the name for the given record child class
@@ -933,7 +933,7 @@ class Record(abc.ABC):
 		return cls.struct()['table']
 
 	@abc.abstractclassmethod
-	def updateField(cls, field, value, _id=None, index=None, filter=None):
+	def update_field(cls, field, value, _id=None, index=None, filter=None):
 		"""Updated Field
 
 		Updates a specific field to the value for an ID, many IDs, or the entire
@@ -949,7 +949,7 @@ class Record(abc.ABC):
 		Returns:
 			uint
 		"""
-		raise NotImplementedError('Must implement the "updateField" method')
+		raise NotImplementedError('Must implement the "update_field" method')
 
 	@abc.abstractclassmethod
 	def uuid(custom={}):

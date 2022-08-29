@@ -8,7 +8,7 @@ Wrapper for python smtp module
 from past.builtins import basestring
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-17"
@@ -127,7 +127,7 @@ def init(host="localhost", port=25, tls=False, user=None, passwd=None):
 	if passwd:
 		__mdSMTP['passwd'] = passwd
 
-def lastError():
+def last_error():
 	"""Last Error
 
 	Returns the last error message if there is one
