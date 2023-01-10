@@ -28,6 +28,7 @@ setup(
 		'gunicorn==20.1.0',
 		'hiredis==2.0.0',
 		'Jinja2==3.1.2',
+		'markupsafe==2.0.1',
 		'pdfkit==1.0.0',
 		'piexif==1.1.3',
 		'Pillow==9.2.0',
