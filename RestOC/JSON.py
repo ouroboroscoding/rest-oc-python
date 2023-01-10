@@ -5,7 +5,7 @@ Wrapper for Python json module which handles custom types
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2016-01-07"

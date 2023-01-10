@@ -1,11 +1,11 @@
 # coding=utf8
-""" Sesh Module
+""" Session Module
 
 Handles internal sessions shared across microservices
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
@@ -16,7 +16,7 @@ import uuid
 # Pip imports
 from redis import StrictRedis
 
-# Framework imports
+# Module imports
 from . import JSON, StrHelper
 
 # Open redis connection
@@ -48,7 +48,7 @@ def create(id = None, expires=None):
 	# Create a new Session using a UUID as the id
 	return _Session(id and id or uuid.uuid4().hex, dData)
 
-def init(conf, expire=86400):
+def init(conf, expire=0):
 	"""Init
 
 	Initialises the module
@@ -224,6 +224,10 @@ class _Session(object):
 					self.__dStore['__expire'] or \
 					_muiExpire
 
+		# If the expire time is 0, do nothing
+		if iExpire == 0:
+			return
+
 		# Extend the session in Redis
 		_moRedis.expire(self.__id, iExpire)
 
@@ -249,5 +253,10 @@ class _Session(object):
 		# Use internal time if we have one, else use the global
 		iExpire = '__expire' in self.__dStore and self.__dStore['__expire'] or _muiExpire
 
-		# Set the session in Redis
-		_moRedis.setex(self.__id, _muiExpire, JSON.encode(self.__dStore))
+		# If we have no expire time, set forever
+		if iExpire == 0:
+			_moRedis.set(self.__id, JSON.encode(self.__dStore))
+
+		# Else, set to expire
+		else:
+			_moRedis.setex(self.__id, _muiExpire, JSON.encode(self.__dStore))
