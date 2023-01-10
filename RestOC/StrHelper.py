@@ -384,7 +384,7 @@ def random(length = 8, sets='_aZ', duplicates=True):
 	character string using lowercase letters with possible repeating characters
 
 	Arguments:
-		length (int): Requested length of the password
+		length (int): Requested length of the string
 		sets (str|str[]): A list of names from the standard sets, a string
 			starting with an underscore representing one named set, or any other
 			string to be used as an array of characters to chose from. If you

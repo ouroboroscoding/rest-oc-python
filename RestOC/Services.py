@@ -68,7 +68,7 @@ def request(service, action, path, body, sesh=None, environ=None):
 		if 'instance' in __mdRegistered[service]:
 
 			# If verbose requested
-			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, JSON.encode(data, 2)))
+			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, JSON.encode(body, 2)))
 
 			# Directly call the action
 			oResponse = getattr(__mdRegistered[service]['instance'], action)(
@@ -558,9 +558,6 @@ class Response(object):
 		try: return self.warning != None
 		except AttributeError: return False
 
-# Backwards compatibilty
-Effect = Response
-
 class Error(Response):
 	"""Error
 
@@ -832,7 +829,7 @@ class Service(object):
 			iLen = len(path)
 			i = 0
 			while i < iLen:
-				sRet += (path[i] in ['/', '-']) and '_' or path[i]:
+				sRet += (path[i] in ['/', '-']) and '_' or path[i]
 				i += 1
 
 			# Store it for next time
