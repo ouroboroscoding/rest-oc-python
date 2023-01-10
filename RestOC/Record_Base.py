@@ -74,11 +74,11 @@ def register_type(type_, module_):
 	"""
 
 	# Go through each type and check for an addHost function
-	try: getattr(module_, 'addHost')
+	try: getattr(module_, 'add_host')
 	except AttributeError: raise ValueError("%s does not have a valid addHost function" % type_)
-	try: getattr(module_, 'dbCreate')
+	try: getattr(module_, 'db_create')
 	except AttributeError: raise ValueError("%s does not have a valid dbCreate function" % type_)
-	try: getattr(module_, 'dbDrop')
+	try: getattr(module_, 'db_drop')
 	except AttributeError: raise ValueError("%s does not have a valid dbDrop function" % type_)
 
 	# If we got no exceptions, store the module

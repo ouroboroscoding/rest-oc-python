@@ -19,7 +19,7 @@ from time import sleep, time
 import requests
 
 # Module imports
-from . import Errors, JSON, Sesh
+from . import Errors, JSON, Session
 
 __mbVerbose = False
 """Verbose Flag"""
@@ -41,7 +41,7 @@ __funcToRequest = {
 }
 """Map functions to REST types"""
 
-def request(service, action, path, body, sesh=None, environ=None):
+def request(service, action, path, body, session=None, environ=None):
 	"""Request
 
 	Method to convert REST requests into HTTP requests
@@ -51,7 +51,7 @@ def request(service, action, path, body, sesh=None, environ=None):
 		action (str): The action to take on the service
 		path (str): The path of the request
 		body (mixed): The body being sent with the request
-		sesh (Sesh._Session): The optional session to pass with the request
+		session (Session._Session): The optional session to pass with the request
 		environ (dict): Info related to the request
 
 	Raises:
@@ -72,7 +72,7 @@ def request(service, action, path, body, sesh=None, environ=None):
 
 			# Directly call the action
 			oResponse = getattr(__mdRegistered[service]['instance'], action)(
-				path, body, sesh, environ
+				path, body, session, environ
 			)
 
 			# If verbose requested
@@ -97,8 +97,8 @@ def request(service, action, path, body, sesh=None, environ=None):
 			}
 
 			# If we have a session, add the ID to the headers
-			if sesh:
-				dHeaders['Authorization'] = sesh.id()
+			if session:
+				dHeaders['Authorization'] = session.id()
 
 			# Try to make the request and store the response
 			iAttempts = 0
@@ -148,7 +148,7 @@ def request(service, action, path, body, sesh=None, environ=None):
 	else:
 		raise ResponseException(error=(Errors.SERVICE_NOT_REGISTERED, service))
 
-def create(service, path, body, sesh=None, environ=None):
+def create(service, path, body, session=None, environ=None):
 	"""Create
 
 	Make a POST request
@@ -157,15 +157,15 @@ def create(service, path, body, sesh=None, environ=None):
 		service (str): The service to call
 		path (str): The path on the service
 		body (mixed): The body to pass to the request
-		sesh {Sesh._Session}: The optional session to send with the request
+		session {Session._Session}: The optional session to send with the request
 		environ (dict): Info related to the request
 
 	Returns:
 		Response
 	"""
-	return request(service, 'create', path, body, sesh, environ)
+	return request(service, 'create', path, body, session, environ)
 
-def delete(service, path, body, sesh=None, environ=None):
+def delete(service, path, body, session=None, environ=None):
 	"""Delete
 
 	Make a DELETE request
@@ -174,13 +174,13 @@ def delete(service, path, body, sesh=None, environ=None):
 		service (str): The service to call
 		path (str): The path on the service
 		body (mixed): The body to pass to the request
-		sesh {Sesh._Session}: The optional session to send with the request
+		session {Session._Session}: The optional session to send with the request
 		environ (dict): Info related to the request
 
 	Returns:
 		Response
 	"""
-	return request(service, 'delete', path, body, sesh, environ)
+	return request(service, 'delete', path, body, session, environ)
 
 def internal_key(key = None):
 	"""Internal Key
@@ -233,7 +233,7 @@ def internal_key(key = None):
 		except Exception:
 			return False
 
-def read(service, path, body, sesh=None, environ=None):
+def read(service, path, body, session=None, environ=None):
 	"""Read
 
 	Make a GET request
@@ -242,13 +242,13 @@ def read(service, path, body, sesh=None, environ=None):
 		service (str): The service to call
 		path (str): The path on the service
 		body (mixed): The body to pass to the request
-		sesh {Sesh._Session}: The optional session to send with the request
+		session {Session._Session}: The optional session to send with the request
 		environ (dict): Info related to the request
 
 	Returns:
 		Response
 	"""
-	return request(service, 'read', path, body, sesh, environ)
+	return request(service, 'read', path, body, session, environ)
 
 def register(services, restconf, salt, internal=5):
 	"""Register
@@ -313,7 +313,7 @@ def register(services, restconf, salt, internal=5):
 		else:
 			raise ValueError('services.%s' % str(k))
 
-def update(service, path, body, sesh=None, environ=None):
+def update(service, path, body, session=None, environ=None):
 	"""Update
 
 	Make a PUT request
@@ -322,13 +322,13 @@ def update(service, path, body, sesh=None, environ=None):
 		service (str): The service to call
 		path (str): The path on the service
 		body (mixed): The body to pass to the request
-		sesh {Sesh._Session}: The optional session to send with the request
+		session {Session._Session}: The optional session to send with the request
 		environ (dict): Info related to the request
 
 	Returns:
 		Response
 	"""
-	return request(service, 'update', path, body, sesh, environ)
+	return request(service, 'update', path, body, session, environ)
 
 def verbose(flag=True):
 	"""Verbose

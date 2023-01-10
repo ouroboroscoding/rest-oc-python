@@ -19,7 +19,7 @@ import traceback
 import bottle
 
 # Module imports
-from . import Errors, JSON, Services, Sesh
+from . import Errors, JSON, Services, Session
 
 # Method bytes
 A		= 0xF
@@ -142,7 +142,7 @@ class _Route(object):
 				return str(Services.Response(error=(Errors.REST_AUTHORIZATION, 'Unauthorized')))
 
 			# Get the session from the Authorization token
-			dReq['session'] = Sesh.load(bottle.request.headers['Authorization'])
+			dReq['session'] = Session.load(bottle.request.headers['Authorization'])
 
 			# If the session is not found
 			if not dReq['session']:

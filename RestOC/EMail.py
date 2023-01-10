@@ -43,7 +43,7 @@ def _init(conf):
 	__mdConf = conf
 
 	# If we have no hostname
-	if 'hostname' not in __mdConf
+	if 'hostname' not in __mdConf:
 		__mdConf['hosntname'] = platform.node()
 
 	# Init the SMTP module
