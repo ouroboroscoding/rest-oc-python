@@ -5,7 +5,7 @@ Extends Record module to add support for RethinkDB tables
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
@@ -19,7 +19,7 @@ from time import sleep, time
 from rethinkdb import errors as rerrors, net as rnet, RethinkDB
 r = RethinkDB()
 
-# Framework imports
+# Module imports
 from . import DictHelper, Record_Base
 
 # List of available hosts
@@ -38,7 +38,7 @@ def _connect(host, error_count=0):
 	Internal module function to fetch a connection to a specific RethinkDB host
 
 	Arguments:
-		host (str): The name the host is stored using addHost()
+		host (str): The name the host is stored using add_host()
 		error_count (int): The number of times the function has failed
 
 	Raises:
@@ -92,7 +92,7 @@ class _with(object):
 		if exc_type is not None:
 			return False
 
-def addHost(name, info, update=False):
+def add_host(name, info, update=False):
 	"""Add Host
 
 	Add a host that can be used by Records
@@ -113,7 +113,7 @@ def addHost(name, info, update=False):
 	# Nothing to do, not OK
 	return False
 
-def dbCreate(name, host = 'primary'):
+def db_create(name, host = 'primary'):
 	"""DB Create
 
 	Creates a DB on the given host
@@ -132,7 +132,7 @@ def dbCreate(name, host = 'primary'):
 		with _with(host) as oCon:
 
 			# Create the DB
-			dRes = r.db_create("%s%s" % (Record_Base.dbPrepend(), name)).run(oCon)
+			dRes = r.db_create("%s%s" % (Record_Base.db_prepend(), name)).run(oCon)
 
 			# If for some reason the DB wasn't created
 			if 'dbs_created' not in dRes or not dRes['dbs_created']:
@@ -149,7 +149,7 @@ def dbCreate(name, host = 'primary'):
 	# Return OK
 	return True
 
-def dbDrop(name, host = 'primary'):
+def db_drop(name, host = 'primary'):
 	"""DB Drop
 
 	Drops a DB on the given host
@@ -168,7 +168,7 @@ def dbDrop(name, host = 'primary'):
 		with _with(host) as oCon:
 
 			# Delete the DB
-			dRes = r.db_drop("%s%s" % (Record_Base.dbPrepend(), name)).run(oCon)
+			dRes = r.db_drop("%s%s" % (Record_Base.db_prepend(), name)).run(oCon)
 
 			# If for some reason the DB wasn't dropped
 			if 'dbs_dropped' not in dRes or not dRes['dbs_dropped']:
@@ -181,6 +181,19 @@ def dbDrop(name, host = 'primary'):
 	# Return OK
 	return True
 
+def db_prepend(pre = None):
+	"""DB Prepend
+
+	Gets or sets the global prefix for all DBs, useful for testing/development
+
+	Arguments:
+		pre (str): The prefix to store
+
+	Returns:
+		str|None
+	"""
+	return Record_Base.db_prepend(pre)
+
 class Record(Record_Base.Record):
 	"""Record
 
@@ -188,7 +201,7 @@ class Record(Record_Base.Record):
 	"""
 
 	@classmethod
-	def addChanges(cls, _id, changes, customer={}):
+	def add_changes(cls, _id, changes, customer={}):
 		"""Add Changes
 
 		Adds a record to the tables associated _changes table. Useful for
@@ -205,7 +218,7 @@ class Record(Record_Base.Record):
 		Returns:
 			bool
 		"""
-		raise Exception('addChanges method not available in Record_ReDB')
+		raise Exception('add_changes method not available in Record_ReDB')
 
 	@classmethod
 	def append(cls, _id, array, item, custom={}):
@@ -568,7 +581,7 @@ class Record(Record_Base.Record):
 		return self._dRecord[self._dStruct['primary']]
 
 	@classmethod
-	def createMany(cls, records, conflict='error', custom={}):
+	def create_many(cls, records, conflict='error', custom={}):
 		"""Create Many
 
 		Inserts multiple records at once, returning all their primary keys
@@ -595,7 +608,7 @@ class Record(Record_Base.Record):
 
 		# If changes are required
 		if dStruct['changes']:
-			raise RuntimeError('Tables with \'changes\' flag can\'t be inserted using createMany')
+			raise RuntimeError('Tables with \'changes\' flag can\'t be inserted using create_many')
 
 		# Initialise a list of raw records
 		lRecords = []
@@ -723,7 +736,7 @@ class Record(Record_Base.Record):
 		return True
 
 	@classmethod
-	def deleteGet(cls, _id=None, index=None, custom={}):
+	def delete_get(cls, _id=None, index=None, custom={}):
 		"""Delete Get
 
 		Deletes one or many records by primary key or index and returns how many
@@ -746,7 +759,7 @@ class Record(Record_Base.Record):
 
 		# If changes are required
 		if dStruct['changes']:
-			raise RuntimeError('Tables with \'changes\' flag can\'t be deleted using deleteGet')
+			raise RuntimeError('Tables with \'changes\' flag can\'t be deleted using delete_get')
 
 		# If an index is passed
 		if index:
@@ -1006,7 +1019,7 @@ class Record(Record_Base.Record):
 				return [cls(d, custom) for d in itRes]
 
 	@classmethod
-	def generateConfig(cls, tree, special='rethinkdb', db=None):
+	def generate_config(cls, tree, special='rethinkdb', db=None):
 		"""Generate Config
 
 		Generates record specific config based on the Format-OC tree passed
@@ -1020,7 +1033,7 @@ class Record(Record_Base.Record):
 		"""
 
 		# Call the parent
-		return super().generateConfig(tree, special, db);
+		return super().generate_config(tree, special, db);
 
 	@classmethod
 	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, distinct=False, orderby=None, limit=None, custom={}):
@@ -1330,7 +1343,7 @@ class Record(Record_Base.Record):
 				return raw and itRes or cls(itRes, custom)
 
 	@classmethod
-	def getChanges(cls, _id, orderby=None, custom={}):
+	def get_changes(cls, _id, orderby=None, custom={}):
 		"""Get Changes
 
 		Returns the changes record associated with the primary record and table.
@@ -1543,7 +1556,7 @@ class Record(Record_Base.Record):
 				dChanges = {
 					"last": iTime,
 					"items": {
-						str(iTime): self.generateChanges(
+						str(iTime): self.generate_changes(
 							self._dOldRecord,
 							self._dRecord
 						)
@@ -1579,7 +1592,7 @@ class Record(Record_Base.Record):
 		return True
 
 	@classmethod
-	def tableCreate(cls, custom={}):
+	def table_create(cls, custom={}):
 		"""Table Create
 
 		Creates the record's table/collection/etc in the DB
@@ -1658,7 +1671,7 @@ class Record(Record_Base.Record):
 		return True
 
 	@classmethod
-	def tableDrop(cls, custom={}):
+	def table_drop(cls, custom={}):
 		"""Table Drop
 
 		Deletes the record's table/collection/etc in the DB
@@ -1706,7 +1719,7 @@ class Record(Record_Base.Record):
 		return True
 
 	@classmethod
-	def updateField(cls, field, value, _id=None, index=None, filter=None, custom={}):
+	def update_field(cls, field, value, _id=None, index=None, filter=None, custom={}):
 		"""Updated Field
 
 		Updates a specific field to the value for an ID, many IDs, or the entire
@@ -1898,4 +1911,4 @@ class Record(Record_Base.Record):
 			return r.uuid().run(oCon)
 
 # Register the module with the Base
-Record_Base.registerType('rethinkdb', sys.modules[__name__])
+Record_Base.register_type('rethinkdb', sys.modules[__name__])

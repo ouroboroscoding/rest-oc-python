@@ -8,7 +8,7 @@ Several useful helper methods for use with dates and times
 from past.builtins import basestring
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2021-05-01"
@@ -19,7 +19,7 @@ from math import floor
 # Pip imports
 import arrow
 
-def _toArrow(val):
+def _to_arrow(val):
 	"""To Arrow
 
 	Converts a value to an Arrow instance for easier use
@@ -75,7 +75,7 @@ def age(dob):
 	"""
 
 	# Make sure we have an arrow instance
-	oDOB = _toArrow(dob)
+	oDOB = _to_arrow(dob)
 
 	# Get the delta from today
 	oDelta = arrow.get() - oDOB
@@ -97,12 +97,12 @@ def date(d):
 	"""
 
 	# Make sure we have an arrow instance
-	oD = _toArrow(d)
+	oD = _to_arrow(d)
 
 	# Return the date string
 	return oD.format('YYYY-MM-DD')
 
-def dateInc(days=1, from_=None):
+def date_increment(days=1, from_=None):
 	"""Date Increment
 
 	Returns a date incremented by the given days. Use negative to decrement.
@@ -116,7 +116,7 @@ def dateInc(days=1, from_=None):
 	"""
 
 	# If we got a from
-	oDate = from_ and _toArrow(from_) or arrow.get();
+	oDate = from_ and _to_arrow(from_) or arrow.get();
 
 	# Increment the date and return it
 	return oDate.shift(days=days)
@@ -135,12 +135,12 @@ def datetime(d):
 	"""
 
 	# Make sure we have an arrow instance
-	oD = _toArrow(d)
+	oD = _to_arrow(d)
 
 	# Return the date/time string
 	return oD.format('YYYY-MM-DD HH:mm:ss')
 
-def timeElapsed(seconds, opts=None):
+def time_elapsed(seconds, opts=None):
 	"""Time Elapsed
 
 	Returns seconds in a human readable format with several options to show/hide

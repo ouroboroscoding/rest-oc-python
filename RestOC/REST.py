@@ -5,7 +5,7 @@ Provides interfaces for creating and maintaining REST servers
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
@@ -18,8 +18,8 @@ import traceback
 # Pip imports
 import bottle
 
-# Framework imports
-from . import Errors, JSON, Services, Sesh
+# Module imports
+from . import Errors, JSON, Services, Session
 
 # Method bytes
 A		= 0xF
@@ -42,7 +42,7 @@ class _Route(object):
 	A callable class used to store rest routes in the server
 	"""
 
-	def __init__(self, service, path, sesh, environ, cors=None, error_callback=None):
+	def __init__(self, service, path, sesh, cors=None, error_callback=None):
 		"""Constructor (__init__)
 
 		Initialises an instance of the route
@@ -74,8 +74,12 @@ class _Route(object):
 			str
 		"""
 
-		# Initialise the data
-		mData = None
+		# Initialise the request data
+		dReq = {
+			'body': None,
+			'environment': None,
+			'session': None
+		}
 
 		# If CORS is enabled and the origin matches
 		if self.cors and 'origin' in bottle.request.headers and self.cors.match(bottle.request.headers['origin']):
@@ -100,7 +104,7 @@ class _Route(object):
 
 			# Convert the GET and store the data
 			try:
-				mData = JSON.decode(bottle.request.query['d'])
+				dReq['body'] = JSON.decode(bottle.request.query['d'])
 			except Exception as e:
 				return str(Services.Response(error=(Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
 
@@ -125,7 +129,7 @@ class _Route(object):
 
 			# Convert the body and store it
 			try:
-				if sBody: mData = JSON.decode(sBody)
+				if sBody: dReq['body'] = JSON.decode(sBody)
 			except Exception as e:
 				return str(Services.Response(error=(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e)))))
 
@@ -138,51 +142,45 @@ class _Route(object):
 				return str(Services.Response(error=(Errors.REST_AUTHORIZATION, 'Unauthorized')))
 
 			# Get the session from the Authorization token
-			oSession = Sesh.load(bottle.request.headers['Authorization'])
+			dReq['session'] = Session.load(bottle.request.headers['Authorization'])
 
 			# If the session is not found
-			if not oSession:
+			if not dReq['session']:
 				bottle.response.status = 401
 				return str(Services.Response(error=(Errors.REST_AUTHORIZATION, 'Unauthorized')))
 
 			# Else, extend the session
 			else:
-				oSession.extend()
+				dReq['session'].extend()
 
-		else:
-			oSession = None
-
-		# If we need environ
-		if self.environ:
-			dEnviron = bottle.request.environ
-		else:
-			dEnviron = None
+		# Add the environment
+		dReq['environment'] = bottle.request.environ
 
 		# In case the service crashes
 		try:
 
 			# Call the appropriate API method based on the HTTP/request method
 			if bottle.request.method == 'DELETE':
-				oResponse = Services.delete(self.service, self.path, mData, oSession, dEnviron)
+				oResponse = Services.delete(self.service, self.path, dReq)
 			elif bottle.request.method == 'GET':
-				oResponse = Services.read(self.service, self.path, mData, oSession, dEnviron)
+				oResponse = Services.read(self.service, self.path, dReq)
 			elif bottle.request.method == 'POST':
-				oResponse = Services.create(self.service, self.path, mData, oSession, dEnviron)
+				oResponse = Services.create(self.service, self.path, dReq)
 			elif bottle.request.method == 'PUT':
-				oResponse = Services.update(self.service, self.path, mData, oSession, dEnviron)
+				oResponse = Services.update(self.service, self.path, dReq)
 
 		except Exception as e:
 			sError = traceback.format_exc()
 			print(sError, file=sys.stderr)
 			if self.error_callback:
 				self.error_callback({
-					"service": self.service,
-					"method": bottle.request.method,
-					"path": self.path,
-					"data": mData,
-					"session": oSession,
-					"environment": dEnviron,
-					"traceback": sError
+					'service': self.service,
+					'method': bottle.request.method,
+					'path': self.path,
+					'body': dReq['body'],
+					'session': dReq['session'],
+					'environment': dReq['environment'],
+					'traceback': sError
 				})
 			oResponse = Services.Error(
 				Errors.SERVICE_CRASHED,
@@ -276,7 +274,7 @@ class Config(object):
 		if 'defaults' not in conf:
 			conf['defaults'] = {}
 
-		# Be default, port values are not modified
+		# Port values are not modified by default
 		iPortMod = 0
 
 		# If there is a port modifier
@@ -458,10 +456,6 @@ class Server(bottle.Bottle):
 			if 'session' not in d:
 				d['session'] = False
 
-			# If the environ value is not passed, assume false
-			if 'environ' not in d:
-				d['environ'] = False
-
 			# If the path is not passed, generate it from the uri
 			if 'path' not in d:
 				d['path'] = d['uri'][1:]
@@ -474,14 +468,13 @@ class Server(bottle.Bottle):
 					d['service'],	# The service to use
 					d['path'],		# The path in the service
 					d['session'],	# The session requirement flag
-					d['environ'],	# The environment requirement flag
 					cors,			# Optional CORS regex
 					error_callback	# Optional callback for error
 				)
 			)
 
 	# run method
-	def run(self, server="gunicorn", host="127.0.0.1", port=8080,
+	def run(self, server='gunicorn', host='127.0.0.1', port=8080,
 			reloader=False, interval=1, quiet=False, plugins=None,
 			debug=None, maxfile=20971520, **kargs):
 		"""Run

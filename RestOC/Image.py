@@ -5,7 +5,7 @@ Module to manipulate images and photos, requires the Python Pillow library
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2016-11-11"
@@ -19,7 +19,7 @@ import piexif
 from PIL import Image as Pillow, ImageFile as PillowFile
 PillowFile.LOAD_TRUNCATED_IMAGES = True
 
-# Framework imports
+# Module imports
 from . import Resize
 
 # exif rotation tag
@@ -89,7 +89,7 @@ def apply_rotation(image):
 	# Return
 	return sRet
 
-def convertToJPEG(image, quality=90):
+def convert_to_jpeg(image, quality=90):
 	"""Convert To JPEG
 
 	Changes any valid image into a JPEG, loses exif data

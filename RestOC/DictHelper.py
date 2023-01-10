@@ -5,7 +5,7 @@ Several useful helper methods for use with dicts
 """
 
 __author__ = "Chris Nasr"
-__copyright__ = "OuroborosCoding"
+__copyright__ = "Ouroboros Coding Inc."
 __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
@@ -152,7 +152,7 @@ def eval(src, contains):
 	if lErrs:
 		raise ValueError(*lErrs)
 
-def keysToInts(src):
+def keys_to_ints(src):
 	"""Keys To Ints
 
 	Recursively goes through a dictionary and converts all keys that are
@@ -187,7 +187,7 @@ def keysToInts(src):
 
 			# If we got a dict or list, recurse it
 			if isinstance(src[k], (dict,list)):
-				mRet[mK] = keysToInts(src[k])
+				mRet[mK] = keys_to_ints(src[k])
 
 			# Else, store as is
 			else:
@@ -204,7 +204,7 @@ def keysToInts(src):
 
 			# If we got a dict or list, recurse it
 			if isinstance(src[i], (dict,list)):
-				mRet.append(keysToInts(src[i]))
+				mRet.append(keys_to_ints(src[i]))
 
 			# Else, store as is
 			else:
