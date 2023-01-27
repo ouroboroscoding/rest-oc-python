@@ -41,7 +41,7 @@ __funcToRequest = {
 }
 """Map functions to REST types"""
 
-def request(service, action, path, body, session=None, environ=None):
+def request(service, action, path, data):
 	"""Request
 
 	Method to convert REST requests into HTTP requests
@@ -50,9 +50,7 @@ def request(service, action, path, body, session=None, environ=None):
 		service (str): The service we are requesting data from
 		action (str): The action to take on the service
 		path (str): The path of the request
-		body (mixed): The body being sent with the request
-		session (Session._Session): The optional session to pass with the request
-		environ (dict): Info related to the request
+		data (dict): The request data: 'body', 'session', and 'enviroment'
 
 	Raises:
 		ServiceException
@@ -68,15 +66,15 @@ def request(service, action, path, body, session=None, environ=None):
 		if 'instance' in __mdRegistered[service]:
 
 			# If verbose requested
-			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, JSON.encode(body, 2)))
+			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, JSON.encode(data['body'], 2)))
 
 			# Directly call the action
 			oResponse = getattr(__mdRegistered[service]['instance'], action)(
-				path, body, session, environ
+				path, data
 			)
 
 			# If verbose requested
-			if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), JSON.encode(oResponse.toDict(), 2)))
+			if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), JSON.encode(oResponse.to_dict(), 2)))
 
 		# Else if the service is running elsewhere
 		else:
@@ -88,7 +86,7 @@ def request(service, action, path, body, session=None, environ=None):
 			sURL = __mdRegistered[service]['url'] + path
 
 			# Convert the body to JSON
-			sBody = JSON.encode(body)
+			sBody = JSON.encode(data['body'])
 
 			# Create the headers
 			dHeaders = {
@@ -97,8 +95,8 @@ def request(service, action, path, body, session=None, environ=None):
 			}
 
 			# If we have a session, add the ID to the headers
-			if session:
-				dHeaders['Authorization'] = session.id()
+			if 'session' in data and data['session']:
+				dHeaders['Authorization'] = data['session'].id()
 
 			# Try to make the request and store the response
 			iAttempts = 0
@@ -112,7 +110,7 @@ def request(service, action, path, body, session=None, environ=None):
 
 						# If we got a 401
 						if oRes.status_code == 401:
-							return Response.fromJSON(oRes.content)
+							return Response.from_json(oRes.content)
 						else:
 							return Response(error=(Errors.SERVICE_STATUS, '%d: %s' % (oRes.status_code, oRes.content)))
 
@@ -139,7 +137,7 @@ def request(service, action, path, body, session=None, environ=None):
 					return Response(error=(Errors.SERVICE_UNREACHABLE, str(e)))
 
 			# Else turn the content into an Response and return it
-			oResponse = Response.fromJSON(oRes.text)
+			oResponse = Response.from_json(oRes.text)
 
 		# Return the Response of the request
 		return oResponse
@@ -148,7 +146,7 @@ def request(service, action, path, body, session=None, environ=None):
 	else:
 		raise ResponseException(error=(Errors.SERVICE_NOT_REGISTERED, service))
 
-def create(service, path, body, session=None, environ=None):
+def create(service, path, data):
 	"""Create
 
 	Make a POST request
@@ -156,16 +154,14 @@ def create(service, path, body, session=None, environ=None):
 	Arguments:
 		service (str): The service to call
 		path (str): The path on the service
-		body (mixed): The body to pass to the request
-		session {Session._Session}: The optional session to send with the request
-		environ (dict): Info related to the request
+		data (dict): The request data: 'body', 'session', and 'enviroment'
 
 	Returns:
 		Response
 	"""
-	return request(service, 'create', path, body, session, environ)
+	return request(service, 'create', path, data)
 
-def delete(service, path, body, session=None, environ=None):
+def delete(service, path, data):
 	"""Delete
 
 	Make a DELETE request
@@ -173,14 +169,12 @@ def delete(service, path, body, session=None, environ=None):
 	Arguments:
 		service (str): The service to call
 		path (str): The path on the service
-		body (mixed): The body to pass to the request
-		session {Session._Session}: The optional session to send with the request
-		environ (dict): Info related to the request
+		data (dict): The request data: 'body', 'session', and 'enviroment'
 
 	Returns:
 		Response
 	"""
-	return request(service, 'delete', path, body, session, environ)
+	return request(service, 'delete', path, data)
 
 def internal_key(key = None):
 	"""Internal Key
@@ -233,7 +227,7 @@ def internal_key(key = None):
 		except Exception:
 			return False
 
-def read(service, path, body, session=None, environ=None):
+def read(service, path, data):
 	"""Read
 
 	Make a GET request
@@ -241,14 +235,12 @@ def read(service, path, body, session=None, environ=None):
 	Arguments:
 		service (str): The service to call
 		path (str): The path on the service
-		body (mixed): The body to pass to the request
-		session {Session._Session}: The optional session to send with the request
-		environ (dict): Info related to the request
+		data (dict): The request data: 'body', 'session', and 'enviroment'
 
 	Returns:
 		Response
 	"""
-	return request(service, 'read', path, body, session, environ)
+	return request(service, 'read', path, data)
 
 def register(services, restconf, salt, internal=5):
 	"""Register
@@ -313,7 +305,7 @@ def register(services, restconf, salt, internal=5):
 		else:
 			raise ValueError('services.%s' % str(k))
 
-def update(service, path, body, session=None, environ=None):
+def update(service, path, data):
 	"""Update
 
 	Make a PUT request
@@ -321,14 +313,12 @@ def update(service, path, body, session=None, environ=None):
 	Arguments:
 		service (str): The service to call
 		path (str): The path on the service
-		body (mixed): The body to pass to the request
-		session {Session._Session}: The optional session to send with the request
-		environ (dict): Info related to the request
+		data (dict): The request data: 'body', 'session', and 'enviroment'
 
 	Returns:
 		Response
 	"""
-	return request(service, 'update', path, body, session, environ)
+	return request(service, 'update', path, data)
 
 def verbose(flag=True):
 	"""Verbose
@@ -385,15 +375,15 @@ class Response(object):
 
 			# If we got an int, it's a code with no message string
 			if isinstance(error, int):
-				self.error = {"code": error, "msg": ''}
+				self.error = {'code': error, 'msg': ''}
 
 			# If we got a string, it's a message with no code
 			elif isinstance(error, str):
-				self.error = {"code": 0, "msg": error}
+				self.error = {'code': 0, 'msg': error}
 
 			# If it's a tuple, 0 is a code, 1 is a message
 			elif isinstance(error, tuple):
-				self.error = {"code": error[0], "msg": error[1]}
+				self.error = {'code': error[0], 'msg': error[1]}
 
 			# If we got a dictionary, assume it's already right
 			elif isinstance(error, dict):
@@ -408,7 +398,7 @@ class Response(object):
 
 				# Else, try to pull out the code and message
 				else:
-					self.error = {"code": error.args[0], "msg": ''}
+					self.error = {'code': error.args[0], 'msg': ''}
 					if len(error.args) > 1: self.error['msg'] = error.args[1]
 
 			# Else, we got something invalid
@@ -518,7 +508,7 @@ class Response(object):
 		except TypeError as e: raise ValueError('val', str(e))
 
 		# Return the fromDict result
-		return cls.fromDict(d)
+		return cls.from_dict(d)
 
 	def to_dict(self):
 		"""To Dict
@@ -636,7 +626,7 @@ class Service(object):
 		"""
 
 		# Generate the method name from the URI
-		sMethod = self.pathToMethod(path, '_create')
+		sMethod = self.path_to_method(path, '_create')
 
 		# Try to find the method
 		try:
@@ -674,7 +664,7 @@ class Service(object):
 		"""
 
 		# Generate the method name from the URI
-		sMethod = self.pathToMethod(path, '_delete')
+		sMethod = self.path_to_method(path, '_delete')
 
 		# Try to find the method
 		try:
@@ -742,7 +732,7 @@ class Service(object):
 		"""
 
 		# Generate the method name from the URI
-		sMethod = self.pathToMethod(path, '_read')
+		sMethod = self.path_to_method(path, '_read')
 
 		# Try to find the method
 		try:
@@ -780,7 +770,7 @@ class Service(object):
 		"""
 
 		# Generate the method name from the URI
-		sMethod = self.pathToMethod(path, '_update')
+		sMethod = self.path_to_method(path, '_update')
 
 		# Try to find the method
 		try:

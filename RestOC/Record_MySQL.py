@@ -1127,7 +1127,10 @@ class Record(Record_Base.Record):
 							self._dStruct['tree'][self._dStruct['primary']],
 							self._dRecord[self._dStruct['primary']]
 						),
-						JSON.encode(dChanges)
+						Commands.escape(
+							self._dStruct['host'],
+							JSON.encode(dChanges)
+						)
 					)
 
 			# Create the changes record
@@ -1664,7 +1667,7 @@ class Record(Record_Base.Record):
 				return cls(dRecord, custom)
 
 	@classmethod
-	def generate_config(cls, tree, special='sql', db=None):
+	def generate_config(cls, tree, special='sql', override=None):
 		"""Generate Config
 
 		Generates record specific config based on the Format-OC tree passed
@@ -1672,13 +1675,14 @@ class Record(Record_Base.Record):
 		Arguments:
 			tree (FormatOC.Tree): the tree associated with the record type
 			special (str): The special section used to identify the child info
+			override (dict): Used to override any data from the tree
 
 		Returns:
 			dict
 		"""
 
 		# Get the based config from the parent
-		dConfig = super().generate_config(tree, special, db);
+		dConfig = super().generate_config(tree, special, override);
 
 		# Add an empty json section
 		dConfig['json'] = []
@@ -2228,7 +2232,10 @@ class Record(Record_Base.Record):
 							self._dStruct['tree'][self._dStruct['primary']],
 							self._dRecord[self._dStruct['primary']]
 						),
-						JSON.encode(dChanges)
+						Commands.escape(
+							self._dStruct['host'],
+							JSON.encode(dChanges)
+						)
 					)
 
 			# Create the changes record
