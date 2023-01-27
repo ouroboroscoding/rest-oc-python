@@ -78,21 +78,8 @@ def combine(first, second):
 	# Copy the first dict
 	dRet = clone(first)
 
-	# Get each key of the second dict
-	for m in second:
-
-		# If the value is another dict and it exists in first as well
-		if isinstance(second[m], dict) and m in dRet and isinstance(dRet[m], dict):
-
-			# Call combine
-			dRet[m] = combine(dRet[m], second[m])
-
-		# else we overwrite the value as is
-		else:
-			dRet[m] = second[m]
-
-	# Return the new dict
-	return dRet
+	# Call merge to avoid duplicate code and return the cloned dict
+	return merge(dRet, second)
 
 # Evaluate function
 def eval(src, contains):
@@ -216,3 +203,39 @@ def keys_to_ints(src):
 
 	# Return the new data
 	return mRet
+
+def merge(first, second):
+	"""Merge
+
+	Overwrites the first dict by adding the values from the second. Returns the
+	first for chaining / ease of use
+
+	Arguments:
+		first (dict): The dict to be changed/overwritten
+		second (dict): The dict that will do the overwriting
+
+	Returns:
+		dict
+	"""
+
+	# Make sure both arguments are actual dicts
+	if not isinstance(first, dict):
+		raise ValueError('%s is not a valid value for first of %s' % (str(first), sys._getframe().f_code.co_name))
+	if not isinstance(second, dict):
+		raise ValueError('%s is not a valid value for second of %s' % (str(second), sys._getframe().f_code.co_name))
+
+	# Get each key of the second dict
+	for m in second:
+
+		# If the value is another dict and it exists in first as well
+		if isinstance(second[m], dict) and m in first and isinstance(first[m], dict):
+
+			# Call merge
+			merge(first[m], second[m])
+
+		# else we overwrite the value as is
+		else:
+			first[m] = second[m]
+
+	# Return the new dict
+	return first

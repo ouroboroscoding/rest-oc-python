@@ -715,7 +715,7 @@ class Record(abc.ABC):
 		return None
 
 	@classmethod
-	def generate_config(cls, tree, special='db', db=None):
+	def generate_config(cls, tree, special='db', override=None):
 		"""Generate Config
 
 		Generates record specific config based on the Format-OC tree passed
@@ -723,6 +723,7 @@ class Record(abc.ABC):
 		Arguments:
 			tree (FormatOC.Tree): the tree associated with the record type
 			special (str): The special section used to identify the child info
+			override (dict): Used to override any data from the tree
 
 		Returns:
 			dict
@@ -730,20 +731,28 @@ class Record(abc.ABC):
 
 		# Combine the dicts
 		dRet = DictHelper.combine({
-			"auto_primary": True,
-			"changes": False,
-			"db": 'test',
-			"indexes": {},
-			"table": "table",
-			"primary": "_id",
-			"rev_field": '_rev',
-			"revisions": False,
-			"tree": tree
+			'auto_primary': True,
+			'changes': False,
+			'db': 'test',
+			'host': 'primary',
+			'indexes': {},
+			'table': 'table',
+			'primary': '_id',
+			'rev_field': '_rev',
+			'revisions': False,
+			'tree': tree
 		}, tree.special(special, default={}))
 
-		# If there's a specific DB
-		if db:
-			dRet['db'] = db
+		# If there's an override
+		if override:
+
+			# Make sure it's a dict before merging it with the current config
+			if isinstance(override, dict):
+				DictHelper.merge(dRet, override)
+
+			# Raise an error if the argument is invalid
+			else:
+				raise ValueError('Record_Base.generate_config.override must be a dict')
 
 		# Return the values
 		return dRet

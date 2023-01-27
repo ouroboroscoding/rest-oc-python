@@ -27,7 +27,7 @@ __regex = re.compile(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$')
 __mdConf = None
 """Email conf"""
 
-def _init(conf):
+def init(conf):
 	"""Init
 
 	Initialises the module

@@ -1019,7 +1019,7 @@ class Record(Record_Base.Record):
 				return [cls(d, custom) for d in itRes]
 
 	@classmethod
-	def generate_config(cls, tree, special='rethinkdb', db=None):
+	def generate_config(cls, tree, special='rethinkdb', override=None):
 		"""Generate Config
 
 		Generates record specific config based on the Format-OC tree passed
@@ -1027,13 +1027,14 @@ class Record(Record_Base.Record):
 		Arguments:
 			tree (FormatOC.Tree): the tree associated with the record type
 			special (str): The special section used to identify the child info
+			override (dict): Used to override any data from the tree
 
 		Returns:
 			dict
 		"""
 
 		# Call the parent
-		return super().generate_config(tree, special, db);
+		return super().generate_config(tree, special, override);
 
 	@classmethod
 	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, distinct=False, orderby=None, limit=None, custom={}):

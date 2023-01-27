@@ -61,7 +61,6 @@ class _Route(object):
 		self.service = service
 		self.path = path
 		self.sesh = sesh
-		self.environ = environ
 		self.cors = cors
 		self.error_callback = error_callback
 
@@ -188,7 +187,7 @@ class _Route(object):
 			)
 
 		# If there's an error
-		if oResponse.errorExists():
+		if oResponse.error_exists():
 
 			# If it's an authorization error
 			if oResponse.error['code'] == Errors.REST_AUTHORIZATION:
