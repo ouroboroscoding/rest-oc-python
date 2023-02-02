@@ -11,12 +11,13 @@ __email__ = "chris@ouroboroscoding.com"
 __created__ = "2022-08-25"
 
 # Python imports
+from base64 import b64decode
 import platform
 import re
 import sys
 
 # Module imports
-from . import SMTP
+from . import DictHelper, SMTP
 
 last_error = ''
 """The last error generated"""
@@ -44,7 +45,7 @@ def init(conf):
 
 	# If we have no hostname
 	if 'hostname' not in __mdConf:
-		__mdConf['hosntname'] = platform.node()
+		__mdConf['hostname'] = platform.node()
 
 	# Init the SMTP module
 	SMTP.init(**__mdConf['smtp'])
