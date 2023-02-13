@@ -816,13 +816,11 @@ class Record(abc.ABC):
 
 		# If no specific fields requested
 		if not fields:
-			dRet =  self._dRecord
+			dRet = DictHelper.clone(self._dRecord)
 
 		# Else, get each requested field and return
 		else:
-			dRet = {}
-			for f in fields:
-				dRet[f] = self._dRecord[f]
+			dRet = {f:self._dRecord[f] for f in fields}
 
 		# Clone the results and return
 		return DictHelper.clone(dRet)
