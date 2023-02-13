@@ -24,7 +24,7 @@ setup(
 	install_requires=[
 		'arrow==1.2.2',
 		'bottle==0.12.23',
-		'format-oc==1.6.0',
+		'format-oc==1.6.1',
 		'gunicorn==20.1.0',
 		'hiredis==2.0.0',
 		'Jinja2==3.1.2',
