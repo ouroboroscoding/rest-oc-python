@@ -22,19 +22,34 @@ import bottle
 from . import Errors, JSON, Services, Session
 
 # Method bytes
-A		= 0xF
-ALL		= 0xF
+#	Create
 C		= 0x1
 CREATE	= 0x1
-D		= 0x2
-DELETE	= 0x2
-GET		= 0x4
 POST	= 0x1
-PUT		= 0x8
-R		= 0x4
-READ	= 0x4
-U		= 0x8
-UPDATE	= 0x8
+#	Read
+GET		= 0x2
+R		= 0x2
+READ	= 0x2
+#	Update
+PUT		= 0x4
+U		= 0x4
+UPDATE	= 0x4
+#	Delete
+D		= 0x8
+DELETE	= 0x8
+#	All
+A		= 0xF
+ALL		= 0xF
+CRUD	= 0xF
+#	Create, Update, Delete
+CUD		= C | U | D
+CREATE_UPDATE_DELETE = CUD
+#	Create, Read, Delete
+CRD		= C | R | D
+CREATE_READ_DELETE = CRD
+#	Read, Update
+RU		= R | U
+READ_UPDATE = RU
 
 class _Route(object):
 	"""Route
