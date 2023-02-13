@@ -805,7 +805,7 @@ class Record(Record_Base.Record):
 	def add_changes(cls, _id, changes, custom={}):
 		"""Add Changes
 
-		Adds a record to the tables associated _changes table. Useful for
+		Adds a record to the table's associated _changes table. Useful for
 		Record types that can't handle multiple levels and have children
 		tables that shouldn't be updated for every change in a single record
 
@@ -2375,7 +2375,7 @@ class Record(Record_Base.Record):
 
 			# If it's a string
 			if isinstance(dSQL, str):
-				dSQL = {"type": dSQL}
+				dSQL = {'type': dSQL}
 
 			# Add the line
 			lFields.append('`%s` %s %s' % (
@@ -2393,7 +2393,7 @@ class Record(Record_Base.Record):
 
 			# If it's a string
 			if isinstance(dSQL, str):
-				dSQL = {"type": dSQL}
+				dSQL = {'type': dSQL}
 
 			# Primary key type
 			sIDType = 'type' in dSQL and dSQL['type'] or cls._node_to_type(dStruct['tree'][dStruct['primary']], dStruct['host'])
