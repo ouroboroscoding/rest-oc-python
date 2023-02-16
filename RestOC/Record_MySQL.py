@@ -2433,20 +2433,27 @@ class Record(Record_Base.Record):
 				# Else if it's a list
 				elif isinstance(mFields, (list,tuple)):
 					sType = 'index'
-					sFields = '`%s`' %  '`,`'.join(mFields)
+					sFields = ','.join([
+						(':' in s and \
+							('`%s`(%s)' % tuple(s.split(':'))) or \
+							('`%s`' % s)
+						) for s in mFields
+					])
 
 				# Else, must be a string or None
 				else:
 					sType = 'index'
-					sFields = '`%s`' % (mFields and mFields or sName)
+					sFields = mFields and \
+								(':' in mFields and \
+									('`%s`(%s)' % tuple(mFields.split(':'))) or \
+									('`%s`' % mFields)
+								) or \
+								'`%s`' % sName
 
 				# Append the index
 				lIndexes.append('%s `%s` (%s)' % (
 					sType, sName, sFields
 				))
-
-			# Combine the indexes
-			sIndexes = ', '.join(lIndexes)
 
 		# Generate the CREATE statement
 		sSQL = 'CREATE TABLE IF NOT EXISTS `%s`.`%s` (%s, %s) '\
