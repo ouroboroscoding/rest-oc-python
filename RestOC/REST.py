@@ -57,7 +57,7 @@ class _Route(object):
 	A callable class used to store rest routes in the server
 	"""
 
-	def __init__(self, service, path, sesh, cors=None, error_callback=None):
+	def __init__(self, service, path, cors=None, error_callback=None):
 		"""Constructor (__init__)
 
 		Initialises an instance of the route
@@ -65,7 +65,6 @@ class _Route(object):
 		Arguments:
 			service (str): The service we are routing to
 			path (str): The path in the service we are routing to
-			sesh (bool): True if the route requires a session
 			environ (bool): True if the route requires request environ
 			cors (dict): Optionsl CORS values
 			error_callback (function): Optional callback for errors
@@ -75,7 +74,6 @@ class _Route(object):
 		"""
 		self.service = service
 		self.path = path
-		self.sesh = sesh
 		self.cors = cors
 		self.error_callback = error_callback
 
@@ -88,11 +86,9 @@ class _Route(object):
 			str
 		"""
 
-		# Initialise the request data
+		# Initialise the request data with the environment
 		dReq = {
-			'body': None,
-			'environment': None,
-			'session': None
+			'environment': bottle.request.environ
 		}
 
 		# If CORS is enabled and the origin matches
@@ -120,7 +116,7 @@ class _Route(object):
 			try:
 				dReq['body'] = JSON.decode(bottle.request.query['d'])
 			except Exception as e:
-				return str(Services.Response(error=(Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
+				return str(Services.Error((Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
 
 		# Else we most likely got the data in the body
 		else:
@@ -128,9 +124,9 @@ class _Route(object):
 			# Make sure the request send JSON
 			try:
 				if bottle.request.headers['Content-Type'].lower() not in ('application/json; charset=utf8', 'application/json; charset=utf-8'):
-					return str(Services.Response(error=Errors.REST_CONTENT_TYPE))
+					return str(Services.Error(Errors.REST_CONTENT_TYPE))
 			except KeyError:
-				return str(Services.Response(error=Errors.REST_CONTENT_TYPE))
+				return str(Services.Error(Errors.REST_CONTENT_TYPE))
 
 			# Store the body, if it's too big we need to read it rather than
 			#	use getvalue
@@ -145,15 +141,10 @@ class _Route(object):
 			try:
 				if sBody: dReq['body'] = JSON.decode(sBody)
 			except Exception as e:
-				return str(Services.Response(error=(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e)))))
+				return str(Services.Error(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e))))
 
 		# If the request should have sent a session, or one was sent anyway
-		if self.sesh or 'Authorization' in bottle.request.headers:
-
-			# Is there an Authorization token
-			if 'Authorization' not in bottle.request.headers:
-				bottle.response.status = 401
-				return str(Services.Response(error=(Errors.REST_AUTHORIZATION, 'Unauthorized')))
+		if 'Authorization' in bottle.request.headers:
 
 			# Get the session from the Authorization token
 			dReq['session'] = Session.load(bottle.request.headers['Authorization'])
@@ -161,14 +152,11 @@ class _Route(object):
 			# If the session is not found
 			if not dReq['session']:
 				bottle.response.status = 401
-				return str(Services.Response(error=(Errors.REST_AUTHORIZATION, 'Unauthorized')))
+				return str(Services.Error(Errors.REST_AUTHORIZATION, 'Unauthorized'))
 
 			# Else, extend the session
 			else:
 				dReq['session'].extend()
-
-		# Add the environment
-		dReq['environment'] = bottle.request.environ
 
 		# In case the service crashes
 		try:
@@ -187,15 +175,17 @@ class _Route(object):
 			sError = traceback.format_exc()
 			print(sError, file=sys.stderr)
 			if self.error_callback:
-				self.error_callback({
+				oData = {
 					'service': self.service,
 					'method': bottle.request.method,
 					'path': self.path,
-					'body': dReq['body'],
-					'session': dReq['session'],
 					'environment': dReq['environment'],
 					'traceback': sError
-				})
+				}
+				for s in ['body', 'session']:
+					if s in dReq:
+						oData[s] = dReq[s]
+				self.error_callback(oData)
 			oResponse = Services.Error(
 				Errors.SERVICE_CRASHED,
 				'%s:%s' % (self.service, self.path)
@@ -466,10 +456,6 @@ class Server(bottle.Bottle):
 			if 'service' not in d:
 				d['service'] = service
 
-			# If the session value is not passed, assume false
-			if 'session' not in d:
-				d['session'] = False
-
 			# If the path is not passed, generate it from the uri
 			if 'path' not in d:
 				d['path'] = d['uri'][1:]
@@ -481,7 +467,6 @@ class Server(bottle.Bottle):
 				_Route(
 					d['service'],	# The service to use
 					d['path'],		# The path in the service
-					d['session'],	# The session requirement flag
 					cors,			# Optional CORS regex
 					error_callback	# Optional callback for error
 				)
