@@ -1632,9 +1632,9 @@ class Record(Record_Base.Record):
 				return []
 
 			# If we have any JSON fields in the records
-			if dStruct['json']:
+			if dStruct['to_process']:
 				for d in lRecords:
-					cls.process_record(dStruct['json'], d)
+					cls.process_record(dStruct['to_process'], d)
 
 			# If Raw requested, return as is
 			if raw:
@@ -1655,8 +1655,8 @@ class Record(Record_Base.Record):
 				return None
 
 			# If we have any JSON fields in the records
-			if dStruct['json']:
-				cls.process_record(dStruct['json'], dRecord)
+			if dStruct['to_process']:
+				cls.process_record(dStruct['to_process'], dRecord)
 
 			# If Raw requested, return as is
 			if raw:
@@ -1685,7 +1685,7 @@ class Record(Record_Base.Record):
 		dConfig = super().generate_config(tree, special, override);
 
 		# Add an empty json section
-		dConfig['json'] = []
+		dConfig['to_process'] = []
 
 		# Go through each node in the tree
 		for k in tree:
@@ -1696,11 +1696,12 @@ class Record(Record_Base.Record):
  			# If it's a Node
 			if sClass == 'Node':
 
-				# If it's json type
-				if tree[k].type() == 'json':
+				# If it's json or bool type
+				sType = tree[k].type()
+				if sType in ['json', 'bool']:
 
 					# Add it to the list
-					dConfig['json'].append(k)
+					dConfig['to_process'].append([k, sType])
 
 			# Else, if it's an object/dict type
 			elif sClass in ['ArrayNode', 'HashNode', 'Parent']:
@@ -1713,7 +1714,7 @@ class Record(Record_Base.Record):
 					if 'json' in dSQL and dSQL['json']:
 
 						# Add it to the list
-						dConfig['json'].append(k)
+						dConfig['to_process'].append([k, 'json'])
 
 		# Return the final config
 		return dConfig
@@ -1854,9 +1855,9 @@ class Record(Record_Base.Record):
 				return []
 
 			# If we have any JSON fields in the records
-			if dStruct['json']:
+			if dStruct['to_process']:
 				for d in lRecords:
-					cls.process_record(dStruct['json'], d)
+					cls.process_record(dStruct['to_process'], d)
 
 			# If Raw requested, return as is
 			if raw:
@@ -1877,8 +1878,8 @@ class Record(Record_Base.Record):
 				return None
 
 			# If we have any JSON fields in the records
-			if dStruct['json']:
-				cls.process_record(dStruct['json'], dRecord)
+			if dStruct['to_process']:
+				cls.process_record(dStruct['to_process'], dRecord)
 
 			# If Raw requested, return as is
 			if raw:
@@ -1959,14 +1960,14 @@ class Record(Record_Base.Record):
 		return lRecords
 
 	@classmethod
-	def process_record(cls, json_fields, record):
+	def process_record(cls, fields, record):
 		"""Process Record
 
-		Goes through a record and decodes any JSON fields in place, does not
-		return a new dict
+		Goes through a record and decodes any JSON or bool fields in place, does
+		not return a new dict
 
 		Arguments:
-			json_fields (list): The list of fields that require decoding
+			fields (list): The list of fields that require decoding
 			record (dict): The record to process
 
 		Returns:
@@ -1974,13 +1975,18 @@ class Record(Record_Base.Record):
 		"""
 
 		# Go through each field
-		for f in json_fields:
+		for l in fields:
 
 			# If it's in the record and it's got a value
-			if f in record and record[f]:
+			if l[0] in record and record[l[0]] is not None:
 
-				# Decode it
-				record[f] = JSON.decode(record[f])
+				# If it's a bool, convert it from 1-0 to True-False
+				if l[1] == 'bool':
+					record[l[0]] = record[l[0]] and True or False
+
+				# If it's a json, decode it
+				elif l[1] == 'json':
+					record[l[0]] = JSON.decode(record[l[0]])
 
 	@classmethod
 	def process_value(cls, struct, field, value):
@@ -2433,20 +2439,27 @@ class Record(Record_Base.Record):
 				# Else if it's a list
 				elif isinstance(mFields, (list,tuple)):
 					sType = 'index'
-					sFields = '`%s`' %  '`,`'.join(mFields)
+					sFields = ','.join([
+						(':' in s and \
+							('`%s`(%s)' % tuple(s.split(':'))) or \
+							('`%s`' % s)
+						) for s in mFields
+					])
 
 				# Else, must be a string or None
 				else:
 					sType = 'index'
-					sFields = '`%s`' % (mFields and mFields or sName)
+					sFields = mFields and \
+								(':' in mFields and \
+									('`%s`(%s)' % tuple(mFields.split(':'))) or \
+									('`%s`' % mFields)
+								) or \
+								'`%s`' % sName
 
 				# Append the index
 				lIndexes.append('%s `%s` (%s)' % (
 					sType, sName, sFields
 				))
-
-			# Combine the indexes
-			sIndexes = ', '.join(lIndexes)
 
 		# Generate the CREATE statement
 		sSQL = 'CREATE TABLE IF NOT EXISTS `%s`.`%s` (%s, %s) '\
