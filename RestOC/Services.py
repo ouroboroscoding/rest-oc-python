@@ -41,7 +41,7 @@ __funcToRequest = {
 }
 """Map functions to REST types"""
 
-def request(service, action, path, data):
+def request(service, action, path, data = {}):
 	"""Request
 
 	Method to convert REST requests into HTTP requests
@@ -66,7 +66,7 @@ def request(service, action, path, data):
 		if 'instance' in __mdRegistered[service]:
 
 			# If verbose requested
-			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, JSON.encode(data['body'], 2)))
+			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, 'body' in data and JSON.encode(data['body'], 2) or 'NONE'))
 
 			# Directly call the action
 			oResponse = getattr(__mdRegistered[service]['instance'], action)(
@@ -85,14 +85,19 @@ def request(service, action, path, data):
 			# Generate the URL to reach the service
 			sURL = __mdRegistered[service]['url'] + path
 
-			# Convert the body to JSON
-			sBody = JSON.encode(data['body'])
-
-			# Create the headers
+			# Init the headers and body
+			sBody = ''
 			dHeaders = {
-				'Content-Type': 'application/json; charset=utf-8',
-				'Content-Length': str(len(sBody))
+				'Content-Length': '0',
+				'Content-Type': 'application/json; charset=utf-8'
 			}
+
+			# If the body was passed
+			if 'body' in data and data['body']:
+
+				# Convert the body to JSON and store the length
+				sBody = JSON.encode(data['body'])
+				dHeaders['Content-Length'] = str(len(sBody))
 
 			# If we have a session, add the ID to the headers
 			if 'session' in data and data['session']:
@@ -112,11 +117,11 @@ def request(service, action, path, data):
 						if oRes.status_code == 401:
 							return Response.from_json(oRes.content)
 						else:
-							return Response(error=(Errors.SERVICE_STATUS, '%d: %s' % (oRes.status_code, oRes.content)))
+							return Error(Errors.SERVICE_STATUS, '%d: %s' % (oRes.status_code, oRes.content))
 
 					# If we got the wrong content type
 					if oRes.headers['Content-Type'].lower() != 'application/json; charset=utf-8':
-						return Response(error=(Errors.SERVICE_CONTENT_TYPE, '%s' % oRes.headers['content-type']))
+						return Error(Errors.SERVICE_CONTENT_TYPE, '%s' % oRes.headers['content-type'])
 
 					# Success, break out of the loop
 					break
@@ -134,7 +139,7 @@ def request(service, action, path, data):
 						continue
 
 					# We've tried enough, return an error
-					return Response(error=(Errors.SERVICE_UNREACHABLE, str(e)))
+					return Error(Errors.SERVICE_UNREACHABLE, str(e))
 
 			# Else turn the content into an Response and return it
 			oResponse = Response.from_json(oRes.text)
@@ -146,7 +151,7 @@ def request(service, action, path, data):
 	else:
 		raise ResponseException(error=(Errors.SERVICE_NOT_REGISTERED, service))
 
-def create(service, path, data):
+def create(service, path, data = {}):
 	"""Create
 
 	Make a POST request
@@ -161,7 +166,7 @@ def create(service, path, data):
 	"""
 	return request(service, 'create', path, data)
 
-def delete(service, path, data):
+def delete(service, path, data = {}):
 	"""Delete
 
 	Make a DELETE request
@@ -227,7 +232,7 @@ def internal_key(key = None):
 		except Exception:
 			return False
 
-def read(service, path, data):
+def read(service, path, data = {}):
 	"""Read
 
 	Make a GET request
@@ -305,7 +310,7 @@ def register(services, restconf, salt, internal=5):
 		else:
 			raise ValueError('services.%s' % str(k))
 
-def update(service, path, data):
+def update(service, path, data = {}):
 	"""Update
 
 	Make a PUT request
@@ -611,6 +616,12 @@ class Service(object):
 	__pathToDef = {}
 	"""Map of paths to function name"""
 
+	__keyToError = {
+		'body': Errors.SERVICE_NO_BODY,
+		'session': Errors.SERVICE_NO_SESSION
+	}
+	"""Maps missing data keys to error codes"""
+
 	def create(self, path, req):
 		"""Create
 
@@ -644,6 +655,12 @@ class Service(object):
 		# Try to call the method
 		try:
 			return f(req)
+
+		# If we got a KeyError
+		except KeyError as e:
+			if e.args[0] in self.__keyToError:
+				return Error(self.__keyToError[e.args[0]])
+			raise e
 
 		# Response thrown
 		except ResponseException as e:
@@ -682,6 +699,12 @@ class Service(object):
 		# Try to call the method
 		try:
 			return f(req)
+
+		# If we got a KeyError
+		except KeyError as e:
+			if e.args[0] in self.__keyToError:
+				return Error(self.__keyToError[e.args[0]])
+			raise e
 
 		# Response thrown
 		except ResponseException as e:
@@ -751,6 +774,12 @@ class Service(object):
 		try:
 			return f(req)
 
+		# If we got a KeyError
+		except KeyError as e:
+			if e.args[0] in self.__keyToError:
+				return Error(self.__keyToError[e.args[0]])
+			raise e
+
 		# Response thrown
 		except ResponseException as e:
 			return e.args[0]
@@ -788,6 +817,12 @@ class Service(object):
 		# Try to call the method
 		try:
 			return f(req)
+
+		# If we got a KeyError
+		except KeyError as e:
+			if e.args[0] in self.__keyToError:
+				return Error(self.__keyToError[e.args[0]])
+			raise e
 
 		# Response thrown
 		except ResponseException as e:
