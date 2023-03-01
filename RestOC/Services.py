@@ -13,6 +13,7 @@ __created__ = "2018-11-11"
 # Python imports
 from datetime import datetime
 from hashlib import sha1
+import re
 from time import sleep, time
 
 # Pip imports
@@ -41,7 +42,7 @@ __funcToRequest = {
 }
 """Map functions to REST types"""
 
-def request(service, action, path, data = {}):
+def request(service, action, path, req = {}):
 	"""Request
 
 	Method to convert REST requests into HTTP requests
@@ -50,7 +51,7 @@ def request(service, action, path, data = {}):
 		service (str): The service we are requesting data from
 		action (str): The action to take on the service
 		path (str): The path of the request
-		data (dict): The request data: 'body', 'session', and 'enviroment'
+		req (dict): The request details: 'data', 'session', and 'enviroment'
 
 	Raises:
 		ServiceException
@@ -66,49 +67,60 @@ def request(service, action, path, data = {}):
 		if 'instance' in __mdRegistered[service]:
 
 			# If verbose requested
-			if __mbVerbose: print('%s: Calling %s.%s("%s", %s)' % (str(datetime.now()), service, action, path, 'body' in data and JSON.encode(data['body'], 2) or 'NONE'))
+			if __mbVerbose:
+				print('%s: Calling %s.%s("%s", %s)' % (
+					str(datetime.now()),
+					service,
+					action,
+					path,
+					'data' in req and JSON.encode(req['data'], 2) or 'NONE')
+				)
 
 			# Directly call the action
 			oResponse = getattr(__mdRegistered[service]['instance'], action)(
-				path, data
+				path, req
 			)
 
 			# If verbose requested
-			if __mbVerbose:	print('%s: Returning %s\n' % (str(datetime.now()), JSON.encode(oResponse.to_dict(), 2)))
+			if __mbVerbose:
+				print('%s: Returning %s\n' % (
+					str(datetime.now()),
+					JSON.encode(oResponse.to_dict(), 2))
+				)
 
 		# Else if the service is running elsewhere
 		else:
 
 			try: __funcToRequest[action]
-			except KeyError: Response(error=(Errors.SERVICE_ACTION, action))
+			except KeyError: Error(Errors.SERVICE_ACTION, action)
 
 			# Generate the URL to reach the service
 			sURL = __mdRegistered[service]['url'] + path
 
-			# Init the headers and body
-			sBody = ''
+			# Init the data and headers
+			sData = ''
 			dHeaders = {
 				'Content-Length': '0',
 				'Content-Type': 'application/json; charset=utf-8'
 			}
 
-			# If the body was passed
-			if 'body' in data and data['body']:
+			# If the data was passed
+			if 'data' in req and req['data']:
 
-				# Convert the body to JSON and store the length
-				sBody = JSON.encode(data['body'])
-				dHeaders['Content-Length'] = str(len(sBody))
+				# Convert the data to JSON and store the length
+				sData = JSON.encode(req['data'])
+				dHeaders['Content-Length'] = str(len(sData))
 
 			# If we have a session, add the ID to the headers
-			if 'session' in data and data['session']:
-				dHeaders['Authorization'] = data['session'].id()
+			if 'session' in req and req['session']:
+				dHeaders['Authorization'] = req['session'].id()
 
 			# Try to make the request and store the response
 			iAttempts = 0
 			while True:
 				iAttempts += 1
 				try:
-					oRes = __funcToRequest[action][0](sURL, data=sBody, headers=dHeaders)
+					oRes = __funcToRequest[action][0](sURL, data=sData, headers=dHeaders)
 
 					# If the request wasn't successful
 					if oRes.status_code != 200:
@@ -151,7 +163,7 @@ def request(service, action, path, data = {}):
 	else:
 		raise ResponseException(error=(Errors.SERVICE_NOT_REGISTERED, service))
 
-def create(service, path, data = {}):
+def create(service, path, req = {}):
 	"""Create
 
 	Make a POST request
@@ -159,14 +171,15 @@ def create(service, path, data = {}):
 	Arguments:
 		service (str): The service to call
 		path (str): The path on the service
-		data (dict): The request data: 'body', 'session', and 'enviroment'
+		req (dict): The request details, which can include 'data',
+					'environment', and 'session'
 
 	Returns:
 		Response
 	"""
-	return request(service, 'create', path, data)
+	return request(service, 'create', path, req)
 
-def delete(service, path, data = {}):
+def delete(service, path, req = {}):
 	"""Delete
 
 	Make a DELETE request
@@ -174,12 +187,13 @@ def delete(service, path, data = {}):
 	Arguments:
 		service (str): The service to call
 		path (str): The path on the service
-		data (dict): The request data: 'body', 'session', and 'enviroment'
+		req (dict): The request details, which can include 'data',
+					'environment', and 'session'
 
 	Returns:
 		Response
 	"""
-	return request(service, 'delete', path, data)
+	return request(service, 'delete', path, req)
 
 def internal_key(key = None):
 	"""Internal Key
@@ -232,7 +246,7 @@ def internal_key(key = None):
 		except Exception:
 			return False
 
-def read(service, path, data = {}):
+def read(service, path, req = {}):
 	"""Read
 
 	Make a GET request
@@ -240,12 +254,13 @@ def read(service, path, data = {}):
 	Arguments:
 		service (str): The service to call
 		path (str): The path on the service
-		data (dict): The request data: 'body', 'session', and 'enviroment'
+		req (dict): The request details, which can include 'data',
+					'environment', and 'session'
 
 	Returns:
 		Response
 	"""
-	return request(service, 'read', path, data)
+	return request(service, 'read', path, req)
 
 def register(services, restconf, salt, internal=5):
 	"""Register
@@ -310,7 +325,7 @@ def register(services, restconf, salt, internal=5):
 		else:
 			raise ValueError('services.%s' % str(k))
 
-def update(service, path, data = {}):
+def update(service, path, req = {}):
 	"""Update
 
 	Make a PUT request
@@ -318,12 +333,13 @@ def update(service, path, data = {}):
 	Arguments:
 		service (str): The service to call
 		path (str): The path on the service
-		data (dict): The request data: 'body', 'session', and 'enviroment'
+		req (dict): The request details, which can include 'data',
+					'environment', and 'session'
 
 	Returns:
 		Response
 	"""
-	return request(service, 'update', path, data)
+	return request(service, 'update', path, req)
 
 def verbose(flag=True):
 	"""Verbose
@@ -372,11 +388,11 @@ class Response(object):
 		"""
 
 		# If there's data, store it as is
-		if not data is None:
+		if data is not None:
 			self.data = data
 
 		# If there's an error, figure out what type
-		if not error is None:
+		if error is not None:
 
 			# If we got an int, it's a code with no message string
 			if isinstance(error, int):
@@ -397,7 +413,8 @@ class Response(object):
 			# If we got an exception
 			elif isinstance(error, Exception):
 
-				# If we got another Response in the Exception, store the error from it
+				# If we got another Response in the Exception, store the error
+				#	from it
 				if isinstance(error.args[0], Response):
 					self.error = error.args[0].error
 
@@ -438,7 +455,7 @@ class Response(object):
 		try: dRet['warning'] = self.warning
 		except AttributeError: pass
 
-		# Convert the dict and return it
+		# Convert the dict to JSON and return it
 		return JSON.encode(dRet)
 
 	def data_exists(self):
@@ -573,10 +590,10 @@ class Error(Response):
 		"""
 
 		# Set the error code
-		self.error = {"code": code}
-
-		# If there's a message
-		self.error['msg'] = msg
+		self.error = {
+			'code': code,
+			'msg': msg
+		}
 
 class ResponseException(Exception):
 	"""Response Exception
@@ -617,10 +634,13 @@ class Service(object):
 	"""Map of paths to function name"""
 
 	__keyToError = {
-		'body': Errors.SERVICE_NO_BODY,
+		'data': Errors.SERVICE_NO_DATA,
 		'session': Errors.SERVICE_NO_SESSION
 	}
 	"""Maps missing data keys to error codes"""
+
+	__nounRegex = re.compile(r'([a-z]+(?:_[a-z]+)*)_(create|delete|read|update)')
+	"""Regular Expression to match to valid service noun method"""
 
 	def create(self, path, req):
 		"""Create
@@ -629,8 +649,8 @@ class Service(object):
 
 		Arguments:
 			path (str): The path passed to the request
-			req (dict): The data being sent with the request, including body,
-						session, and environment variables
+			req (dict): The request details, which can include 'data',
+						'environment', and 'session'
 
 		Return:
 			Response
@@ -673,8 +693,8 @@ class Service(object):
 
 		Arguments:
 			path (str): The path passed to the request
-			req (dict): The data being sent with the request, including body,
-						session, and environment variables
+			req (dict): The request details, which can include 'data',
+						'environment', and 'session'
 
 		Return:
 			Response
@@ -719,11 +739,39 @@ class Service(object):
 			Service
 		"""
 
-		# Init the paths to function names
-		self._pathToDef
-
 		# Return self for chaining
 		return self
+
+	def generateURLS(self, prefix = None):
+		"""Generate URLS
+
+		Finds all the appropriate functions on the Child service and returns
+		a dictionary of URLs to bound functions
+
+		Arguments:
+			prefix (str): The optional prefix for urls
+
+		Returns:
+			{ str : bound method }
+		"""
+
+		# Fetch all available methods
+		lURLs = []
+
+		# Go through each available method
+		for s in dir(self):
+
+			# Try matching the proper format
+			oMatch = self.__nounRegex.match(s)
+
+			# If we have a match
+			if oMatch:
+				lURL = prefix and [prefix] or []
+				lURL.extend(oMatch.group(1).split('_'))
+				lURLs.append(['/'.join(lURL), oMatch.group(2)])
+
+		# Returns the generated urls
+		return lURLs
 
 	@classmethod
 	def install(cls):
@@ -747,8 +795,8 @@ class Service(object):
 
 		Arguments:
 			path (str): The path passed to the request
-			req (dict): The data being sent with the request, including body,
-						session, and environment variables
+			req (dict): The request details, which can include 'data',
+						'environment', and 'session'
 
 		Return:
 			Response
@@ -791,8 +839,8 @@ class Service(object):
 
 		Arguments:
 			path (str): The path passed to the request
-			req (dict): The data being sent with the request, including body,
-						session, and environment variables
+			req (dict): The request details, which can include 'data',
+						'environment', and 'session'
 
 		Return:
 			Response

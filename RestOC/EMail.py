@@ -73,7 +73,7 @@ def error(message):
 		'text': message
 	})
 	if not bRes:
-		print('Failed to send email: %s' % EMail.last_error, file=sys.stderr)
+		print('Failed to send email: %s' % last_error, file=sys.stderr)
 		return False
 
 	# Return OK
