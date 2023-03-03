@@ -21,6 +21,9 @@ import bottle
 # Module imports
 from . import Errors, JSON, Services, Session
 
+# Valid content types
+_reContentType = re.compile(r'^application\/json; charset=utf-?8$')
+
 # Method bytes
 #	Create
 C		= 0x1
@@ -86,11 +89,6 @@ class _Route(object):
 			str
 		"""
 
-		# Initialise the request data with the environment
-		dReq = {
-			'environment': bottle.request.environ
-		}
-
 		# If CORS is enabled and the origin matches
 		if self.cors and 'origin' in bottle.request.headers and self.cors.match(bottle.request.headers['origin']):
 			bottle.response.headers['Access-Control-Allow-Origin'] = bottle.request.headers['origin']
@@ -107,14 +105,19 @@ class _Route(object):
 			return ''
 
 		# Set the return to JSON
-		bottle.response.headers['Content-Type'] = 'application/json; charset=UTF-8'
+		bottle.response.headers['Content-Type'] = 'application/json; charset=utf-8'
+
+		# Initialise the request details with the environment
+		dReq = {
+			'environment': bottle.request.environ
+		}
 
 		# If we got a Read request and the data is in the GET
 		if bottle.request.method == 'GET' and 'd' in bottle.request.query:
 
 			# Convert the GET and store the data
 			try:
-				dReq['body'] = JSON.decode(bottle.request.query['d'])
+				dReq['data'] = JSON.decode(bottle.request.query['d'])
 			except Exception as e:
 				return str(Services.Error((Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
 
@@ -123,25 +126,25 @@ class _Route(object):
 
 			# Make sure the request send JSON
 			try:
-				if bottle.request.headers['Content-Type'].lower() not in ('application/json; charset=utf8', 'application/json; charset=utf-8'):
+				if not _reContentType.match(bottle.request.headers['Content-Type'].lower()):
 					return str(Services.Error(Errors.REST_CONTENT_TYPE))
 			except KeyError:
 				return str(Services.Error(Errors.REST_CONTENT_TYPE))
 
-			# Store the body, if it's too big we need to read it rather than
+			# Store the data, if it's too big we need to read it rather than
 			#	use getvalue
-			try: sBody = bottle.request.body.getvalue()
-			except AttributeError as e: sBody = bottle.request.body.read()
+			try: sData = bottle.request.body.getvalue()
+			except AttributeError as e: sData = bottle.request.body.read()
 
 			# Make sure we have a string, not a set of bytes
-			try: sBody = sBody.decode()
+			try: sData = sData.decode()
 			except (UnicodeDecodeError, AttributeError): pass
 
-			# Convert the body and store it
+			# Convert the data and store it
 			try:
-				if sBody: dReq['body'] = JSON.decode(sBody)
+				if sData: dReq['data'] = JSON.decode(sData)
 			except Exception as e:
-				return str(Services.Error(Errors.REST_REQUEST_DATA,'%s\n%s' % (sBody, str(e))))
+				return str(Services.Error(Errors.REST_REQUEST_DATA,'%s\n%s' % (sData, str(e))))
 
 		# If the request should have sent a session, or one was sent anyway
 		if 'Authorization' in bottle.request.headers:
@@ -175,17 +178,17 @@ class _Route(object):
 			sError = traceback.format_exc()
 			print(sError, file=sys.stderr)
 			if self.error_callback:
-				oData = {
+				oDetails = {
 					'service': self.service,
 					'method': bottle.request.method,
 					'path': self.path,
 					'environment': dReq['environment'],
 					'traceback': sError
 				}
-				for s in ['body', 'session']:
+				for s in ['data', 'session']:
 					if s in dReq:
-						oData[s] = dReq[s]
-				self.error_callback(oData)
+						oDetails[s] = dReq[s]
+				self.error_callback(oDetails)
 			oResponse = Services.Error(
 				Errors.SERVICE_CRASHED,
 				'%s:%s' % (self.service, self.path)
