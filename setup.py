@@ -6,7 +6,7 @@ with open('README.md', 'r') as oF:
 setup(
 	name='Rest-OC',
 	version='1.1.0',
-	description='RestOC is a library of python 3 modules for rapidly setting up REST microservices.',
+	description='Rest-OC is a library of python 3 modules for rapidly setting up REST microservices.',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	url='https://ouroboroscoding.com/rest-oc/',
@@ -18,7 +18,7 @@ setup(
 	keywords=['rest','microservices'],
 	author='Chris Nasr - Ouroboros Coding Inc.',
 	author_email='chris@ouroboroscoding.com',
-	license='Apache-2.0',
+	license='MIT',
 	packages=['RestOC'],
 	python_requires='>=3.10',
 	install_requires=[
