@@ -11,7 +11,6 @@ __email__ = "chris@ouroboroscoding.com"
 __created__ = "2020-02-12"
 
 # Python imports
-import datetime
 from enum import IntEnum
 from hashlib import md5
 import re
@@ -30,6 +29,9 @@ __mdHosts = {}
 
 # List of available connection
 __mdConnections = {}
+
+# The offset used to calculate timestamps
+__msTimestampTimezone = '+00:00'
 
 # defines
 MAX_RETRIES = 3
@@ -168,8 +170,16 @@ def _converter_timestamp(ts):
 	if ts == '0000-00-00 00:00:00':
 		return 0
 
+	# Replace ' ' with 'T', add milliseconds, and then timezone
+	ts = '%s.000000%s' % (
+		ts.replace(' ', 'T'),
+		__msTimestampTimezone
+	)
+	print('convert')
+	print(ts)
+
 	# Conver the string to a timestamp and return it
-	return arrow.get('%s+00:00' % ts).int_timestamp
+	return arrow.get(ts).int_timestamp
 
 def _cursor(host, dictCur = False):
 	"""Cursor
@@ -329,6 +339,24 @@ def db_prepend(pre = None):
 	"""
 	return Record_Base.db_prepend(pre)
 
+def timestamp_timezone(s):
+	"""Timestamp Offset
+
+	Used to deal with dumb mysql servers that return timestamps
+	as a string in the system's local time
+
+	Arguments:
+		s (str): The timezone offset
+
+	Returns
+		None
+	"""
+	global __msTimestampTimezone
+	print('set')
+	print(s)
+	__msTimestampTimezone = s
+	print(__msTimestampTimezone)
+
 def verbose(set_=None):
 	"""Verbose
 
@@ -340,8 +368,8 @@ def verbose(set_=None):
 	Returns
 		bool|None
 	"""
-	if set is None:	return Commands._verbose
-	else:			Commands._verbose = set_
+	if set_ is None:	return Commands._verbose
+	else:				Commands._verbose = set_
 
 # Commands class
 class Commands(object):
