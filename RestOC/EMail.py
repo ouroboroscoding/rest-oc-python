@@ -130,7 +130,7 @@ def send(conf):
 
 	# Send the e-mail
 	iRes = SMTP.Send(
-		__mdConf['override'] or conf['to'],
+		'override' in __mdConf and __mdConf['override'] or conf['to'],
 		conf['subject'],
 		conf
 	)
