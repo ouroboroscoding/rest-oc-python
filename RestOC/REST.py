@@ -452,7 +452,7 @@ class Server(bottle.Bottle):
 				if d['methods'] & READ: lMethods.append('GET')
 				if d['methods'] & UPDATE: lMethods.append('PUT')
 
-			# Add OPTIONS is CORS is enabled
+			# Add OPTIONS if CORS is enabled
 			if cors: lMethods.append('OPTIONS')
 
 			# If the service is missing, use the default
