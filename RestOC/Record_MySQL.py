@@ -175,8 +175,6 @@ def _converter_timestamp(ts):
 		ts.replace(' ', 'T'),
 		__msTimestampTimezone
 	)
-	print('convert')
-	print(ts)
 
 	# Conver the string to a timestamp and return it
 	return arrow.get(ts).int_timestamp
@@ -352,10 +350,7 @@ def timestamp_timezone(s):
 		None
 	"""
 	global __msTimestampTimezone
-	print('set')
-	print(s)
 	__msTimestampTimezone = s
-	print(__msTimestampTimezone)
 
 def verbose(set_=None):
 	"""Verbose
