@@ -19,7 +19,7 @@ import traceback
 import bottle
 
 # Module imports
-from . import Errors, JSON, Services, Session
+from . import DictHelper, Errors, JSON, Services, Session
 
 # Valid content types
 _reContentType = re.compile(r'^application\/json; charset=utf-?8$')
@@ -60,7 +60,7 @@ class _Route(object):
 	A callable class used to store rest routes in the server
 	"""
 
-	def __init__(self, service, path, cors=None, error_callback=None):
+	def __init__(self, service, path, cors=None, error_callback=None, many=False):
 		"""Constructor (__init__)
 
 		Initialises an instance of the route
@@ -71,6 +71,7 @@ class _Route(object):
 			environ (bool): True if the route requires request environ
 			cors (dict): Optionsl CORS values
 			error_callback (function): Optional callback for errors
+			many (boolean): Optional, used to identify the request as a __list
 
 		Returns:
 			None
@@ -79,6 +80,7 @@ class _Route(object):
 		self.path = path
 		self.cors = cors
 		self.error_callback = error_callback
+		self.many = many
 
 	def __call__(self):
 		"""Call (__call__)
@@ -167,12 +169,63 @@ class _Route(object):
 			# Call the appropriate API method based on the HTTP/request method
 			if bottle.request.method == 'DELETE':
 				oResponse = Services.delete(self.service, self.path, dReq)
-			elif bottle.request.method == 'GET':
-				oResponse = Services.read(self.service, self.path, dReq)
 			elif bottle.request.method == 'POST':
 				oResponse = Services.create(self.service, self.path, dReq)
 			elif bottle.request.method == 'PUT':
 				oResponse = Services.update(self.service, self.path, dReq)
+
+			# If it's specifically GET
+			elif bottle.request.method == 'GET':
+
+				# If it's the special __list path
+				if self.many is True:
+
+					# If the data isn't passed or isn't an array
+					if 'data' not in dReq or not isinstance(dReq['data'], list):
+						oResponse = Services.Error(
+							Errors.REST_REQUEST_DATA,
+							'data must be an array'
+						)
+
+					# Else, if it's beyond the max
+					elif len(dReq['data']) > 10:
+						oResponse = Services.Error(
+							Errors.REST_LIST_TO_LONG,
+							'Can not request more than 10 urls via __list'
+						)
+
+					# Else, we have an array of nouns to call and return
+					else:
+
+						# Init the response
+						lResponse = []
+
+						# Go through each element in the list
+						for m in dReq['data']:
+
+							# If we got a string
+							if isinstance(m, str):
+								m = [m]
+
+							# Generate unique request details for the element
+							dRequest = DictHelper.clone(dReq)
+							dRequest['data'] = len(m) == 2 and m[1] or None
+
+							# Call the request and append the data to the
+							#	response
+							lResponse.append([
+								m[0],
+								Services.read(
+									self.service, m[0], dRequest
+								).to_dict()
+							])
+
+						# Set the response
+						oResponse = Services.Response(lResponse)
+
+				# Else, just do a normal read
+				else:
+					oResponse = Services.read(self.service, self.path, dReq)
 
 		except Exception as e:
 			sError = traceback.format_exc()
@@ -404,7 +457,12 @@ class Server(bottle.Bottle):
 	Creates an HTTP server for use with REST requests
 	"""
 
-	def __init__(self, routes, service = '', cors=None, error_callback=None):
+	def __init__(self,
+			routes,
+			service = '',
+			cors = None,
+			error_callback = None,
+			lists = True):
 		"""Constructor (__init__)
 
 		Instantiates the server instance
@@ -413,7 +471,10 @@ class Server(bottle.Bottle):
 			routes (dict|list): Routes to the server
 			service (str): The service to use if none exists in a route
 			cors (str): The regex to identify allowed domains
-			error_callback (function): A function to call if any exception occurs
+			error_callback (function): A function to call if any exception
+										occurs
+			lists (bool | dict): True to add a __list call to the default
+								service, else a dictionay of uris to services
 
 		Returns:
 			None
@@ -424,6 +485,29 @@ class Server(bottle.Bottle):
 
 		# If cors
 		if cors: cors = re.compile(cors)
+
+		# If we have a request for a list of requests
+		if lists:
+
+			# If it's True
+			if lists is True:
+				lists = {'/__list': service}
+
+			# Go through each request in the list
+			for sUri in lists:
+
+				# Add the list read route
+				self.route(
+					sUri,
+					['OPTIONS', 'GET'],
+					_Route(
+						lists[sUri],	# The service to use
+						sUri[1:],		# The path in the service
+						cors,			# CORS regex
+						error_callback,	# Callback for error
+						True			# Handles many requests
+					)
+		)
 
 		# If the routes are passed as a dict
 		if isinstance(routes, dict):
@@ -446,14 +530,11 @@ class Server(bottle.Bottle):
 
 			# Else, use the bits to figure out the methods
 			else:
-				lMethods = []
+				lMethods = ['OPTIONS']
 				if d['methods'] & CREATE: lMethods.append('POST')
 				if d['methods'] & DELETE: lMethods.append('DELETE')
 				if d['methods'] & READ: lMethods.append('GET')
 				if d['methods'] & UPDATE: lMethods.append('PUT')
-
-			# Add OPTIONS if CORS is enabled
-			if cors: lMethods.append('OPTIONS')
 
 			# If the service is missing, use the default
 			if 'service' not in d:
