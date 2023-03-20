@@ -499,7 +499,7 @@ class Server(bottle.Bottle):
 				# Add the list read route
 				self.route(
 					sUri,
-					['GET'],
+					['OPTIONS', 'GET'],
 					_Route(
 						lists[sUri],	# The service to use
 						sUri[1:],		# The path in the service
@@ -530,14 +530,11 @@ class Server(bottle.Bottle):
 
 			# Else, use the bits to figure out the methods
 			else:
-				lMethods = []
+				lMethods = ['OPTIONS']
 				if d['methods'] & CREATE: lMethods.append('POST')
 				if d['methods'] & DELETE: lMethods.append('DELETE')
 				if d['methods'] & READ: lMethods.append('GET')
 				if d['methods'] & UPDATE: lMethods.append('PUT')
-
-			# Add OPTIONS if CORS is enabled
-			if cors: lMethods.append('OPTIONS')
 
 			# If the service is missing, use the default
 			if 'service' not in d:
