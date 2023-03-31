@@ -32,7 +32,7 @@ setup(
 		'piexif==1.1.3',
 		'Pillow==9.4.0',
 		'PyMySQL==1.0.2',
-		'redis==4.5.1',
+		'redis==4.4.4',
 		'requests==2.28.2',
 		'rethinkdb==2.4.9'
 	],
