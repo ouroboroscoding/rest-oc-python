@@ -30,7 +30,7 @@ setup(
 		'markupsafe==2.0.1',
 		'pdfkit==1.0.0',
 		'piexif==1.1.3',
-		'Pillow==9.4.0',
+		'Pillow==9.3.0',
 		'PyMySQL==1.0.2',
 		'redis==4.5.1',
 		'requests==2.28.2',
