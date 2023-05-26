@@ -209,7 +209,11 @@ class _Route(object):
 
 							# Generate unique request details for the element
 							dRequest = DictHelper.clone(dReq)
-							dRequest['data'] = len(m) == 2 and m[1] or None
+							if len(m) == 2:
+								dRequest['data'] = m[1]
+							else:
+								try: del dRequest['data']
+								except KeyError: pass
 
 							# Call the request and append the data to the
 							#	response
