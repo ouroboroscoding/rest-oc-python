@@ -33,7 +33,7 @@ setup(
 		'Pillow>=9.4.0,<9.5',
 		'PyMySQL>=1.0.2,<1.1',
 		'redis>=4.5.1,<4.6',
-		'requests>=2.28.2,<2.29',
+		'requests>=2.28.2,<2.32',
 		'rethinkdb>=2.4.9,<2.5'
 	],
 	zip_safe=True
