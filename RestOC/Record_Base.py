@@ -820,7 +820,7 @@ class Record(abc.ABC):
 
 		# Else, get each requested field and return
 		else:
-			dRet = {f:self._dRecord[f] for f in fields}
+			dRet = {f:self._dRecord[f] for f in fields if f in self._dRecord}
 
 		# Clone the results and return
 		return DictHelper.clone(dRet)
