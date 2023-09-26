@@ -137,7 +137,7 @@ def send(conf):
 
 	# If there was an error
 	if iRes != SMTP.OK:
-		last_error = '%i %s' % (iRes, SMTP.last_error())
+		last_error = '%d %s' % (iRes, SMTP.last_error())
 		return False
 
 	# Clear the error
