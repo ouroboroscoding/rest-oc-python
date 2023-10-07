@@ -237,7 +237,7 @@ def Send(to, subject, opts):
 
 	# Check that text or html body is set
 	if 'text' not in opts and 'html' not in opts:
-		return ValueError('need one of "text" or "html" in Send options')
+		raise ValueError('need one of "text" or "html" in Send options')
 
 	# Attach the main message
 	if 'text' in opts and opts['text']:
