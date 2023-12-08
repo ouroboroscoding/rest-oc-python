@@ -1337,7 +1337,10 @@ class Record(Record_Base.Record):
 							self._dStruct['tree'][self._dStruct['primary']],
 							self._dRecord[self._dStruct['primary']]
 						),
-						JSON.encode(dChanges)
+						Commands.escape(
+							self._dStruct['host'],
+							JSON.encode(dChanges)
+						)
 					)
 
 			# Insert the changes
