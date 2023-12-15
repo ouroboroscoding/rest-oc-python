@@ -5,7 +5,7 @@ with open('README.md', 'r') as oF:
 
 setup(
 	name='rest-oc',
-	version='1.2.6',
+	version='1.2.7',
 	description='Rest-OC is a library of python 3 modules for rapidly setting up REST microservices.',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
