@@ -34,7 +34,7 @@ def _to_arrow(val):
 
 	# If we got a timestamp
 	if isinstance(val, int):
-		return arrow.get(val);
+		return arrow.get(val)
 
 	# If we got a string
 	if isinstance(val, basestring):
@@ -49,7 +49,7 @@ def _to_arrow(val):
 
 		# If it's 25 characters, assume it's good
 		if len(val) == 25:
-			return arrow.get(val);
+			return arrow.get(val)
 
 		# Raise an exception
 		raise ValueError('Invalid date string', val)
@@ -116,7 +116,7 @@ def date_increment(days=1, from_=None):
 	"""
 
 	# If we got a from
-	oDate = from_ and _to_arrow(from_) or arrow.get();
+	oDate = from_ and _to_arrow(from_) or arrow.get()
 
 	# Increment the date and return it
 	return oDate.shift(days=days)

@@ -113,7 +113,7 @@ def convert_to_jpeg(image, quality=90):
 
 	# If the mode is not valid
 	if oImg.mode not in ('1','L','RGB','RGBA'):
-		oImg = oImg.convert('RGB');
+		oImg = oImg.convert('RGB')
 
 	# Save the new image as a JPEG
 	oImg.save(sNewImg, 'JPEG', quality=quality, subsampling=0)

@@ -19,6 +19,7 @@ from time import sleep, time
 
 # Pip imports
 import arrow
+import json_fix
 import pymysql
 
 # Module imports
@@ -61,7 +62,9 @@ class Literal(object):
 	def __init__(self, text):
 		if not isinstance(text, str):
 			raise ValueError('first argument to Literal must be a string')
-		self._text = text;
+		self._text = text
+	def __json__(self):
+		return self._text
 	def __str__(self):
 		return self._text
 	def get(self):
@@ -245,7 +248,7 @@ class _wcursor(object):
 	"""
 
 	def __init__(self, host, dictCur = False):
-		self.cursor = _cursor(host, dictCur);
+		self.cursor = _cursor(host, dictCur)
 
 	def __enter__(self):
 		return self.cursor
@@ -1559,6 +1562,17 @@ class Record(Record_Base.Record):
 
 		# If the value is actually a literal, accept it as is
 		if isinstance(val, Literal):
+
+			# If we need to keep changes
+			if self._dStruct['changes']:
+				if self._dOldRecord is None:
+					self._dOldRecord = DictHelper.clone(self._dRecord)
+
+			# If we still have a dict for changes (not a total replace)
+			if isinstance(self._dChanged, dict):
+				self._dChanged[field] = True
+
+			# Set the field as is
 			self._dRecord[field] = val
 
 		# Else, allow the parent to validate the value
@@ -1601,7 +1615,7 @@ class Record(Record_Base.Record):
 			sFields = '`%s`' % '`,`'.join(raw)
 
 		# Go through each value
-		lWhere = [];
+		lWhere = []
 		for n,v in fields.items():
 
 			# Generate theSQL and append it to the list
@@ -1729,7 +1743,7 @@ class Record(Record_Base.Record):
 		"""
 
 		# Get the based config from the parent
-		dConfig = super().generate_config(tree, special, override);
+		dConfig = super().generate_config(tree, special, override)
 
 		# Add an empty json section
 		dConfig['to_process'] = []
@@ -1809,7 +1823,7 @@ class Record(Record_Base.Record):
 			sFields = '`%s`' % '`,`'.join(raw)
 
 		# Init the where fields
-		lWhere = [];
+		lWhere = []
 
 		# If there's an id
 		if _id is not None:
@@ -2625,7 +2639,7 @@ class Record(Record_Base.Record):
 			raise ValueError('%s not a valid field' % field)
 
 		# Init the where fields
-		lWhere = [];
+		lWhere = []
 
 		# Add the primary if passed
 		if _id is not None:

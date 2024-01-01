@@ -1,8 +1,9 @@
 arrow==1.2.2
-bottle==0.12.23
+bottle==0.12.25
 format-oc==1.6.2
 gunicorn==20.1.0
 Jinja2==3.1.2
+json-fix==0.5.2
 markupsafe==2.0.1
 pdfkit==1.0.0
 piexif==1.1.3

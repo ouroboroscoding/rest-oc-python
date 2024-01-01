@@ -1034,7 +1034,7 @@ class Record(Record_Base.Record):
 		"""
 
 		# Call the parent
-		return super().generate_config(tree, special, override);
+		return super().generate_config(tree, special, override)
 
 	@classmethod
 	def get(cls, _id=None, index=None, filter=None, match=None, raw=None, distinct=False, orderby=None, limit=None, custom={}):
