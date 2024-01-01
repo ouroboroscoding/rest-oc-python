@@ -31,7 +31,7 @@ __mdSMTP = {
 }
 
 # Init the last error message
-__msError = '';
+__msError = ''
 
 # Create the defines
 OK = 0
