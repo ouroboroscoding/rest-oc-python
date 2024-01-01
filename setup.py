@@ -5,7 +5,7 @@ with open('README.md', 'r') as oF:
 
 setup(
 	name='rest-oc',
-	version='1.2.7',
+	version='1.2.8',
 	description='Rest-OC is a library of python 3 modules for rapidly setting up REST microservices.',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
@@ -27,6 +27,7 @@ setup(
 		'format-oc>=1.6.2,<1.7',
 		'gunicorn>=20.1.0,<20.2',
 		'Jinja2>=3.1.2,<3.2',
+		'json-fix>=0.5.2,<0.6',
 		'markupsafe>=2.0.1,<2.1',
 		'pdfkit>=1.0.0,<1.1',
 		'piexif>=1.1.3,<1.2',

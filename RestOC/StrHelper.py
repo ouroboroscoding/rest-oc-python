@@ -74,7 +74,7 @@ def decrypt(key, val):
 		print('%s\n' % str(e))
 		return None
 
-	# base64 decode the value; this can explode because of padding errors
+	# base64 decode the value, this can explode because of padding errors
 	try: val = b64decode(val)
 	except TypeError: return None
 
@@ -457,7 +457,7 @@ def random(length = 8, sets='_aZ', duplicates=True):
 		raise ValueError('%s is not a valid value for sets argument of %s' % (str(sets), sys._getframe().f_code.co_name))
 
 	# Init the return variable
-	sText = '';
+	sText = ''
 
 	# Count the number of characters we can use
 	iCount = len(sChars)

@@ -19,10 +19,11 @@ from time import sleep, time
 
 # Pip imports
 import arrow
+import json_fix
 import pymysql
 
 # Module imports
-from . import JSON, Record_Base
+from . import DictHelper, JSON, Record_Base
 
 # List of available hosts
 __mdHosts = {}
@@ -62,6 +63,8 @@ class Literal(object):
 		if not isinstance(text, str):
 			raise ValueError('first argument to Literal must be a string')
 		self._text = text
+	def __json__(self):
+		return self._text
 	def __str__(self):
 		return self._text
 	def get(self):
@@ -1559,6 +1562,17 @@ class Record(Record_Base.Record):
 
 		# If the value is actually a literal, accept it as is
 		if isinstance(val, Literal):
+
+			# If we need to keep changes
+			if self._dStruct['changes']:
+				if self._dOldRecord is None:
+					self._dOldRecord = DictHelper.clone(self._dRecord)
+
+			# If we still have a dict for changes (not a total replace)
+			if isinstance(self._dChanged, dict):
+				self._dChanged[field] = True
+
+			# Set the field as is
 			self._dRecord[field] = val
 
 		# Else, allow the parent to validate the value
