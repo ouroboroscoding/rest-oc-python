@@ -20,7 +20,7 @@ from rethinkdb import errors as rerrors, net as rnet, RethinkDB
 r = RethinkDB()
 
 # Module imports
-from . import DictHelper, Record_Base
+from . import Record_Base
 
 # List of available hosts
 __mdHosts = {}

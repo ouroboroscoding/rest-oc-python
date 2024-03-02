@@ -10,6 +10,10 @@ __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
 
+# Ouroboros imports
+from tools import clone
+import jsonb
+
 # Python imports
 import re
 import sys
@@ -19,7 +23,7 @@ import traceback
 import bottle
 
 # Module imports
-from . import DictHelper, Errors, JSON, Services, Session
+from . import Errors, Services, Session
 
 # Valid content types
 _reContentType = re.compile(r'^application\/json; charset=utf-?8$')
@@ -119,14 +123,14 @@ class _Route(object):
 
 			# Convert the GET and store the data
 			try:
-				dReq['data'] = JSON.decode(bottle.request.query['d'])
+				dReq['data'] = jsonb.decode(bottle.request.query['d'])
 			except Exception as e:
 				return str(Services.Error((Errors.REST_REQUEST_DATA, '%s\n%s' % (bottle.request.query['d'], str(e)))))
 
 		# Else we most likely got the data in the body
 		else:
 
-			# Make sure the request send JSON
+			# Make sure the request sent JSON
 			try:
 				if not _reContentType.match(bottle.request.headers['Content-Type'].lower()):
 					return str(Services.Error(Errors.REST_CONTENT_TYPE))
@@ -144,7 +148,7 @@ class _Route(object):
 
 			# Convert the data and store it
 			try:
-				if sData: dReq['data'] = JSON.decode(sData)
+				if sData: dReq['data'] = jsonb.decode(sData)
 			except Exception as e:
 				return str(Services.Error(Errors.REST_REQUEST_DATA,'%s\n%s' % (sData, str(e))))
 
@@ -208,7 +212,7 @@ class _Route(object):
 								m = [m]
 
 							# Generate unique request details for the element
-							dRequest = DictHelper.clone(dReq)
+							dRequest = clone(dReq)
 							if len(m) == 2:
 								dRequest['data'] = m[1]
 							else:

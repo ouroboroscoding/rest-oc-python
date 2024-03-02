@@ -10,6 +10,10 @@ __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2020-02-12"
 
+# Ouroboros imports
+from tools import clone
+import jsonb
+
 # Python imports
 from enum import IntEnum
 from hashlib import md5
@@ -23,7 +27,7 @@ import json_fix
 import pymysql
 
 # Module imports
-from . import DictHelper, JSON, Record_Base
+from . import Record_Base
 
 # List of available hosts
 __mdHosts = {}
@@ -897,7 +901,7 @@ class Record(Record_Base.Record):
 						dStruct['tree'][dStruct['primary']],
 						_id
 					),
-					JSON.encode(changes)
+					jsonb.encode(changes)
 				)
 
 		# Create the changes record
@@ -1176,7 +1180,7 @@ class Record(Record_Base.Record):
 						),
 						Commands.escape(
 							self._dStruct['host'],
-							JSON.encode(dChanges)
+							jsonb.encode(dChanges)
 						)
 					)
 
@@ -1363,7 +1367,7 @@ class Record(Record_Base.Record):
 						),
 						Commands.escape(
 							self._dStruct['host'],
-							JSON.encode(dChanges)
+							jsonb.encode(dChanges)
 						)
 					)
 
@@ -1496,7 +1500,7 @@ class Record(Record_Base.Record):
 					raise TypeError('Record_MySQL can not process FormatOC %s nodes without the json flag set' % sClass)
 
 				# JSON encode the data and then escape it
-				return "'%s'" % Commands.escape(host, JSON.encode(value))
+				return "'%s'" % Commands.escape(host, jsonb.encode(value))
 
 			# Else, any other type isn't implemented
 			else:
@@ -1566,7 +1570,7 @@ class Record(Record_Base.Record):
 			# If we need to keep changes
 			if self._dStruct['changes']:
 				if self._dOldRecord is None:
-					self._dOldRecord = DictHelper.clone(self._dRecord)
+					self._dOldRecord = clone(self._dRecord)
 
 			# If we still have a dict for changes (not a total replace)
 			if isinstance(self._dChanged, dict):
@@ -2015,7 +2019,7 @@ class Record(Record_Base.Record):
 
 		# Go through each record and turn the items from JSON to dicts
 		for i in range(len(lRecords)):
-			lRecords[i]['items'] = JSON.decode(lRecords[i]['items'])
+			lRecords[i]['items'] = jsonb.decode(lRecords[i]['items'])
 
 		# Return the records
 		return lRecords
@@ -2047,7 +2051,7 @@ class Record(Record_Base.Record):
 
 				# If it's a json, decode it
 				elif l[1] == 'json':
-					record[l[0]] = JSON.decode(record[l[0]])
+					record[l[0]] = jsonb.decode(record[l[0]])
 
 	@classmethod
 	def process_value(cls, struct, field, value):
@@ -2301,7 +2305,7 @@ class Record(Record_Base.Record):
 						),
 						Commands.escape(
 							self._dStruct['host'],
-							JSON.encode(dChanges)
+							jsonb.encode(dChanges)
 						)
 					)
 

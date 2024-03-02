@@ -10,6 +10,9 @@ __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2022-08-25"
 
+# Ouroboros imports
+from tools import evaluate
+
 # Python imports
 from base64 import b64decode
 import platform
@@ -17,7 +20,7 @@ import re
 import sys
 
 # Module imports
-from . import DictHelper, SMTP
+from . import SMTP
 
 last_error = ''
 """The last error generated"""
@@ -121,7 +124,7 @@ def send(conf):
 
 			# If the fields are missing
 			try:
-				DictHelper.eval(conf['attachments'][i], ['body', 'filename'])
+				evaluate(conf['attachments'][i], ['body', 'filename'])
 			except ValueError as e:
 				raise ValueError([('attachments.%d.%s' % (i, s), 'invalid') for s in e.args])
 
