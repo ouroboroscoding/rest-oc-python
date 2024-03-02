@@ -10,14 +10,15 @@ __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
 
+# Ouroboros imports
+import jsonb
+from nredis import nr
+
 # Python imports
 import uuid
 
 # Pip imports
 from redis import StrictRedis
-
-# Module imports
-from . import JSON, StrHelper
 
 # Open redis connection
 _moRedis = None
@@ -48,13 +49,13 @@ def create(id = None, expires=None):
 	# Create a new Session using a UUID as the id
 	return _Session(id and id or uuid.uuid4().hex, dData)
 
-def init(conf, expire=0):
+def init(redis_host: str, expire: int = 0):
 	"""Init
 
 	Initialises the module
 
 	Arguments:
-		conf (dict): The necessary Redis config
+		redis_host (str): The name of the redis host to use
 		expire (uint): Length in seconds for the session to remain active
 
 	Returns:
@@ -65,7 +66,7 @@ def init(conf, expire=0):
 	global _moRedis, _muiExpire
 
 	# Create the Redis connection
-	_moRedis = StrictRedis(**conf)
+	_moRedis = nr(redis_host)
 
 	# Store the expire time
 	_muiExpire = expire
@@ -93,7 +94,7 @@ def load(id):
 	except (UnicodeDecodeError, AttributeError): pass
 
 	# Create a new instance with the decoded data
-	return _Session(id, JSON.decode(s))
+	return _Session(id, jsonb.decode(s))
 
 class _Session(object):
 	"""Session
@@ -255,8 +256,8 @@ class _Session(object):
 
 		# If we have no expire time, set forever
 		if iExpire == 0:
-			_moRedis.set(self.__id, JSON.encode(self.__dStore))
+			_moRedis.set(self.__id, jsonb.encode(self.__dStore))
 
 		# Else, set to expire
 		else:
-			_moRedis.setex(self.__id, _muiExpire, JSON.encode(self.__dStore))
+			_moRedis.setex(self.__id, _muiExpire, jsonb.encode(self.__dStore))

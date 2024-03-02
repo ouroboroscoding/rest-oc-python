@@ -10,6 +10,10 @@ __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
 
+# Ouroboros imports
+import jsonb
+import undefined
+
 # Python imports
 from datetime import datetime
 from hashlib import sha1
@@ -20,7 +24,7 @@ from time import sleep, time
 import requests
 
 # Module imports
-from . import Errors, JSON, Session
+from . import Errors
 
 __mbVerbose = False
 """Verbose Flag"""
@@ -73,7 +77,7 @@ def request(service, action, path, req = {}):
 					service,
 					action,
 					path,
-					'data' in req and JSON.encode(req['data'], 2) or 'NONE')
+					'data' in req and jsonb.encode(req['data'], 2) or 'NONE')
 				)
 
 			# Directly call the action
@@ -85,7 +89,7 @@ def request(service, action, path, req = {}):
 			if __mbVerbose:
 				print('%s: Returning %s\n' % (
 					str(datetime.now()),
-					JSON.encode(oResponse.to_dict(), 2))
+					jsonb.encode(oResponse.to_dict(), 2))
 				)
 
 		# Else if the service is running elsewhere
@@ -108,7 +112,7 @@ def request(service, action, path, req = {}):
 			if 'data' in req and req['data']:
 
 				# Convert the data to JSON and store the length
-				sData = JSON.encode(req['data'])
+				sData = jsonb.encode(req['data'])
 				dHeaders['Content-Length'] = str(len(sData))
 
 			# If we have a session, add the ID to the headers
@@ -369,7 +373,7 @@ class Response(object):
 	Represents a standard result from any/all requests
 	"""
 
-	def __init__(self, data = None, error = None, warning = None):
+	def __init__(self, data = undefined, error = undefined, warning = undefined):
 		"""Constructor
 
 		Initialises a new Response instance
@@ -388,11 +392,11 @@ class Response(object):
 		"""
 
 		# If there's data, store it as is
-		if data is not None:
+		if data is not undefined:
 			self.data = data
 
 		# If there's an error, figure out what type
-		if error is not None:
+		if error is not undefined:
 
 			# If we got an int, it's a code with no message string
 			if isinstance(error, int):
@@ -428,7 +432,7 @@ class Response(object):
 				raise ValueError('error')
 
 		# If there's a warning, store it as is
-		if not warning is None:
+		if not warning is undefined:
 			self.warning = warning
 
 	def __str__(self):
@@ -456,7 +460,7 @@ class Response(object):
 		except AttributeError: pass
 
 		# Convert the dict to JSON and return it
-		return JSON.encode(dRet)
+		return jsonb.encode(dRet)
 
 	def data_exists(self):
 		"""Data Exists
@@ -525,7 +529,7 @@ class Response(object):
 		"""
 
 		# Try to convert the string to a dict
-		try: d = JSON.decode(val)
+		try: d = jsonb.decode(val)
 		except ValueError as e: raise ValueError('val', str(e))
 		except TypeError as e: raise ValueError('val', str(e))
 
@@ -576,7 +580,7 @@ class Error(Response):
 	Shorthand form of Response(error=)
 	"""
 
-	def __init__(self, code, msg=None):
+	def __init__(self, code, msg = None):
 		"""Constructor
 
 		Initialises a new Response instance
@@ -601,7 +605,7 @@ class ResponseException(Exception):
 	Stupid python won't let you raise anything that doesn't extend BaseException
 	"""
 
-	def __init__(self, data = None, error = None, warning = None):
+	def __init__(self, data = undefined, error = undefined, warning = undefined):
 		"""Constructor
 
 		Dumb dumb python
