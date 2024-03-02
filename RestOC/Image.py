@@ -10,6 +10,9 @@ __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2016-11-11"
 
+# Ouroboros imports
+from tools import crop as crop_tool, fit as fit_tool
+
 # Python imports
 import re
 from io import BytesIO
@@ -18,9 +21,6 @@ from io import BytesIO
 import piexif
 from PIL import Image as Pillow, ImageFile as PillowFile
 PillowFile.LOAD_TRUNCATED_IMAGES = True
-
-# Module imports
-from . import Resize
 
 # exif rotation tag
 ORIENTATION_TAG = 0x0112
@@ -175,7 +175,7 @@ def info(image):
 	# Return the info
 	return dInfo
 
-def resize(image, dims, crop=False, quality=90, format=None):
+def resize(image, dims, crop = False, quality = 90, format = None):
 	"""Resize
 
 	Given raw data and a size, a new image is created and returned as raw data
@@ -228,11 +228,11 @@ def resize(image, dims, crop=False, quality=90, format=None):
 
 	# If we are cropping
 	if crop:
-		dResize = Resize.crop(oImg.width, oImg.height, dims['w'], dims['h'])
+		dResize = crop_tool(oImg.width, oImg.height, dims['w'], dims['h'])
 
 	# Else, we are fitting
 	else:
-		dResize = Resize.fit(oImg.width, oImg.height, dims['w'], dims['h'])
+		dResize = fit_tool(oImg.width, oImg.height, dims['w'], dims['h'])
 
 	# Resize the image
 	oImg.thumbnail([dResize['w'], dResize['h']], Pillow.ANTIALIAS)

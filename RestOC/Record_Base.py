@@ -10,12 +10,13 @@ __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
 
+# Ouroboros imports
+from tools import clone, combine, merge
+import jsonb
+
 # Python imports
 import abc
 from hashlib import md5
-
-# Module imports
-from . import DictHelper, JSON
 
 # The global DB prefix
 __msPrepend = ''
@@ -239,7 +240,7 @@ class Record(abc.ABC):
 				del self._dRecord[struct['rev_field']]
 
 			# Generate and set the revision
-			self._dRecord[struct['rev_field']] = '1-%s' % md5(JSON.encode(self._dRecord)).hexdigest()
+			self._dRecord[struct['rev_field']] = '1-%s' % md5(jsonb.encode(self._dRecord)).hexdigest()
 
 			# Return OK
 			return True
@@ -255,7 +256,7 @@ class Record(abc.ABC):
 			sVer, sHash = sRev.split('-')
 
 			# Generate a new hash from the record data
-			sMD5 = md5(JSON.encode(self._dRecord)).hexdigest()
+			sMD5 = md5(jsonb.encode(self._dRecord)).hexdigest()
 
 			# If the old and new hash don't match
 			if sMD5 != sHash:
@@ -563,7 +564,7 @@ class Record(abc.ABC):
 		# If we need to keep changes
 		if self._dStruct['changes']:
 			if self._dOldRecord is None:
-				self._dOldRecord = DictHelper.clone(self._dRecord)
+				self._dOldRecord = clone(self._dRecord)
 
 		# If the value is not None, store it after cleaning it
 		if val is not None:
@@ -730,7 +731,7 @@ class Record(abc.ABC):
 		"""
 
 		# Combine the dicts
-		dRet = DictHelper.combine({
+		dRet = combine({
 			'auto_primary': True,
 			'changes': False,
 			'db': 'test',
@@ -748,7 +749,7 @@ class Record(abc.ABC):
 
 			# Make sure it's a dict before merging it with the current config
 			if isinstance(override, dict):
-				DictHelper.merge(dRet, override)
+				merge(dRet, override)
 
 			# Raise an error if the argument is invalid
 			else:
@@ -816,14 +817,14 @@ class Record(abc.ABC):
 
 		# If no specific fields requested
 		if not fields:
-			dRet = DictHelper.clone(self._dRecord)
+			dRet = clone(self._dRecord)
 
 		# Else, get each requested field and return
 		else:
 			dRet = {f:self._dRecord[f] for f in fields if f in self._dRecord}
 
 		# Clone the results and return
-		return DictHelper.clone(dRet)
+		return clone(dRet)
 
 	@abc.abstractclassmethod
 	def remove(cls, _id, array, index, custom={}):
@@ -877,7 +878,7 @@ class Record(abc.ABC):
 		"""
 
 		# Get the config values associated with the Child record
-		dConfig = DictHelper.clone(cls.config())
+		dConfig = clone(cls.config())
 
 		# If the host value is overriden
 		if 'host' in custom:

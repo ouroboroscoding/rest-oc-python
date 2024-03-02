@@ -10,9 +10,6 @@ __version__ = "1.0.0"
 __email__ = "chris@ouroboroscoding.com"
 __created__ = "2018-11-11"
 
-# Python imports
-import sys
-
 class ProgressBar(object):
 	"""Progress Bar
 
