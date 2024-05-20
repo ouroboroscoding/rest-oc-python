@@ -16,10 +16,9 @@ import jsonb
 
 # Python imports
 from enum import IntEnum
-from hashlib import md5
 import re
 import sys
-from time import sleep, time
+from time import sleep
 
 # Pip imports
 import arrow
@@ -973,7 +972,7 @@ class Record(Record_Base.Record):
 				'append' optional postfix for dynamic DBs
 
 		Returns:
-			bool
+			uint
 		"""
 
 		# Fetch the record structure
